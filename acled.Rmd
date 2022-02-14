@@ -391,7 +391,7 @@ There is, in general, a dearth of partners in the parts of the country most affe
 
 <br>
 
-```{r fig.height=10}
+```{r map-events-fsc-parnters, fig.height=10}
 acled %>% 
   filter(year == 2021 & sub_event_type != "Peaceful protest") %>%
   full_join(fsc %>%
@@ -423,7 +423,7 @@ acled %>%
 
 The plot below shows a massive spike in conflict events in 2021, bearing in mind that Myanmar has long been embroiled in a 70-year-long civil war. 
 
-```{r}
+```{r barplot-year-events}
 acled %>% 
   filter(!is.na(event_type) & year < 2022) %>%
   mutate(year = round(year)) %>% 
@@ -451,7 +451,7 @@ acled %>%
 
 The 2021 breakdown of conflict events in 2021 was:
 
-```{r}
+```{r conflict-events-summary-2021}
 acled %>%  
   filter(year == 2021) %>% 
   group_by(event_type) %>% 
@@ -469,7 +469,7 @@ acled %>%
 
 There were more conflict fatalities in 2021 than from 2010 to 2020 combined. There were more fatalities related to violence against civilians alone than all conflict-related fatalities in 2019, which previously had the highest number of fatalities this decade.  
 
-```{r}
+```{r barplot-year-fatalties}
 acled %>% 
   filter(!is.na(event_type) & year < 2022) %>%
   mutate(year = round(year)) %>% 
@@ -498,7 +498,7 @@ acled %>%
 
 For reference, the 2021 breakdown of fatalities by event type was:
 
-```{r}
+```{r fatalities-summary-2021}
 acled %>%  
   filter(year == 2021) %>% 
   group_by(event_type) %>% 
@@ -596,10 +596,10 @@ actors %>%
   summarise(count = n(),
             fatalities = sum(fatalities)) %>% 
   group_by(event_type) %>% 
-  filter(inter1 != "identity_militias") %>% 
+  # filter(inter1 != "identity_militias") %>% 
   ggplot(aes(x = count, y = event_type, fill = event_type)) +
   geom_col() +
-  scale_x_continuous(labels = comma_format(accuracy = 1)) +
+  scale_x_continuous(labels = comma) +
   # scale_fill_viridis_d() +
   facet_wrap(~ inter1, scales = "free_x") + 
   theme(legend.position = "none",
@@ -643,7 +643,7 @@ For instance, under fatalities related to protests, `r filter(actors, inter1 == 
 
 <br>
 
-```{r actor-facet-event-fatalities}
+```{r actor-facet-event-fatalities, fig.height=7}
 
 actors %>%
   mutate(event_type = fct_relevel(event_type, c("Battles", "Explosions/Remote violence", "Violence against civilians",
@@ -655,11 +655,11 @@ actors %>%
   summarise(count = n(),
             fatalities = sum(fatalities)) %>% 
   group_by(event_type) %>% 
-  filter(inter1 %out% c("external_other_force", "identity_militias")) %>% 
+  filter(inter1 %out% c("external_other_force")) %>% 
   mutate(pc_total = count / sum(count)) %>% 
   ggplot(aes(x = fatalities, y = event_type, fill = event_type)) +
   geom_col() +
-  scale_x_continuous(labels = comma_format(accuracy = 1)) +
+  scale_x_continuous(labels = comma) +
   # scale_fill_viridis_d() +
   facet_wrap(~ inter1, scales = "free_x") + 
   theme(legend.position = "none",
@@ -740,7 +740,7 @@ actors_conf_int %>%
 
 The table below summarises the number of fatalities and conflict events associated with the largest actors. The table has been sorted in descending order of number of fatalities; only actors associated with more than 100 fatalities are shown and all other actors have been lumped together as "Other". 
 
-```{r}
+```{r table-fatalities-summary}
 actors %>% 
   filter(year == 2021) %>% 
   group_by(actor_simple) %>% 
@@ -767,7 +767,7 @@ actors %>%
 
 ### 4.4 Summary table of main conflict actors
 
-```{r}
+```{r table-main-conflict-actors}
 top_actors <- actors %>%  
   mutate(inter1 = fct_relevel(inter1, c("state_forces", "protesters", "civilians", "political_militias", "rebel_groups",
                                         "rioters", "identity_militias", "external_other_force"))) %>% 
@@ -793,7 +793,7 @@ kable(top_actors, caption = "Top 5 actors by actor type", format.args = list(big
 
 ### 4.5 Geographic distribution of conflict actors
 
-```{r fig.height=10}
+```{r map-conflict-actors-township, fig.height=10}
 actors %>% 
   filter(year == 2021) %>% 
   group_by(admin3_pcode) %>% 
@@ -876,7 +876,9 @@ The correlation plot below examines the specific relationships between the indiv
 
 For instance, violence against civilians is highly correlated with strategic developments (with a coefficient of 0.79) -- this means that in the townships where strategic developments occurred (the most common strategic developments were arrests and looting/property damage), violence against civilians also likely occurred. 
 
-```{r corrplot, fig.height=7}
+<br>
+
+```{r corrplot, fig.height=7.5}
 conflict_score %>% 
   mutate(log_beneficiaries = log(beneficiaries)) %>% 
   select(battles, explosions_remote_violence, violence_against_civilians, protests_and_riots, strategic_developments, 
@@ -884,16 +886,17 @@ conflict_score %>%
   pairs.panels(smooth = TRUE,      # If TRUE, draws loess smooths
                scale = FALSE,      # If TRUE, scales the correlation text font
                density = TRUE,     # If TRUE, adds density plots and histograms
-               ellipses = FALSE,    # If TRUE, draws ellipses
+               ellipses = FALSE,   # If TRUE, draws ellipses
                method = "pearson", # Correlation method (also "spearman" or "kendall")
-               pch = 8,           # pch symbol
-               lm = FALSE,         # If TRUE, plots linear fit rather than the LOESS (smoothed) fit
+               pch = 8,            # pch symbol
+               lm = TRUE,          # If TRUE, plots linear fit rather than the LOESS (smoothed) fit
                cor = TRUE,         # If TRUE, reports correlations
                jiggle = FALSE,     # If TRUE, data points are jittered
                factor = 2,         # Jittering factor
                hist.col = 4,       # Histograms color
                stars = TRUE,       # If TRUE, adds significance level with stars
-               ci = FALSE)         # If TRUE, adds confidence intervals
+               ci = FALSE,         # If TRUE, adds confidence intervals
+               main = "Correlation plot of conflict indicators (acleddata.com) and FSC partners and beneficiaries")
 ```
 
 <br>
@@ -907,7 +910,7 @@ The various conflict indicators -- as expected -- are highly correlated with eac
 acled %>%  filter(year == 2021 & event_type == "Strategic developments") %>% 
   count(sub_event_type, sort = TRUE, name = "count") %>% 
   mutate(percentage = round(count / sum(count) * 100, digits = 2)) %>% 
-  kable(caption = "Sub-event types under strategic developments, 2021") %>% 
+  kable(caption = "Sub-event types under strategic developments, 2021", format.args = list(big.mark = ",")) %>% 
   kable_classic_2(full_width = FALSE, position = "left") %>% 
   footnote(general = "Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com",
            general_title = "")
@@ -935,11 +938,12 @@ conflict_score %>%
   labs(x = "Number of beneficiaries",
        y = "Conflict score", 
        title = "Relationship between beneficiaries reached and conflict score at township level",
-       caption = "Data sources: Armed Conflict Location & Event Data Project (ACLED); acleddata.com and Food Security Cluster Myanmar")
+       caption = "Data sources: Armed Conflict Location & Event Data Project (ACLED); acleddata.com and Food Security Cluster Myanmar") +
+  theme(plot.caption = element_text(hjust = 0.5))
 ```
 
 <br>
-As can be seen from the largely flat blue line, which is just a simple linear model (the results of this model are printed below), the number of beneficiaries per township does not predict the incidence of conflict (represented by the conflict score, where higher values indicate higher incidence of conflict). There is no demonstrable relationship -- positive or negative -- between the overall conflict index and the numbers of beneficiaries and partners per township:
+As expected, from reviewing the correlation plot above and from the flat blue line, the incidence of conflict (represented by the conflict score, where higher values indicate higher incidence of conflict) has no discernible relationship -- positive or negative -- with the number of FSC beneficiaries. The blue line just shows a simple linear model, the summary of which is printed below:
 
 <br>
 
@@ -947,7 +951,7 @@ As can be seen from the largely flat blue line, which is just a simple linear mo
 conflict_score %>%
   rename(conflict_score = score_i) %>% 
   lm(conflict_score ~ beneficiaries + partners, data = .) %>% 
-  summary() %>% pander()
+  summary() %>% pander(caption = "Summary of linear model")
 ```
 
 <br><br>
@@ -958,7 +962,7 @@ These two histograms shows the distribution of conflict events and fatalities pe
 
 <br>
 
-```{r}
+```{r histogram-conflict-events}
 acled %>% 
   filter(year == 2021 & sub_event_type != "Peaceful protests") %>% 
   group_by(admin1, admin3) %>% 
@@ -969,7 +973,8 @@ acled %>%
   geom_histogram() + 
   labs(x = "Number of conflict events",
        y = "Number of townships", 
-       title = "Histogram of conflict events by township", 
+       title = "Histogram of conflict events by township",
+       subtitle = "Peaceful protests have been excluded",
        caption = "Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com") + 
   theme(plot.caption = element_text(hjust = 0.5))
   
@@ -981,7 +986,7 @@ Similar to the plot above on conflict events, there are some very clear outliers
 
 <br>
 
-```{r}
+```{r histogram-fatalities}
 acled %>% 
   filter(year == 2021) %>% 
   group_by(admin1, admin3) %>% 
@@ -1062,7 +1067,7 @@ acled_source %>%
 
 ### 8.1 Reference table of 2021 conflict events aggregated at township level 
 
-```{r}
+```{r DT-by-township}
 acled %>% 
   filter(year == 2021) %>% 
   group_by(admin1, admin3, admin3_pcode) %>% 
@@ -1085,7 +1090,11 @@ acled %>%
          beneficiaries, admin3_pcode) %>% 
   arrange(desc(total_events)) %>% 
   datatable(filter = list(position = "top", clear = FALSE),
-            options = list(pageLength = 10, scrollX = TRUE)) %>% 
+            options = list(pageLength = 10, scrollX = TRUE,
+                                           initComplete = htmlwidgets::JS(
+          "function(settings, json) {",
+          paste0("$(this.api().table().container()).css({'font-size': '", "8.5pt", "'});"),
+          "}"))) %>% 
   formatRound(c("beneficiaries"), digits = 0)
 
 ```
@@ -1094,7 +1103,7 @@ acled %>%
 
 ### 8.2 Reference table by conflict actors in 2021
 
-```{r}
+```{r DT-conflict-actors}
 actors %>% 
   filter(year == 2021) %>% 
   group_by(actor_simple, actor_type = inter1, event_type) %>% 
@@ -1127,20 +1136,22 @@ actors %>%
 
 ### 8.3 Reference maps
 
-```{r fig.height=11} 
-conflict_score %>%  
-  mutate(score_i = replace(score_i, score_i == 0, NA)) %>% 
+```{r patchwork-maps, fig.height=16} 
+acled %>%  
+  filter(year == 2021 & sub_event_type != "Peaceful protests") %>% 
+  group_by(admin3_pcode) %>%
+  summarise(count = n()) %>% 
   full_join(pcode3_shape, by = "admin3_pcode") %>%
   st_as_sf() %>% 
   ggplot() + 
-  geom_sf(aes(fill = score_i), size = 0.1) +
+  geom_sf(aes(fill = count), size = 0.1) +
   geom_sf(data = pcode1_shape, size = 0.5, colour = "black", alpha = 0) + 
   scale_fill_viridis_c(option = "mako", direction = -1) +
   theme_void() + 
-  labs(title = "Conflict score by township 2021",
+  labs(title = "Conflict events by township 2021",
        subtitle = "Peaceful protests have been excluded",
-       caption = "Calculated from Armed Conflict Location & Event Data Project (ACLED); acleddata.com",
-       fill = "conflict score") +
+       caption = "Data source: ACLED; acleddata.com",
+       fill = "conflict events") +
   theme(plot.caption=element_text(hjust = 0.2)) +
   
 fsc %>%
@@ -1153,9 +1164,42 @@ fsc %>%
   geom_sf(data = pcode1_shape, size = 0.5, colour = "black", alpha = 0) + 
   scale_fill_viridis_c(option = "mako", direction = -1, breaks = c(1, 3, 6, 9, 12)) + 
   theme_void() +
-  labs(title = "Distribution of food security partners and conflict events in 2021",
+  labs(title = "Distribution of food security partners in 2021",
        caption = "Data source: Food Security Cluster Myanmar",
-       fill = "number of\npartners")
+       fill = "number of\npartners") +
+  theme(plot.caption=element_text(hjust = 0.2)) + 
+  
+acled %>%  
+  filter(year == 2021) %>% 
+  group_by(admin3_pcode) %>% 
+  summarise(fatalities = sum(fatalities)) %>% 
+  na_if(0) %>% 
+  full_join(pcode3_shape, by = "admin3_pcode") %>%
+  st_as_sf() %>% 
+  ggplot() + 
+  geom_sf(aes(fill = fatalities), size = 0.1) +
+  geom_sf(data = pcode1_shape, size = 0.5, colour = "black", alpha = 0) + 
+  scale_fill_viridis_c(option = "mako", direction = -1) +
+  theme_void() + 
+  labs(title = "Conflict fatalities by township 2021",
+       caption = "Data source: ACLED; acleddata.com",
+       fill = "fatalities") +
+  theme(plot.caption=element_text(hjust = 0.2)) +
+  
+fsc %>%
+  group_by(admin3_pcode) %>%
+  summarise(beneficiaries = sum(u_ben), by = "admin3_pcode") %>%
+  right_join(pcode3_shape, by = "admin3_pcode") %>% 
+  st_as_sf() %>% 
+  ggplot() +
+  geom_sf(aes(fill = beneficiaries), size = 0.1) +
+  geom_sf(data = pcode1_shape, size = 0.5, colour = "black", alpha = 0) + 
+  scale_fill_viridis_c(option = "mako", direction = -1, begin = 0.2, trans = "log10") + 
+  theme_void() +
+  labs(title = "Distribution of food security beneficiaries in 2021",
+       caption = "Data source: Food Security Cluster Myanmar",
+       fill = "number of\nbeneficiaries") +
+  theme(plot.caption=element_text(hjust = 0.2))
 
 ```
 
