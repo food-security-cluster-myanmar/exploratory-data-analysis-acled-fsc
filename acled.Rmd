@@ -696,7 +696,7 @@ actors %>%
 
 ### 4.3 Which actors are associated with the most fatalities?
 
-As mentioned, it is difficult at this juncture to state how many of the associated fatalities were persons killed by these groups and how many were members of these groups who have been killed. Still, it is worthwhile to plot which actors have been the most "violent", at least in regards to the outcomes of their actions. 
+As mentioned, it is difficult at this juncture to state how many of the associated fatalities were persons killed by these groups and how many were members of these groups who have been killed. Still, it is worthwhile to plot which actors are the "bloodiest", at least in regards to the outcomes of their actions, or have been involved in incidents with the most fatalities. 
 
 The plot below seeks to examine which actors have been associated with the most fatalities per event, and only actors which have participated in more than 50 conflict events have been included. The point shows the average number of fatalities associated with each actor per conflict event it was involved in. The whiskers show the upper and lower ranges of fatalities per event, that is, 95% of all conflict events that an actor participated in fell within that range. The highest numbers of fatalities per event are associated with political militias and rebel groups.  
 
