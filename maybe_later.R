@@ -189,3 +189,25 @@ acled %>%
 # "<sup>",
 # "mouse over for details; click and drag to select and zoom","</sup>")))
 
+
+actors %>%
+  filter(year == 2021) %>% 
+  group_by(actor_simple, event_type, inter1) %>% 
+  summarise(count = n(),
+            fatalities = sum(fatalities)) %>% 
+  group_by(event_type) %>% 
+  mutate(pc_fatalities = fatalities / sum(fatalities)) %>% 
+  ggplot(aes(x = fatalities, y = inter1, fill = inter1)) +
+  geom_col() +
+  scale_x_continuous(labels = comma_format(accuracy = 1)) +
+  scale_fill_viridis_d() +
+  # scale_fill_brewer(palette = "Dark2", direction = -1) + 
+  facet_wrap(~ event_type, scales = "free_x") + 
+  theme(legend.position = "none",
+        plot.caption = element_text(hjust = 0.5)) +
+  labs(x = "Number of fatalities associated with actor type", 
+       y = "Type of actor", 
+       title = "Number of fatalities associated with actor type",
+       subtitle = "Faceted by type of conflict event",
+       caption = "Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com")
+

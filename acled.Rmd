@@ -37,21 +37,20 @@ always_allow_html: true
 ```
 
 
-## Introduction and references
+## Introduction
 
 This report provides an overview of the Armed Conflict Location and Event Data Project (ACLED) dataset for Myanmar. This dataset contains information on conflict actors, conflict events, event types, event locations and fatalities dating back to 2010; the data is updated on a monthly basis. 
 
 The aim of ACLED is "to capture the forms, agents, dates and locations of political violence and protests"; its methodology for Myanmar consists of the review of English and Myanmar sources to code political violence and demonstration events: the vast majority (85%) of their information originates from subnational, national and international media sources, with the remainder originating from ACLED's partnership with the Myanmar Peace Monitor and reports by the UN, international monitoring groups and local human rights organisations. Points of alignment and divergence from the conflict events collected by the Nexus Response Mechanism's Conflict Analysis and Research Facility remains to be explored.
 
-The terminology employed with this report follows what has been laid out in the ACLED codebook; the review of the codebook, as well as ACLED's methodology notes on Myanmar, is highly encouraged. The specific data sources used for this report are:
+The terminology employed with this report follows what has been laid out in the ACLED codebook; the review of the codebook, as well as ACLED's methodology notes on Myanmar, is highly encouraged. This report would like to highlight the excellent scholarship of the Armed Conflict Location and Event Data Project, as well as their dedication in making this wealth of data public. This report also echoes ACLED's calls for increased protections for journalists and independent reporting.
 
+### References for this report
 * ACLED, (2019). Armed Conflict Location & Event Data Project (ACLED) Codebook. https://www.acleddata.com/wp-content/uploads/dlm_uploads/2017/10/ACLED_Codebook_2019FINAL_pbl.pdf
-* ACLED, (2020). ACLED Methodology and Coding Decisions around Political Violence in Myanmar. https://acleddata.com/acleddatanew/wp-content/uploads/2021/11/ACLED_Political-Violence-in-Myanmar_February-2020.pdf
 * ACLED, (2022). ACLED data for Myanmar (2010-2022). https://acleddata.com
+* ACLED, (2020). ACLED Methodology and Coding Decisions around Political Violence in Myanmar. https://acleddata.com/acleddatanew/wp-content/uploads/2021/11/ACLED_Political-Violence-in-Myanmar_February-2020.pdf
 * Atillio Benini, Aldo Benini (2021). mdepriv: Synthetic scores of multiple deprivation. R package version 0.0.3.  https://github.com/a-benini/mdepriv/
 * Food Security Cluster, Myanmar (2021). 5Ws reporting tool. 
-
-This report would like to highlight the excellent scholarship of the Armed Conflict Location and Event Data Project, as well as their dedication in making this wealth of data public. This report also echoes ACLED's calls for increased protections for journalists and independent reporting. 
 
 <br><br><br>
 
@@ -411,7 +410,8 @@ acled %>%
   labs(title = "Distribution of food security partners and conflict events in 2021",
        subtitle =  "Red dots are conflict events; peaceful protests have been excluded",
        caption = "Data sources: Armed Conflict Location & Event Data Project (ACLED); acleddata.com and Food Security Cluster Myanmar",
-       fill = "number of\npartners")
+       fill = "number of\npartners") + 
+  theme(plot.caption = element_text(hjust = 0.5))
 ```
  
  <br><br><br>
@@ -580,30 +580,34 @@ plot year-on-year increase by state and region
 
 ### 4.1 Conflict events by type of actor 
 
-The next two sections summarise conflict events and fatalities by event type and actor type. For the plots below, one should bear in mind that most event types (with the exception of peaceful protests) involved more than one actor, so totalling up each facet will result in a number higher than the total number of events. For instance, rebel groups took part in around 1,250 battles, but many of these battles were between them and state forces and political militias; the same battle will also show up in the count of the other involved actor.
+The next two sections summarise conflict events and fatalities by event type and actor type. For the plots below, one should bear in mind that most event types (with the exception of peaceful protests) involved more than one actor, so totalling up each facet will result in a number higher than the total number of events. For instance, the same battle involving state forces and rebel groups would show up in the event counts of each.  
 
 <br>
 
-```{r actor-facet-event-count}
+```{r actor-facet-event-count, fig.height = 7}
 
 actors %>%
+  mutate(event_type = fct_relevel(event_type, c("Battles", "Explosions/Remote violence", "Violence against civilians",
+                                                "Protests", "Riots", "Strategic developments"))) %>% 
+  mutate(inter1 = fct_relevel(inter1, c("state_forces", "protesters", "civilians", "political_militias", "rebel_groups",
+                                        "rioters", "identity_militias", "external_other_force"))) %>% 
   filter(year == 2021) %>% 
   group_by(actor_simple, event_type, inter1) %>% 
   summarise(count = n(),
             fatalities = sum(fatalities)) %>% 
   group_by(event_type) %>% 
-  mutate(pc_total = count / sum(count)) %>% 
-  ggplot(aes(x = count, y = inter1, fill = inter1)) +
+  filter(inter1 != "identity_militias") %>% 
+  ggplot(aes(x = count, y = event_type, fill = event_type)) +
   geom_col() +
   scale_x_continuous(labels = comma_format(accuracy = 1)) +
-  scale_fill_viridis_d() +
-  facet_wrap(~ event_type, scales = "free_x") + 
+  # scale_fill_viridis_d() +
+  facet_wrap(~ inter1, scales = "free_x") + 
   theme(legend.position = "none",
         plot.caption = element_text(hjust = 0.5)) +
-  labs(x = "Number of conflict events associated with actor type", 
-       y = "Type of actor", 
+  labs(x = "Number of conflict events associated with each actor type", 
+       y = "Type of conflict event", 
        title = "Number of conflict events associated with each actor type",
-       subtitle = "Faceted by type of conflict event",
+       subtitle = "Faceted by type of conflict actor",
        caption = "Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com")
 
 
@@ -612,16 +616,18 @@ actors %>%
 <br>
 
 ```{r summary-table-event_type}
-acled %>% 
+actors %>% 
+  mutate(inter1 = fct_relevel(inter1, c("state_forces", "protesters", "civilians", "political_militias", "rebel_groups",
+                                        "rioters", "identity_militias", "external_other_force"))) %>% 
   filter(year == 2021) %>% 
-  group_by(event_type) %>% 
-  summarise(count = n()) %>%  
+  group_by(actor_type = inter1) %>% 
+  summarise(events = n()) %>%  
   transpose_df() %>% 
   row_to_names(row_number = 1) %>% 
-  mutate_at(vars(Battles, `Explosions/Remote violence`,  `Violence against civilians`, Protests, Riots, `Strategic developments`),
+  mutate_at(vars("protesters", "civilians", "state_forces", "political_militias", "rebel_groups",
+                                        "rioters", "identity_militias", "external_other_force"),
             ~ as.numeric(.x)) %>% 
-  relocate(`Violence against civilians`, .after = `Explosions/Remote violence`) %>% 
-  kable(caption = "2021 number of conflict events by event type", format.args = list(big.mark = ","), digits = 0) %>% 
+  kable(caption = "2021 number of conflict events by actor type", format.args = list(big.mark = ","), digits = 0) %>% 
   kable_classic_2() %>% 
   footnote(general = "Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com",
            general_title = "")
@@ -633,49 +639,53 @@ acled %>%
 
 The plot below on fatalities shows the number of fatalities associated with each type of actor. It should be noted that the ACLED dataset does not have a column to assign blame, neither are the specific details of the fatalities always known -- there is additional information in the column `notes` and text mining would be a fruitful next step for future analysis, but has not been performed for this cursory overview of the data. And similar to the plot on event types above, duplications have been included, though not within the totals for each actor type. 
 
-For instance, under fatalities related to protests, `r filter(actors, inter1 == "protesters") %>% {sum(.$fatalities)}` fatalities were associated with protesters, with the other party involved almost entirely being state forces, with very small numbers being associated with political militias and rioters. 
+For instance, under fatalities related to protests, `r filter(actors, inter1 == "protesters") %>% {sum(.$fatalities)}` fatalities were associated with protesters, with the main other party involved almost entirely being state forces, with very small numbers being associated with rioters. 
 
 <br>
 
 ```{r actor-facet-event-fatalities}
 
 actors %>%
+  mutate(event_type = fct_relevel(event_type, c("Battles", "Explosions/Remote violence", "Violence against civilians",
+                                                "Protests", "Riots", "Strategic developments"))) %>% 
+  mutate(inter1 = fct_relevel(inter1, c("state_forces", "protesters", "civilians", "political_militias", "rebel_groups",
+                                        "rioters", "identity_militias", "external_other_force"))) %>% 
   filter(year == 2021) %>% 
   group_by(actor_simple, event_type, inter1) %>% 
   summarise(count = n(),
             fatalities = sum(fatalities)) %>% 
   group_by(event_type) %>% 
-  mutate(pc_fatalities = fatalities / sum(fatalities)) %>% 
-  ggplot(aes(x = fatalities, y = inter1, fill = inter1)) +
+  filter(inter1 %out% c("external_other_force", "identity_militias")) %>% 
+  mutate(pc_total = count / sum(count)) %>% 
+  ggplot(aes(x = fatalities, y = event_type, fill = event_type)) +
   geom_col() +
   scale_x_continuous(labels = comma_format(accuracy = 1)) +
-  scale_fill_viridis_d() +
-  # scale_fill_brewer(palette = "Dark2", direction = -1) + 
-  facet_wrap(~ event_type, scales = "free_x") + 
+  # scale_fill_viridis_d() +
+  facet_wrap(~ inter1, scales = "free_x") + 
   theme(legend.position = "none",
         plot.caption = element_text(hjust = 0.5)) +
-  labs(x = "Number of fatalities associated with actor type", 
-       y = "Type of actor", 
-       title = "Number of fatalities associated with actor type",
-       subtitle = "Faceted by type of conflict event",
+  labs(x = "Number of fatalities associated with each actor type", 
+       y = "Type of conflict event", 
+       title = "Number of fatalities associated with each actor type",
+       subtitle = "Faceted by type of conflict actor",
        caption = "Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com")
 
 ```
 <br>
 
 ```{r summary-table-fatalities}
-acled %>% 
-  mutate(event_type = fct_relevel(event_type, c("Battles", "Explosions/Remote violence", "Violence against civilians",
-                                                "Protests", "Riots", "Strategic developments"))) %>% 
-  
+actors %>% 
+  mutate(inter1 = fct_relevel(inter1, c("state_forces", "protesters", "civilians", "political_militias", "rebel_groups",
+                                        "rioters", "identity_militias", "external_other_force"))) %>% 
   filter(year == 2021) %>% 
-  group_by(event_type) %>% 
+  group_by(actor_type = inter1) %>% 
   summarise(fatalities = sum(fatalities)) %>%  
   transpose_df() %>% 
   row_to_names(row_number = 1) %>% 
-  mutate_at(vars(Battles, `Explosions/Remote violence`, Protests, Riots, `Strategic developments`, `Violence against civilians`),
+  mutate_at(vars("protesters", "civilians", "state_forces", "political_militias", "rebel_groups",
+                                        "rioters", "identity_militias", "external_other_force"),
             ~ as.numeric(.x)) %>% 
-  kable(caption = "2021 fatalities by conflict event type", format.args = list(big.mark = ","), digits = 0) %>% 
+  kable(caption = "2021 number of fatalities associated with each actor type", format.args = list(big.mark = ","), digits = 0) %>% 
   kable_classic_2() %>% 
   footnote(general = "Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com",
            general_title = "")
@@ -692,7 +702,7 @@ The plot below seeks to examine which actors have been associated with the most 
 
 <br>
 
-```{r fatalities-actors-errorbarh, fig.height=7}
+```{r fatalities-actors-errorbarh, fig.height=6}
 actors_conf_int <- actors %>%  
   filter(year == 2021) %>% 
   add_count(actor_simple) %>% 
@@ -720,7 +730,9 @@ actors_conf_int %>%
       caption = "Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com",
       colour = "") + 
   theme(plot.caption = element_text(hjust = 0.5), 
-        legend.text = element_text(size = 6))
+        legend.text = element_text(size = 6), 
+        legend.position = "bottom") +
+  guides(colour = guide_legend(nrow = 1))
 
 ```
 
@@ -743,7 +755,7 @@ actors %>%
          fatalities_per_event = round(fatalities / events, digits = 2)) %>% 
   select(actor = actor_simple, actor_type = inter1, fatalities, events, fatalities_per_event) %>% 
   arrange(desc(fatalities)) %>% 
-  kable(caption = "Top actors in terms of fatalities associated with them; actors associated with <100 fatalities have been lumped together as 'Other'",
+  kable(caption = "Top actors in terms of fatalities associated with them; actors associated with less than 100 fatalities have been lumped together as 'Other'",
         format.args = list(big.mark = ",")) %>% 
   kable_classic_2("striped") %>% 
   footnote(general = "Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com", 
@@ -804,7 +816,8 @@ actors %>%
 
 ## 5. Correlations between conflict and food security cluster footprint 
 
-### 5.1 Updating the MIMU-HARP conflict index
+
+### 5.1 Correlation plot
 
 ```{r conflict-score-df, warning=FALSE}
 conflict_df <- acled %>% 
@@ -859,46 +872,9 @@ conflict_score <- conflict_df %>%
 
 ```
 
-A conflict score was calculated using ACLED data: its construction was similar to the conflict index in the MIMU-HARP Vulnerability Analysis, with the notable omission of data on displacement -- this has been requested and the score will be updated once that data has been made available. 
-
-The conflict score -- at its most basic level -- is an average of the normalised values of battles, explosions and remote violence, violence against civilians, strategic developments, non-peaceful protests and riots and the conflict-related fatalities. However, these normalised values have be re-weighted with the Betti-Verma method, which penalises redundancy and rewards variation; this is the other notable divergence from MIMU-HARP's methodology. The Betti-Verma method was employed through the `mdepriv` R package developed by Atillio Benini and Aldo Benini. 
-
-Below is a plot of townships comparing the conflict score with the number of beneficiaries. 
-
-<br>
-
-```{r score-i-ben-plot}
-# there is no relationship between conflict score and the number of beneficiaries or number of partners per township
-conflict_score %>%
-  ggplot(aes(x = beneficiaries, y = score_i)) + 
-  geom_point() + 
-  scale_x_continuous(trans = "log10", labels = comma) +
-  geom_smooth(method = "lm") +
-  labs(x = "Number of beneficiaries",
-       y = "Conflict score", 
-       title = "Relationship between beneficiaries reached and conflict score at township level",
-       caption = "Data sources: Armed Conflict Location & Event Data Project (ACLED); acleddata.com and Food Security Cluster Myanmar")
-```
-
-<br>
-As can be seen from the largely flat blue line, which is just a simple linear model (the results of this model are printed below), the number of beneficiaries per township does not predict the incidence of conflict (represented by the conflict score, where higher values indicate higher incidence of conflict). There is no demonstrable relationship -- positive or negative -- between the overall conflict index and the numbers of beneficiaries and partners per township:
-
-<br>
-
-```{r lm-output}
-conflict_score %>%
-  rename(conflict_score = score_i) %>% 
-  lm(conflict_score ~ beneficiaries + partners, data = .) %>% 
-  summary() %>% pander()
-```
-
-<br><br>
-
-### 5.2 Correlation plot
-
 The correlation plot below examines the specific relationships between the individual variables in the dataset -- the histograms down the diagonal show the distributions of townships across the various values; the correlations between variables (all between 0 and 1) are shown in the upper triangle, with the asterisks denoting how significant the correlations are; and the lower triangle shows the specific distribution of observations, with each point representing each township. Beneficiaries have been placed on a logarithmic scale so that the variation is more visible. 
 
-For instance, violence against civilians is highly correlated with strategic developments (with a coefficient of 0.79) -- this means that in 79% of the townships where strategic developments occurred (the most common strategic developments were arrests and looting/property damage), violence against civilians was also reported. 
+For instance, violence against civilians is highly correlated with strategic developments (with a coefficient of 0.79) -- this means that in the townships where strategic developments occurred (the most common strategic developments were arrests and looting/property damage), violence against civilians also likely occurred. 
 
 ```{r corrplot, fig.height=7}
 conflict_score %>% 
@@ -935,6 +911,43 @@ acled %>%  filter(year == 2021 & event_type == "Strategic developments") %>%
   kable_classic_2(full_width = FALSE, position = "left") %>% 
   footnote(general = "Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com",
            general_title = "")
+```
+
+<br><br>
+
+### 5.2 Revisiting the MIMU-HARP conflict index
+
+A conflict score was then calculated using ACLED data: its construction was similar to the conflict index in the MIMU-HARP Vulnerability Analysis, with the notable omission of data on displacement -- this has been requested and the score will be updated once that data has been made available.
+
+The conflict score -- at its most basic level -- is an average of the normalised values of battles, explosions and remote violence, violence against civilians, strategic developments, non-peaceful protests and riots and the conflict-related fatalities. However, these normalised values have be re-weighted with the Betti-Verma method, which penalises redundancy and rewards variation; this is the other notable divergence from MIMU-HARP's methodology. The Betti-Verma method was employed through the `mdepriv` R package developed by Atillio Benini and Aldo Benini. 
+
+Below is a plot of townships comparing the conflict score with the number of beneficiaries. 
+
+<br>
+
+```{r score-i-ben-plot}
+# there is no relationship between conflict score and the number of beneficiaries or number of partners per township
+conflict_score %>%
+  ggplot(aes(x = beneficiaries, y = score_i)) + 
+  geom_point() + 
+  scale_x_continuous(trans = "log10", labels = comma) +
+  geom_smooth(method = "lm") +
+  labs(x = "Number of beneficiaries",
+       y = "Conflict score", 
+       title = "Relationship between beneficiaries reached and conflict score at township level",
+       caption = "Data sources: Armed Conflict Location & Event Data Project (ACLED); acleddata.com and Food Security Cluster Myanmar")
+```
+
+<br>
+As can be seen from the largely flat blue line, which is just a simple linear model (the results of this model are printed below), the number of beneficiaries per township does not predict the incidence of conflict (represented by the conflict score, where higher values indicate higher incidence of conflict). There is no demonstrable relationship -- positive or negative -- between the overall conflict index and the numbers of beneficiaries and partners per township:
+
+<br>
+
+```{r lm-output}
+conflict_score %>%
+  rename(conflict_score = score_i) %>% 
+  lm(conflict_score ~ beneficiaries + partners, data = .) %>% 
+  summary() %>% pander()
 ```
 
 <br><br>
@@ -1029,9 +1042,11 @@ acled_source %>%
 
 ## 7. Next steps
 
-* Re-calculate the conflict score once IDP data is obtained and compare these results to previous results recorded by MIMU-HARP in their vulnerability analysis. However displacement is likely to be highly correlated with the other conflict indicators and it is not expected that results will differ substantially. Nevertheless, it was a key component of the MIMU-HARP model and its inclusion will aid in improving comparability. 
+* Re-calculate the conflict score once IDP data is obtained and compare these results to previous results recorded by MIMU-HARP in their vulnerability analysis. To note, displacement is likely to be highly correlated with the other conflict indicators and it is not expected that results will differ substantially. Nevertheless, it was a key component of the MIMU-HARP model and its inclusion will aid in improving comparability. 
 
 * Compare the conflict score and specific conflict indicators to results of the WFP-FAO food insecurity survey. It is important to understand if there are any significant correlations between the two. Filter the conflict data to only include time periods relevant to WFP-FAO's study. Additionally, these conflict score should be cross-referenced with market prices to see if a predictive model can be established. Additionally, begin the comparison of conflict data and data on malnutrition. There will likely be many challenges in obtaining accurate mortality rates of any kind. 
+
+* Compare conflict indicators to market prices to identify if battles and other violent incidents have had impacts on food prices and their stability; explore if a predictive model can be developed. 
 
 * Begin text mining the column `notes` in the ACLED dataset. 
 
@@ -1041,9 +1056,11 @@ acled_source %>%
 
 * Cross-reference conflict data with partner presence and achievements of other clusters. 
 
+<br><br><br>
+
 ## 8. Reference maps and tables
 
-### 8.1 Reference table of conflict events aggregated at township level 
+### 8.1 Reference table of 2021 conflict events aggregated at township level 
 
 ```{r}
 acled %>% 
@@ -1075,11 +1092,38 @@ acled %>%
 
 <br><br>
 
-### 8.2 Reference table by conflict actor
+### 8.2 Reference table by conflict actors in 2021
 
 ```{r}
-
+actors %>% 
+  filter(year == 2021) %>% 
+  group_by(actor_simple, actor_type = inter1, event_type) %>% 
+  summarise(count = n(), .groups = "drop") %>%  
+  pivot_wider(names_from = event_type, values_from = count) %>%  clean_names() %>% 
+  mutate(total_events = rowSums(across(where(is.numeric)), na.rm = TRUE)) %>%
+  left_join(actors %>% 
+              filter(year == 2021) %>% 
+              group_by(actor_simple) %>% 
+              summarise(fatalities = sum(fatalities),
+                        townships = n_distinct(admin3_pcode)), by = "actor_simple") %>%
+  rename(actor_name = actor_simple) %>% 
+  replace_na(list(explosions_remote_violence = 0, violence_against_civilians = 0, battles = 0, strategic_developments = 0, 
+                  riots = 0, protests = 0)) %>%
+  select(actor_name, actor_type, townships, fatalities, total_events, battles, violence_against_civilians, explosions_remote_violence, riots,
+         protests, strategic_developments) %>% 
+  arrange(desc(total_events)) %>%
+  datatable(filter = list(position = "top", clear = FALSE),
+            options = list(pageLength = 10, scrollX = TRUE,
+                                           initComplete = htmlwidgets::JS(
+          "function(settings, json) {",
+          paste0("$(this.api().table().container()).css({'font-size': '", "8.5pt", "'});"),
+          "}"))) %>%
+  formatRound(c("fatalities", "total_events", "battles", "violence_against_civilians", "explosions_remote_violence", 
+                "protests", "strategic_developments"), digits = 0)
+  
 ```
+
+<br><br>
 
 ### 8.3 Reference maps
 
