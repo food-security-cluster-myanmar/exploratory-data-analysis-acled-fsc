@@ -211,3 +211,18 @@ actors %>%
        subtitle = "Faceted by type of conflict event",
        caption = "Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com")
 
+
+acled %>% filter(str_detect(admin1, "Shan") | admin1 %in% c("Kayah", "Kayin", "Mon", "Tanintharyi")) %>% 
+  filter(inter_type != "sole protester action" & year == 2021) %>% 
+  mutate(inter_type = fct_lump(inter_type, 6, other_level = "other")) %>%
+  full_join(pcode3_shape, by = "admin3_pcode") %>% 
+  st_as_sf() %>% 
+  ggplot() + 
+  geom_sf(size = 0.1, alpha = 0) +
+  geom_sf(data = pcode1_shape, size = 0.5, colour = "black", alpha = 0) + 
+  geom_point(aes(x = longitude, y = latitude, size = fatalities, colour = inter_type)) +
+  theme_void() + 
+  labs(title = "Conflict events by township 2021",
+       subtitle = "Peaceful protests have been excluded",
+       caption = "Data source: ACLED; acleddata.com") +
+  theme(plot.caption=element_text(hjust = 0.2))

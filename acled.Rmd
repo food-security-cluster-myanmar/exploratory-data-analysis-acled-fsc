@@ -449,6 +449,7 @@ acled %>%
 
 <br>
 
+
 The 2021 breakdown of conflict events in 2021 was:
 
 ```{r conflict-events-summary-2021}
@@ -1202,9 +1203,6 @@ fsc %>%
   theme(plot.caption=element_text(hjust = 0.2))
 
 ```
-
-
-
 
 
 
