@@ -39,11 +39,13 @@ always_allow_html: true
 
 ## Introduction
 
-This report provides an overview of the Armed Conflict Location and Event Data Project (ACLED) dataset for Myanmar. This dataset contains information on conflict actors, conflict events, event types, event locations and fatalities dating back to 2010; the data is updated on a monthly basis. 
+This report provides an overview of the Armed Conflict Location and Event Data Project (ACLED) dataset for Myanmar. This dataset contains information on conflict actors, conflict events, event types, event locations and fatalities dating back to 2010; the data is updated on a monthly basis. With some notable exceptions, this report is largely focused on 2021 data. 
 
 The aim of ACLED is "to capture the forms, agents, dates and locations of political violence and protests"; its methodology for Myanmar consists of the review of English and Myanmar sources to code political violence and demonstration events: the vast majority (85%) of their information originates from subnational, national and international media sources, with the remainder originating from ACLED's partnership with the Myanmar Peace Monitor and reports by the UN, international monitoring groups and local human rights organisations. Points of alignment and divergence from the conflict events collected by the Nexus Response Mechanism's Conflict Analysis and Research Facility remains to be explored.
 
 The terminology employed with this report follows what has been laid out in the ACLED codebook; the review of the codebook, as well as ACLED's methodology notes on Myanmar, is highly encouraged. This report would like to highlight the excellent scholarship of the Armed Conflict Location and Event Data Project, as well as their dedication in making this wealth of data public. This report also echoes ACLED's calls for increased protections for journalists and independent reporting.
+
+<br>
 
 ### References for this report
 * ACLED, (2019). Armed Conflict Location & Event Data Project (ACLED) Codebook. https://www.acleddata.com/wp-content/uploads/dlm_uploads/2017/10/ACLED_Codebook_2019FINAL_pbl.pdf
@@ -376,7 +378,7 @@ fsc <- read_csv("fsc5w_2021.csv")
 
 ## 1. Progression of conflict events by interaction type in 2021
 
-The GIF  below 2021 conflict events by **month**. The colour of each point indicates the interaction type -- the 6 most common interaction types have been included and less frequent types have been recoded as "Other" -- and the number of fatalities associated with each event is indicated by the size of each point. 
+The GIF  below shows 2021 conflict events by **month**. The colour of each point indicates the interaction type -- the 6 most common interaction types have been included and less frequent types have been recoded as "Other" -- and the number of fatalities associated with each event is indicated by the size of each point. 
 
 <br>
 
@@ -387,7 +389,7 @@ The GIF  below 2021 conflict events by **month**. The colour of each point indic
 
 ## 2. Distribution of food security partners and conflict events in 2021 
 
-There is, in general, a dearth of partners in the parts of the country most affected by conflict. Battles and explosions and remote violence were most prevalent in Sagaing, and, to lesser extents Kachin and Shan North. The specific relationships between conflict events and partner presence will be explored in later sections of this document. 
+There is, in general, a dearth of partners in the parts of the country most affected by conflict. Battles and explosions and remote violence were most prevalent in Sagaing, and, to lesser extents Kachin and Shan North. 
 
 <br>
 
@@ -421,7 +423,7 @@ acled %>%
 
 ### 3.1 Annual distribution of conflict events
 
-The plot below shows a massive spike in conflict events in 2021, bearing in mind that Myanmar has long been embroiled in a 70-year-long civil war. 
+The plot below shows a massive spike in conflict events in 2021, bearing in mind that Myanmar has long been embroiled in a 70-year civil war. 
 
 ```{r barplot-year-events}
 acled %>% 
@@ -697,7 +699,7 @@ actors %>%
 
 ### 4.3 Which actors are associated with the most fatalities?
 
-As mentioned, it is difficult at this juncture to state how many of the associated fatalities were persons killed by these groups and how many were members of these groups who have been killed. Still, it is worthwhile to plot which actors are the "bloodiest", at least in regards to the outcomes of their actions, or have been involved in incidents with the most fatalities. 
+As mentioned, it is difficult at this juncture to state how many of the associated fatalities were persons killed by these groups and how many were members of these groups had been the ones who were killed. Still, it is worthwhile to plot which actors are the "bloodiest", at least in regards to the outcomes of their actions, or have been involved in incidents with the most fatalities. 
 
 The plot below seeks to examine which actors have been associated with the most fatalities per event, and only actors which have participated in more than 50 conflict events have been included. The point shows the average number of fatalities associated with each actor per conflict event it was involved in. The whiskers show the upper and lower ranges of fatalities per event, that is, 95% of all conflict events that an actor participated in fell within that range. The highest numbers of fatalities per event are associated with political militias and rebel groups.  
 
@@ -756,7 +758,7 @@ actors %>%
          fatalities_per_event = round(fatalities / events, digits = 2)) %>% 
   select(actor = actor_simple, actor_type = inter1, fatalities, events, fatalities_per_event) %>% 
   arrange(desc(fatalities)) %>% 
-  kable(caption = "Top actors in terms of fatalities associated with them; actors associated with less than 100 fatalities have been lumped together as 'Other'",
+  kable(caption = "Top 2021 actors in terms of fatalities; actors associated with less than 100 fatalities have been lumped together as 'Other'",
         format.args = list(big.mark = ",")) %>% 
   kable_classic_2("striped") %>% 
   footnote(general = "Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com", 
@@ -781,7 +783,7 @@ top_actors <- actors %>%
          actor_name = actor_simple) %>% 
   top_n(n = 5) %>%  arrange(actor_type)
 
-kable(top_actors, caption = "Top 5 actors by actor type", format.args = list(big.mark = ",")) %>% 
+kable(top_actors, caption = "Top 5 conflict actors in 2021 by actor type", format.args = list(big.mark = ",")) %>% 
   pack_rows(index = table(top_actors$actor_type)) %>% 
   kable_classic_2("striped") %>%  
   footnote(general = "Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com", 
@@ -807,7 +809,7 @@ actors %>%
   scale_fill_viridis_c(option = "inferno", direction = -1) +
   theme_void() +
   labs(fill = "number of\n conflict actors",
-       title = "Distribution of conflict actors at township level",
+       title = "Distribution of 2021 conflict actors at township level",
        caption = "Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com")
   
 ```
@@ -822,6 +824,7 @@ actors %>%
 
 ```{r conflict-score-df, warning=FALSE}
 conflict_df <- acled %>% 
+  # do you really need this step since you're using Betti-Verma
   mutate(event_type = case_when(event_type == "Protests" ~ "Protests_and_Riots",
                                 event_type == "Riots" ~ "Protests_and_Riots", 
                                 TRUE ~ event_type)) %>% 
@@ -939,6 +942,7 @@ conflict_score %>%
   labs(x = "Number of beneficiaries",
        y = "Conflict score", 
        title = "Relationship between beneficiaries reached and conflict score at township level",
+       subtitle = "Higher conflict scores indicate more conflict events anf fatalities", 
        caption = "Data sources: Armed Conflict Location & Event Data Project (ACLED); acleddata.com and Food Security Cluster Myanmar") +
   theme(plot.caption = element_text(hjust = 0.5))
 ```
@@ -1020,7 +1024,7 @@ acled_source <- acled %>%
 
 ```
 
-A total of `r acled_source %>% distinct(source_long) %>% nrow` news sources were used in the ACLED dataset. About a third of the conflict events in 2021 included in the ACLED dataset were originally reported in the [Democratic Voice of Burma](https://english.dvb.no/). To assess the completeness and reliability of the ACLED dataset, a more thorough analysis of the news sources it makes use of should be conducted. The most common news sources are listed in the plot below. 
+A total of `r acled_source %>% distinct(source_long) %>% nrow` news sources were used in the ACLED dataset. About a third of the conflict events in 2021 included in the ACLED dataset were originally reported in the [Democratic Voice of Burma](https://english.dvb.no/). To assess the completeness and reliability of the ACLED dataset, a more thorough analysis of the news sources it makes use of should be conducted. Additionally, comparisons should be made between ACLED's methodology and that of the Nexus Response Mechanism. The most common news sources are listed in the plot below, in order of the share of 2021 conflict events attributed to them. 
 
 <br>
 
@@ -1038,7 +1042,7 @@ acled_source %>%
         plot.caption = element_text(hjust = 0.5)) + 
   labs(x = "Percentage of conflict events reported by source", 
        y = "", 
-       title = "Most common data sources in the ACLED dataset", 
+       title = "Most common data sources in 2021 in the ACLED dataset", 
        subtitle = "Sources outside of the top 20 were recoded as 'Other'", 
        caption = "Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com")
         
@@ -1048,9 +1052,9 @@ acled_source %>%
 
 ## 7. Next steps
 
-* Re-calculate the conflict score once IDP data is obtained and compare these results to previous results recorded by MIMU-HARP in their vulnerability analysis. To note, displacement is likely to be highly correlated with the other conflict indicators and it is not expected that results will differ substantially. Nevertheless, it was a key component of the MIMU-HARP model and its inclusion will aid in improving comparability. 
+* Re-calculate the conflict score once IDP data is obtained and compare these results to previous results recorded by MIMU-HARP in their vulnerability analysis. To note, displacement is likely to be highly correlated with the other conflict indicators (this was the case with the MIMU-HARP conflict index). Nevertheless, it was a key component of the MIMU-HARP model and its inclusion will aid in improving comparability. 
 
-* Compare the conflict score and specific conflict indicators to results of the WFP-FAO food insecurity survey. It is important to understand if there are any significant correlations between the two. Filter the conflict data to only include time periods relevant to WFP-FAO's study. Additionally, these conflict score should be cross-referenced with market prices to see if a predictive model can be established. Additionally, begin the comparison of conflict data and data on malnutrition. There will likely be many challenges in obtaining accurate mortality rates of any kind. 
+* Compare the conflict score and specific conflict indicators to results of the WFP-FAO food insecurity survey. It is important to understand if there are any significant correlations between the two. Filter the conflict data to only include time periods relevant to WFP-FAO's study. Additionally, conflict scores should be cross-referenced with market prices to see if a predictive model can be established. Additionally, begin the comparison of conflict data and data on malnutrition. There will likely be many challenges in obtaining accurate mortality rates of any kind. 
 
 * Compare conflict indicators to market prices to identify if battles and other violent incidents have had impacts on food prices and their stability; explore if a predictive model can be developed. 
 

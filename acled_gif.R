@@ -50,7 +50,7 @@ anim_acled <- acled %>%
         plot.caption = element_text(hjust = 0.2)) + 
   transition_manual(month) +
   labs(title = "Conflict events in { current_frame }",
-       subtitle = "Conflict events included are battles, explosions, riots and violence against civilians\nShowing 6 most common interaction types",
+       subtitle = "Showing 6 most common interaction types\nPeaceful protests have been excluded",
        caption = "Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com",
        colour = "interaction type")
 
