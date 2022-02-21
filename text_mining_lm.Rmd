@@ -1,0 +1,247 @@
+---
+title: "Untitled"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidytext)
+library(glmnet)
+library(broom)
+library(rpart)
+library(rattle)
+```
+
+```{r}
+acled_words <- acled %>% 
+  unite("text", c(notes, actor1, actor2), na.rm = TRUE, sep = " ") %>% 
+  filter(year == 2021) %>% 
+  select(data_id, text) %>% 
+  unnest_tokens(word, text) %>% 
+  anti_join(stop_words, by = "word") %>% 
+  filter(str_detect(word, "[a-z]")) %>% 
+  left_join(acled %>% select(data_id, admin3_pcode, event_type, fatalities, inter_type), by = "data_id") 
+
+acled_conf_int <- acled %>% 
+  # unite("text", c(notes, actor1, actor2), na.rm = TRUE, sep = " ") %>% 
+  filter(year == 2021) %>%
+  unnest_tokens(word, notes) %>% 
+  anti_join(stop_words, by = "word") %>% 
+  filter(str_detect(word, "[a-z]")) %>%
+  add_count(word) %>% 
+  filter(n > 100) %>% 
+  nest(-word) %>% 
+  mutate(model = map(data, ~ t.test(.$fatalities))) %>% 
+  unnest_legacy(map(model, tidy)) %>%  
+  mutate(word = fct_reorder(word, estimate))
+
+acled_conf_int %>% 
+  filter(word %out% c("fatality", "coded", "death", "village", "township", "district", "killed", "dead", "villages",
+                      "town", "tract", "fatalities", "died", "dvb", "aapp")) %>% 
+  arrange(desc(estimate)) %>% 
+  head(50) %>% 
+  ggplot(aes(x = estimate, y = word)) +
+  geom_point() + 
+  geom_errorbarh(aes(xmin = conf.low, xmax = conf.high), size = 0.5) 
+
+acled %>% filter(str_detect(notes, "dvb", ignore_case = TRUE) & year == 2021)
+
+acled_conf_int %>% arrange(desc(estimate
+                                ))
+
+acled_conf_int %>% 
+  ggplot(aes(x = estimate, y = p.value)) + 
+  geom_point()
+
+acled_conf_int %>% filter(word == "ten") %>%
+  select(data) %>% unnest()
+
+acled %>% 
+  filter(data_id == 7695600) %>% pull(notes)
+```
+
+
+```{r}
+acled_words <- acled %>% 
+  filter(year == 2021) %>% 
+  select(data_id, notes) %>% 
+  unnest_tokens(word, notes) %>% 
+  anti_join(stop_words, by = "word") %>% 
+  filter(str_detect(word, "[a-z]")) %>% 
+  left_join(acled %>% 
+              select(data_id, admin3_pcode, event_type, fatalities, inter_type), by = "data_id")
+
+
+acled_words %>%  
+  filter(word %out% c("township", "district", "myanmar", "region", "village")) %>% 
+  distinct(data_id, word) %>% 
+  add_count(word) %>% 
+  filter(n >= 100) %>%
+  pairwise_cor(word, data_id, sort = TRUE)
+  
+  cast_sparse(data_id, word)
+
+words_matrix %>% 
+  pairwise_cor(word, data_id, sort = TRUE)
+
+data_id <- as.integer(rownames(words_matrix))
+fatalities <-  acled(select(data_id, fatalities) %>% 
+                       inner_join()) 
+
+glimpse(words_matrix)
+
+glmnet(words_matrix, fatalities)
+```
+
+```{r}
+acled_words %>% 
+  filter(word %out% c("township", "district", "myanmar", "region", "village")) %>%
+  group_by(word) %>% 
+  summarise(number = n(), 
+            events = n_distinct(data_id),
+            fatalities = sum(fatalities)) %>% 
+  arrange(desc(fatalities)) %>%  
+  distinct(data_id, word) %>% 
+  add_count(word) %>% 
+  filter(n >= 100)
+```
+
+```{r}
+acled %>% 
+  filter(year == 2021) %>% 
+  filter(sub_event_type != "Peaceful protests") %>% 
+  group_by(admin1, admin3, event_type) %>% 
+  summarise(count = n()) %>% 
+  mutate(sum = sum(count)) %>% 
+  ungroup() %>% 
+  mutate(admin3 = fct_reorder(admin3, sum, .desc = TRUE)) %>% 
+  distinct(admin1, admin3, sum) %>% 
+  mutate(pc_total = round(sum / sum(sum) * 100, digits = 2)) %>% 
+  arrange(desc(pc_total))
+```
+
+### side by side plots for fatalities and event type
+```{r}
+acled %>% 
+  filter(year == 2021) %>%  
+  mutate(inter_type = fct_relevel(inter_type, "sole protester action"),
+         event_type = fct_relevel(event_type, "Protests"),
+         admin1 = fct_relevel(admin1, "Yangon")) %>%
+  lm(fatalities ~ admin1, data = .) %>% # anova() %>% tidy() %>% mutate(sumsq / sum(sumsq))
+  tidy(conf.int = TRUE) %>% 
+  # mutate(term = substr(term, 0, 45)) %>% 
+  mutate(term = str_remove_all(term, "admin1"),
+         term = recode(term, "(Intercept)" = "Yangon")) %>% 
+  # filter(term != "(Intercept)") %>% 
+  mutate(term = fct_reorder(term, estimate)) %>% 
+  ggplot(aes(x = estimate, y = term)) + 
+  geom_point() + 
+  geom_errorbarh(aes(xmin = conf.low, xmax = conf.high)) + 
+  
+actors %>% 
+  filter(year == 2021) %>%  
+  mutate(inter_type = fct_relevel(inter_type, "sole protester action"),
+         event_type = fct_relevel(event_type, "Protests"),
+         actor_simple = fct_relevel(fct_lump(actor_simple, 10), "Protesters (Myanmar)"),
+         admin1 = fct_relevel(admin1, "Yangon")) %>%
+  lm(fatalities ~ actor_simple, data = .) %>% # anova() %>% tidy() %>% mutate(sumsq / sum(sumsq))
+  tidy(conf.int = TRUE) %>% 
+  # mutate(term = substr(term, 0, 45)) %>% 
+  mutate(term = str_remove_all(term, "actor_simple"),
+         term = recode(term, "(Intercept)" = "Protesters (Myanmar)")) %>% 
+  # filter(term != "(Intercept)") %>% 
+  mutate(term = fct_reorder(term, estimate)) %>% 
+  ggplot(aes(x = estimate, y = term)) + 
+  geom_point() + 
+  geom_errorbarh(aes(xmin = conf.low, xmax = conf.high))
+  
+acled %>% 
+  filter(year == 2021) %>%  
+  mutate(inter_type = fct_relevel(inter_type, "sole protester action"),
+         event_type = fct_relevel(event_type, "Protests"),
+         admin1 = fct_relevel(admin1, "Yangon")) %>%
+  lm(fatalities ~ event_type, data = .) %>% # anova() %>% tidy() %>% mutate(sumsq / sum(sumsq))
+  tidy(conf.int = TRUE) %>% 
+  # mutate(term = substr(term, 0, 45)) %>% 
+  mutate(term = str_remove_all(term, "event_type"),
+         term = recode(term, "(Intercept)" = "Protests")) %>% 
+  # filter(term != "(Intercept)") %>% 
+  mutate(term = fct_reorder(term, estimate)) %>% 
+  ggplot(aes(x = estimate, y = term)) + 
+  geom_point() + 
+  geom_errorbarh(aes(xmin = conf.low, xmax = conf.high))
+
+actors %>% count(actor_simple, sort = TRUE)
+```
+
+
+```{r}
+acled %>% 
+  filter(year == 2021) %>%  
+  filter(fatalities != 0) %>% 
+  mutate(inter_type = fct_relevel(inter_type, "sole protester action"),
+         event_type = fct_relevel(event_type, "Protests")) %>%
+  lm(fatalities ~ event_type + inter_type + admin1, data = .) %>% 
+  tidy(conf.int = TRUE) %>% 
+  # mutate(term = substr(term, 0, 45)) %>% 
+  mutate(term = recode(term, "(Intercept)" = "eventypeProtests")) %>% 
+  # filter(term != "(Intercept)") %>% 
+  mutate(term = fct_reorder(term, estimate)) %>% 
+  anova() %>%
+  mutate(sumsq / sum(sumsq))
+```
+
+
+```{r}
+
+
+model2 <- actors %>% 
+  filter
+
+model %>% 
+  tidy(conf.int = TRUE) %>% 
+  mutate(term = substr(term, 0, 45)) %>% 
+  filter(term != "(Intercept)") %>% 
+  mutate(term = fct_reorder(term, estimate)) %>% 
+  ggplot(aes(x = estimate, y = term)) + 
+  geom_point() + 
+  geom_errorbarh(aes(xmin = conf.low, xmax = conf.high))
+
+acled %>% filter(year == 2021) %>% count(event_type, wt = fatalities)
+glimpse(acled)
+acled %>% filter(year == 2021) %>%  count(inter_type, sort = TRUE)
+```
+
+```{r}
+anova(model) %>% 
+  tidy() %>% 
+  mutate(share = sumsq / sum(sumsq))
+```
+
+
+```{r}
+model2 <- actors %>% 
+  filter
+
+model %>% 
+  tidy(conf.int = TRUE) %>% 
+  mutate(term = substr(term, 0, 45)) %>% 
+  filter(term != "(Intercept)") %>% 
+  mutate(term = fct_reorder(term, estimate)) %>% 
+  ggplot(aes(x = estimate, y = term)) + 
+  geom_point() + 
+  geom_errorbarh(aes(xmin = conf.low, xmax = conf.high))
+
+glimpse(acled)
+```
+
+
+```{r}
+tree1 <- actors %>% 
+  filter(year == 2021) %>% 
+  rpart(fatalities ~ admin1 + inter1 + event_type, data = .)
+
+fancyRpartPlot(tree1, digits = 3, sub = "", palettes = "Blues")
+```
+

@@ -1,6 +1,6 @@
 ---
 title: "Exploratory data analysis of conflict data and food security cluster presence and achievements"
-author: "Sean Ng"
+author: "Myanmar Food Security Cluster"
 date: "11/02/2022"
 output: 
   html_document:
@@ -515,7 +515,7 @@ acled %>%
 
 <br><br>
 
-### 3.3 Breakdown of conflict events and fatalities by state/region
+### 3.3 Geographic distribution of conflict events
 
 ```{r state-events-plot}
 
