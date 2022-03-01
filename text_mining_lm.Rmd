@@ -8,61 +8,14 @@ knitr::opts_chunk$set(echo = TRUE)
 
 library(tidytext)
 library(glmnet)
+library(glmnetUtils)
 library(broom)
 library(rpart)
 library(rattle)
-```
+library(stringi)
+library(ggraph)
+library(ggridges)
 
-```{r}
-acled_words <- acled %>% 
-  unite("text", c(notes, actor1, actor2), na.rm = TRUE, sep = " ") %>% 
-  filter(year == 2021) %>% 
-  select(data_id, text) %>% 
-  unnest_tokens(word, text) %>% 
-  anti_join(stop_words, by = "word") %>% 
-  filter(str_detect(word, "[a-z]")) %>% 
-  left_join(acled %>% select(data_id, admin3_pcode, event_type, fatalities, inter_type), by = "data_id") 
-
-acled_conf_int <- acled %>% 
-  # unite("text", c(notes, actor1, actor2), na.rm = TRUE, sep = " ") %>% 
-  filter(year == 2021) %>%
-  unnest_tokens(word, notes) %>% 
-  anti_join(stop_words, by = "word") %>% 
-  filter(str_detect(word, "[a-z]")) %>%
-  add_count(word) %>% 
-  filter(n > 100) %>% 
-  nest(-word) %>% 
-  mutate(model = map(data, ~ t.test(.$fatalities))) %>% 
-  unnest_legacy(map(model, tidy)) %>%  
-  mutate(word = fct_reorder(word, estimate))
-
-acled_conf_int %>% 
-  filter(word %out% c("fatality", "coded", "death", "village", "township", "district", "killed", "dead", "villages",
-                      "town", "tract", "fatalities", "died", "dvb", "aapp")) %>% 
-  arrange(desc(estimate)) %>% 
-  head(50) %>% 
-  ggplot(aes(x = estimate, y = word)) +
-  geom_point() + 
-  geom_errorbarh(aes(xmin = conf.low, xmax = conf.high), size = 0.5) 
-
-acled %>% filter(str_detect(notes, "dvb", ignore_case = TRUE) & year == 2021)
-
-acled_conf_int %>% arrange(desc(estimate
-                                ))
-
-acled_conf_int %>% 
-  ggplot(aes(x = estimate, y = p.value)) + 
-  geom_point()
-
-acled_conf_int %>% filter(word == "ten") %>%
-  select(data) %>% unnest()
-
-acled %>% 
-  filter(data_id == 7695600) %>% pull(notes)
-```
-
-
-```{r}
 acled_words <- acled %>% 
   filter(year == 2021) %>% 
   select(data_id, notes) %>% 
@@ -72,27 +25,297 @@ acled_words <- acled %>%
   left_join(acled %>% 
               select(data_id, admin3_pcode, event_type, fatalities, inter_type), by = "data_id")
 
+```
+
+```{r}
+acled_conf_int <- acled %>%
+  filter(year == 2021) %>%
+  select(data_id, admin3_pcode, event_date, sub_event_type, event_type, fatalities, inter_type, notes) %>% 
+  unnest_tokens(word, notes) %>% 
+  anti_join(stop_words, by = "word") %>% 
+  filter(str_detect(word, "[a-z]")) %>%
+  add_count(word) %>% 
+  filter(n > 50) %>% 
+  nest(-word) %>% 
+  mutate(model = map(data, ~ t.test(.$fatalities))) %>% 
+  unnest_legacy(map(model, tidy)) %>%  
+  mutate(word = fct_reorder(word, estimate))
+
+acled_conf_int %>% arrange(desc(estimate))
+
+acled_conf_int %>% 
+  filter(word %out% c("fatality", "coded", "death", "village", "township", "district", "villages",
+                      "town", "tract", "fatalities", "dvb", "aapp", "total", "irrawaddy", "rfa", "died",
+                      "killing")) %>% 
+  arrange(desc(estimate)) %>% 
+  head(40) %>% 
+  ggplot(aes(x = estimate, y = word)) +
+  geom_point() + 
+  geom_errorbarh(aes(xmin = conf.low, xmax = conf.high), size = 0.5) 
+
+glimpse(acled)
+
+```
+
+```{r}
+# to check specific entries 
+acled %>% 
+  filter(year == 2021) %>% 
+  filter(str_detect(notes, "DVB"))
+
+acled_conf_int %>% filter(word == "rfa") %>%
+  select(data) %>% unnest()
+
+acled %>% 
+  filter(data_id == 7801674) %>% pull(notes)
+```
+
+
+
+```{r}
+
+
+acled_words %>% 
+  count(word, sort = TRUE) %>% 
+  head(20) %>% 
+  mutate(word = fct_reorder(word, n)) %>% 
+  ggplot(aes(x = word, y = n)) + 
+  geom_col() +
+  coord_flip()
+```
+
+# pairwise correlations
+
+```{r}
 
 acled_words %>%  
-  filter(word %out% c("township", "district", "myanmar", "region", "village")) %>% 
+  filter(word %out% c("township", "district", "myanmar", "region", "village", "town", "size", "report", "code", "coded")) %>% 
   distinct(data_id, word) %>% 
   add_count(word) %>% 
-  filter(n >= 100) %>%
-  pairwise_cor(word, data_id, sort = TRUE)
-  
-  cast_sparse(data_id, word)
+  filter(n >= 50) %>% 
+  pairwise_cor(word, data_id, sort = TRUE) %>%
+  group_by(item1) %>% 
+  top_n(correlation, n = 20) %>% 
+  datatable(filter = list(position = "top", clear = FALSE), 
+            options = list(pageLength = 10, scrollX = TRUE
+  #                         
+  #                         ,
+  #                                         initComplete = htmlwidgets::JS(
+  #        "function(settings, json) {",
+  #        paste0("$(this.api().table().container()).css({'font-size': '", "8.5pt", "'});"),
+  #        "}")
+       ) 
+     ) %>% 
+  formatRound(c("correlation"), digits = 3)
 
-words_matrix %>% 
-  pairwise_cor(word, data_id, sort = TRUE)
 
-data_id <- as.integer(rownames(words_matrix))
-fatalities <-  acled(select(data_id, fatalities) %>% 
-                       inner_join()) 
-
-glimpse(words_matrix)
-
-glmnet(words_matrix, fatalities)
 ```
+
+### acled words filtered
+
+```{r}
+
+acled_words_filtered <- acled_words %>%  
+  filter(word %out% c("fatality", "coded", "death", "village", "township", "district", "villages",
+                      "town", "tract", "fatalities", "dvb", "aapp", "total", "irrawaddy", "rfa", "died",
+                      "killing", "killed", "dead", "event", "events", "casualty", "casualties",
+                      "size", "code", "report", "myanmar","coded")) %>% 
+  distinct(data_id, word) %>% 
+  add_count(word) %>% 
+  filter(n >= 50)
+
+# does it make sense to filter out peaceful protests? 
+has_fatalities <- acled %>% 
+  select(data_id, has_fatalities) %>% 
+  inner_join(acled_words_filtered %>% select(data_id, word), by = "data_id") %>% 
+  distinct()
+
+fatalities <- acled %>% 
+  select(data_id, fatalities) %>% 
+  inner_join(acled_words_filtered %>% select(data_id, word), by = "data_id") %>% 
+  distinct()
+
+```
+### network graph
+
+```{r}
+conflict_network_map <- acled_words %>%  
+  filter(word %out% c("township", "district", "myanmar", "region", "village", "town", "size", "report", "code", "coded",
+                      "dvb", "aapp", "total", "irrawaddy", "rfa", "tract")) %>% 
+  distinct(data_id, word) %>% 
+  add_count(word) %>% 
+  filter(n >= 70) %>% 
+  pairwise_cor(word, data_id, sort = TRUE) %>% 
+  filter(correlation >= 0.2) %>% 
+  igraph::graph_from_data_frame() %>% 
+  ggraph(layout = "fr") + 
+  geom_edge_link(aes(alpha = correlation), colour = "blue") + 
+  scale_alpha_continuous(range = c(0.1, 0.4)) +
+  geom_node_point(colour = "blue", alpha = 0.3) +
+  geom_node_text(aes(label = name), size = 2) + 
+  theme(legend.position = "none") + 
+  labs(title = "Network map of 2021 conflict event descriptions in Myanmar",
+       subtitle = "Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com")
+
+ggsave("conflict_network_map.png", conflict_network_map, width = 42.0, height = 29.7, units = "cm", dpi = 300)
+
+```
+
+```{r}
+acled_words %>%  
+  filter(fatalities > 0) %>% 
+  # filter(event_type == "Battles") %>% 
+  filter(word %out% c("township", "district", "myanmar", "region", "village", "town", "size", "report", "code", "coded",
+                      "dvb", "aapp", "total", "irrawaddy", "rfa", "tract")) %>% 
+  distinct(data_id, word) %>% 
+  add_count(word) %>% 
+  filter(n >= 70) %>% 
+  pairwise_cor(word, data_id, sort = TRUE) %>% 
+  filter(correlation >= 0.15) %>% 
+  igraph::graph_from_data_frame() %>% 
+  ggraph(layout = "fr") + 
+  geom_edge_link(aes(alpha = correlation), colour = "blue") + 
+  scale_alpha_continuous(range = c(0.1, 0.4)) +
+  geom_node_point(colour = "blue", alpha = 0.3) +
+  geom_node_text(aes(label = name), size = 2) + 
+  theme(legend.position = "none") + 
+  labs(title = "Network map of 2021 conflict event descriptions in Myanmar",
+       subtitle = "Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com")
+  
+  acled %>% count(event_type)
+```
+
+
+
+### glmnet models
+
+```{r}
+glmnet_model <- glmnet(has_fatalities ~ word, data = has_fatalities)
+
+glmnet_model %>%
+  tidy() %>% 
+  mutate(term = str_remove_all(term, "word")) %>% 
+  filter(term %in% c("accused", "convoy", "pale", "pdf")) %>% 
+  ggplot(aes(x = lambda, y = estimate, colour = term)) + 
+  geom_line() + 
+  scale_x_log10() + 
+  geom_hline(lty = 2, yintercept = 0)
+```
+
+
+```{r}
+# how do we pick a lambda?
+glmnet_model %>%
+  tidy() %>% 
+  mutate(term = str_remove_all(term, "word")) %>% 
+  count(lambda) %>% 
+  ggplot(aes(x = lambda, y = n)) + 
+  geom_line() + 
+  scale_x_log10()
+
+```
+
+```{r}
+# cross-validated glmnet model
+cv_glmnet_model_number <- cv.glmnet(fatalities ~ word, data = fatalities)
+
+cv_glmnet_model_tf <- cv.glmnet(has_fatalities ~ word, data = has_fatalities)
+
+plot(cv_glmnet_model_number)
+
+cv_glmnet_model_tf$glmnet.fit %>% 
+  tidy() %>% 
+  mutate(term = str_remove_all(term, "word")) %>% 
+  filter(lambda == cv_glmnet_model_tf$lambda.min & term != "(Intercept)") %>% 
+  arrange(desc(estimate)) %>% 
+  group_by(direction = ifelse(estimate < 0, "Negative", "Positive")) %>% 
+  top_n(20, abs(estimate)) %>% 
+  ungroup() %>%
+  mutate(term = fct_reorder(term, estimate)) %>% 
+  ggplot(aes(x = term, y = estimate, fill = direction)) + 
+  geom_col() + 
+  coord_flip() 
+```
+
+```{r}
+cv_glmnet_model_number$glmnet.fit %>% 
+  tidy() %>% 
+  mutate(term = str_remove_all(term, "word")) %>% 
+  filter(lambda == cv_glmnet_model_number$lambda.min & term != "(Intercept)") %>% 
+  arrange(desc(estimate)) %>% 
+  group_by(direction = ifelse(estimate < 0, "Negative", "Positive")) %>% 
+  top_n(20, abs(estimate)) %>% 
+  ungroup() %>%
+  mutate(term = fct_reorder(term, estimate)) %>% 
+  ggplot(aes(x = term, y = estimate, fill = direction)) + 
+  geom_col() + 
+  coord_flip()
+
+acled %>% filter(year == 2021) %>% 
+  filter(str_detect(notes, "informant")) %>% sample_n(10) %>% pull(notes) 
+```
+
+### in this instance, mod 2 is much less useful since it only goes note by note 
+```{r}
+# why don't we try this?
+
+has_fatalities_matrix <- acled %>% 
+  select(data_id, has_fatalities) %>% 
+  right_join(acled_words_filtered %>% select(data_id, word, n), by = "data_id") %>% 
+  distinct() %>% 
+  cast_sparse(data_id, word, n)
+
+y <- has_fatalities$has_fatalities[match(rownames(has_fatalities_matrix), has_fatalities$data_id)]
+
+mod2 <- cv.glmnet(has_fatalities_matrix, y, family = "binomial")
+```
+
+```{r}
+mod2$glmnet.fit %>% 
+  tidy() %>% 
+  filter(lambda == mod2$lambda.min & term != "(Intercept)") %>% 
+  arrange(desc(estimate)) %>% 
+  group_by(direction = ifelse(estimate < 0, "Negative", "Positive")) %>% 
+  top_n(20, abs(estimate)) %>% 
+  ungroup() %>%
+  mutate(term = fct_reorder(term, estimate)) %>% 
+  ggplot(aes(x = term, y = estimate, fill = direction)) + 
+  geom_col() + 
+  coord_flip()
+
+plot(mod2)
+```
+
+
+
+### logistic regression model
+
+```{r}
+glm_model <- acled %>%
+  mutate(inter_type = fct_relevel(inter_type, "sole protester action"),
+         event_type = fct_relevel(event_type, "Protests"),
+         admin1 = fct_relevel(admin1, "Yangon")) %>%
+  filter(year == 2021) %>%
+  glm(has_fatalities ~ inter_type, data = .)
+
+glm_model %>% 
+  tidy() %>% 
+  mutate(term = str_remove_all(term, c("sub_event_type|event_type|inter_type")),
+         term = substr(term, 0, 45)) %>% 
+  # mutate(term = recode(term, "(Intercept)" = "Protests")) %>% 
+  # filter(term != "(Intercept)") %>% 
+  mutate(term = fct_reorder(term, estimate)) %>% 
+  arrange(desc(estimate)) %>% head(20) %>% 
+  ggplot(aes(x = estimate, y = term)) + 
+  geom_point()
+
+```
+
+```{r}
+
+acled %>% filter(inter_type == "military versus military" & year == 2021) %>% pull(notes)
+```
+
 
 ```{r}
 acled_words %>% 
@@ -106,6 +329,27 @@ acled_words %>%
   add_count(word) %>% 
   filter(n >= 100)
 ```
+
+```{r}
+acled %>%  
+  # filter(fatalities == 0) %>% 
+  group_by(event_type, sub_event_type, inter_type) %>% 
+  summarise(count = n(), 
+            fatalities = sum(fatalities)) %>% 
+  mutate(per_event = fatalities / count) %>% 
+  arrange(desc(count))
+
+acled %>%  
+  filter(fatalities > 0) %>% 
+  group_by(event_type, sub_event_type, inter_type) %>% 
+  summarise(count = n(), 
+            fatalities = sum(fatalities)) %>% 
+  mutate(per_event = fatalities / count) %>% 
+  arrange(desc(count))
+
+actors %>% filter(inter1 == "political_militias" & year == 2021) %>% count(actor_simple, sort = TRUE)
+```
+
 
 ```{r}
 acled %>% 
@@ -243,5 +487,58 @@ tree1 <- actors %>%
   rpart(fatalities ~ admin1 + inter1 + event_type, data = .)
 
 fancyRpartPlot(tree1, digits = 3, sub = "", palettes = "Blues")
+```
+
+
+```{r}
+acled %>% 
+  filter(!is.na(event_type) & year < 2022) %>%
+  mutate(year = round(year)) %>% 
+  group_by(year, event_type) %>%
+  summarise(fatalities = sum(fatalities), .groups = "drop") %>%
+  ggplot(aes(year, fatalities, fill = event_type, group = event_type)) + 
+  # geom_line(size = 1) + 
+  geom_col() +
+  geom_text(aes(label = comma(stat(y), accuracy = 1), group = year), stat = "summary", fun = sum, vjust = -0.7, size = 3) +
+  scale_x_continuous(breaks = seq(2010, 2021, by = 1)) + 
+  scale_y_continuous(labels = comma, limits = c(0, 12500)) +
+  theme(axis.text.x = element_text(size = 9), 
+        axis.text.y = element_text(size = 9), 
+        legend.text = element_text(size = 5),
+        legend.title = element_text(size = 6),
+        plot.caption = element_text(hjust = 0.5)) +
+  labs(x = "", 
+       y = "Number of conflict-related fatalities",
+       title = "Fatalities by conflict event type, 2010-2021", 
+       caption = "Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com")
+```
+
+```{r}
+acled %>%  
+  filter(year == 2021) %>% 
+  mutate(month = lubridate::month(event_date, label = TRUE)) %>% 
+  group_by(month, event_type) %>% 
+  summarise(count = n()) %>%
+  mutate(month = fct_rev(month)) %>% 
+  ggplot(aes(x = count, y = month, fill = stat(x))) + 
+  geom_density_ridges_gradient() +
+  scale_fill_viridis(option = "C") + 
+  facet_wrap(~event_type)
+
+acled %>%  
+  filter(year == 2021) %>% 
+  mutate(month = lubridate::month(event_date, label = TRUE)) %>% 
+  group_by(month, event_type) %>% 
+  summarise(count = n()) %>%
+ #  mutate(month = fct_rev(month)) %>% 
+  ggplot(aes(x = month, y = count, group = event_type, colour = event_type)) + 
+  geom_smooth(se = FALSE) +
+  facet_wrap(~event_type, scales = "free_y") + 
+  labs(x = "",
+       y = "Number of events", 
+       title = "Progression of 2021 conflict events, by type",
+       subtitle = "Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com") + 
+  theme(legend.position = "none")
+  
 ```
 

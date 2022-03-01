@@ -87,6 +87,7 @@ library(mdepriv)
 library(broom)
 library(xtable)
 library(psych)
+library(tidytext)
 
 theme_set(theme_light())
 
@@ -138,6 +139,18 @@ sum_ben2 <- function(df, column_var1, column_var2){
     summarise(beneficiaries = sum(beneficiaries)) %>% 
     arrange(desc(beneficiaries))
     
+}
+
+# cumualtive count
+cumcount <- function(x){
+  cumcount <- numeric(length(x))
+  names(cumcount) <- x
+
+  for(i in 1:length(x)){
+    cumcount[i] <- sum(x[1:i]==x[i])
+  }
+
+  return(cumcount)
 }
 
 # reading in townships from geoadmins 
@@ -218,7 +231,8 @@ acled <- read_excel("2010-01-01-2022-01-25-Myanmar.xlsx",
                              `80` = "SOLE OTHER ACTION"), 
          inter_type = tolower(str_trim(str_replace_all(inter_type, "[\\r\\n\\t]+", " ")))) %>% 
   mutate(admin3_pcode = ifelse(admin3_pcode == "MMR007014" & admin1 == "Yangon", "MMR013006", admin3_pcode),
-         admin3_pcode = ifelse(admin1 == "Magway" & admin3 == "Minhla", "MMR009013", admin3_pcode))
+         admin3_pcode = ifelse(admin1 == "Magway" & admin3 == "Minhla", "MMR009013", admin3_pcode)) %>% 
+  mutate(has_fatalities = ifelse(fatalities > 0, TRUE, FALSE))
 
 # actor-level dataset
 actors <- read_csv("1900-01-01-2022-02-09-Myanmar.csv") %>% 
@@ -346,7 +360,8 @@ actors <- read_csv("1900-01-01-2022-02-09-Myanmar.csv") %>%
   mutate(inter1 = fct_relevel(inter1, c("external_other_force", "identity_militias", "rioters", "rebel_groups", 
                                         "political_militias", "state_forces", "civilians", "protesters"))) %>% 
   mutate(event_type = fct_relevel(event_type, c("Battles", "Explosions/Remote violence", "Violence against civilians",
-                                                "Protests", "Riots", "Strategic developments")))
+                                                "Protests", "Riots", "Strategic developments"))) %>% 
+  mutate(has_fatalities = ifelse(fatalities > 0, TRUE, FALSE))
 
 # shapefiles
 pcode3_shape <- st_read("./mmr_polbnda_adm3_mimu_250k/mmr_polbnda_adm3_mimu_250k.shp", quiet = TRUE) %>% 
@@ -373,6 +388,17 @@ townships <- read_excel("FSC 5W 2021 - GEOADMINS_final 19.xlsx",
 
 # reading in 5Ws
 fsc <- read_csv("fsc5w_2021.csv")
+
+# acled words
+acled_words <- acled %>% 
+  filter(year == 2021) %>% 
+  select(data_id, notes) %>% 
+  unnest_tokens(word, notes) %>% 
+  anti_join(stop_words, by = "word") %>% 
+  filter(str_detect(word, "[a-z]")) %>% 
+  left_join(acled %>% 
+              select(data_id, admin3_pcode, event_type, fatalities, inter_type), by = "data_id")
+
 ```
 
 
@@ -421,7 +447,7 @@ acled %>%
 
 ## 3. Summaries by event type
 
-### 3.1 Annual distribution of conflict events
+### 3.1 Annual distribution of conflict events and fatalities
 
 The plot below shows a massive spike in conflict events in 2021, bearing in mind that Myanmar has long been embroiled in a 70-year civil war. 
 
@@ -466,9 +492,7 @@ acled %>%
   footnote(general = "Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com", general_title = "")
 ```
 
-<br><br>
-
-### 3.2 Annual distribution of fatalities by event type
+<br>
 
 There were more conflict fatalities in 2021 than from 2010 to 2020 combined. There were more fatalities related to violence against civilians alone than all conflict-related fatalities in 2019, which previously had the highest number of fatalities this decade.  
 
@@ -515,6 +539,46 @@ acled %>%
 
 <br><br>
 
+### 3.2 Monthly progression of conflict events and fatalities in 2021
+
+```{r}
+acled %>%  
+  filter(year == 2021) %>% 
+  mutate(month = lubridate::month(event_date, label = TRUE)) %>% 
+  group_by(month, event_type) %>% 
+  summarise(count = n()) %>%
+ #  mutate(month = fct_rev(month)) %>% 
+  ggplot(aes(x = month, y = count, group = event_type, colour = event_type)) + 
+  geom_smooth(se = FALSE) +
+  facet_wrap(~event_type, scales = "free_y") + 
+  labs(x = "",
+       y = "Number of events", 
+       title = "Number of 2021 conflict events, by type",
+       subtitle = "Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com") + 
+  theme(legend.position = "none")
+
+# cumulative counts results in a less interesting graph 
+# acled %>%  
+#   filter(year == 2021) %>% 
+#   mutate(month = lubridate::month(event_date, label = TRUE)) %>%
+#   group_by(month, event_type) %>% 
+#   summarise(count = n()) %>% 
+#   ungroup() %>% 
+#   group_by(event_type) %>% 
+#   mutate(cum_count = cumsum(count)) %>% 
+#   ggplot(aes(x = month, y = cum_count, group = event_type, colour = event_type)) + 
+#   geom_smooth(se = FALSE) +
+#   facet_wrap(~event_type, scales = "free_y") + 
+#   labs(x = "",
+#        y = "Number of events", 
+#        title = "Progression of 2021 conflict events, by type",
+#        subtitle = "Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com") + 
+#   theme(legend.position = "none")
+```
+
+Battles, explosions and remote violence and strategic developments rose steadily until May 2021, then experienced a brief decline before rising again in September 2021. Protests and riots peaked in March 2021, right after the coup. Events involving violence against civilians grew in frequency steadily throughout the year, though a slight decline in intensity was noted at the end of the year. 
+
+
 ### 3.3 Geographic distribution of conflict events
 
 ```{r state-events-plot}
@@ -539,7 +603,6 @@ acled %>%
        y = "Number of conflict events",
        title = "2021 conflict events by state/region", 
        caption = "Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com")
-
 
   
 ```
@@ -575,7 +638,6 @@ acled %>%
  
 ```
 
-plot year-on-year increase by state and region 
 
 <br><br><br>
 
@@ -1012,7 +1074,46 @@ acled %>%
 
 <br><br><br>
 
-## 6. Sources of the ACLED data
+## 6. Text mining the ACLED dataset
+
+The table below shows the correlations between individual words within the column `notes` of the ACLED dataset which contains the descriptions of each conflict event. Only words which appeared more than 50 times in 2021 were included. To reduce the size of the table loaded, only the top 20 matches per word were included. A correlation of 1 means that the word always appears with its match in the dataset, a correlation of 0.5 means that the word shows appears in the same event as its match 50% of the time. 
+
+Use the filter above the column **`word`** to try out different words -- try starting with "artillery", "protest", "landmine" or a location of interest. All words are in lower case. The search bar will look in both columns and may prove less useful than the filter bar. 
+
+<br>
+
+```{r dt-pairwise-words}
+acled_words %>%  
+  filter(word %out% c("township", "district", "myanmar", "region", "village", "town", "size", "report", "code", "coded",
+                      "dvb", "aapp", "rfa", "irrawaddy")) %>% 
+  distinct(data_id, word) %>% 
+  add_count(word) %>% 
+  filter(n >= 50) %>% 
+  pairwise_cor(word, data_id, sort = TRUE) %>%
+  rename(word = item1, match = item2) %>% 
+  group_by(word) %>% 
+  top_n(correlation, n = 20) %>% 
+  datatable(filter = list(position = "top", clear = FALSE), 
+            options = list(pageLength = 10, scrollX = TRUE,
+                           search = list(regex = TRUE)
+  #                         
+  #                         ,
+  #                                         initComplete = htmlwidgets::JS(
+  #        "function(settings, json) {",
+  #        paste0("$(this.api().table().container()).css({'font-size': '", "8.5pt", "'});"),
+  #        "}")
+       ),
+  caption = htmltools::tags$caption(style = 'caption-side: top; 
+                                    text-align: center; 
+                                    color:black; font-size:140% ;',
+                                    "Pairwise correlations in conflict event descriptions")
+     ) %>% 
+  formatRound(c("correlation"), digits = 3)
+
+```
+
+<br>
+
 
 ```{r sources-df}
 
@@ -1023,6 +1124,8 @@ acled_source <- acled %>%
   filter(!is.na(source_long))
 
 ```
+
+As mentioned, these words originate from the ACLED dataset's descriptions of each conflict event. In the vast majority of cases, these conflict descriptions are articles from various news sources. 
 
 A total of `r acled_source %>% distinct(source_long) %>% nrow` news sources were used in the ACLED dataset. About a third of the conflict events in 2021 included in the ACLED dataset were originally reported in the [Democratic Voice of Burma](https://english.dvb.no/). To assess the completeness and reliability of the ACLED dataset, a more thorough analysis of the news sources it makes use of should be conducted. Additionally, comparisons should be made between ACLED's methodology and that of the Nexus Response Mechanism. The most common news sources are listed in the plot below, in order of the share of 2021 conflict events attributed to them. 
 
@@ -1048,6 +1151,7 @@ acled_source %>%
         
 ```
 
+
 <br><br><br>
 
 ## 7. Next steps
@@ -1068,7 +1172,9 @@ acled_source %>%
 
 <br><br><br>
 
+
 ## 8. Reference maps and tables
+
 
 ### 8.1 Reference table of 2021 conflict events aggregated at township level 
 
@@ -1099,7 +1205,11 @@ acled %>%
                                            initComplete = htmlwidgets::JS(
           "function(settings, json) {",
           paste0("$(this.api().table().container()).css({'font-size': '", "8.5pt", "'});"),
-          "}"))) %>% 
+          "}")),
+          caption = htmltools::tags$caption(style = 'caption-side: top; 
+                                    text-align: center; 
+                                    color:black; font-size:140% ;',
+                                    "2021 conflict events by township")) %>% 
   formatRound(c("beneficiaries"), digits = 0)
 
 ```
@@ -1131,7 +1241,11 @@ actors %>%
                                            initComplete = htmlwidgets::JS(
           "function(settings, json) {",
           paste0("$(this.api().table().container()).css({'font-size': '", "8.5pt", "'});"),
-          "}"))) %>%
+          "}")),
+          caption = htmltools::tags$caption(style = 'caption-side: top; 
+                                    text-align: center; 
+                                    color:black; font-size:140% ;',
+                                    "2021 conflict actors")) %>%
   formatRound(c("fatalities", "total_events", "battles", "violence_against_civilians", "explosions_remote_violence", 
                 "protests", "strategic_developments"), digits = 0)
   
