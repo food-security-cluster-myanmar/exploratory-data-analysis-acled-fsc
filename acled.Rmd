@@ -494,7 +494,9 @@ acled %>%
 
 <br>
 
-There were more conflict fatalities in 2021 than from 2010 to 2020 combined. There were more fatalities related to violence against civilians alone than all conflict-related fatalities in 2019, which previously had the highest number of fatalities this decade.  
+There were more conflict fatalities in 2021 than from 2010 to 2020 combined. There were more fatalities related to violence against civilians alone than all conflict-related fatalities in 2019, which previously had the highest number of fatalities this decade.
+
+<br>
 
 ```{r barplot-year-fatalties}
 acled %>% 
@@ -541,7 +543,7 @@ acled %>%
 
 ### 3.2 Monthly progression of conflict events and fatalities in 2021
 
-```{r}
+```{r facet-line-plot-monthly}
 acled %>%  
   filter(year == 2021) %>% 
   mutate(month = lubridate::month(event_date, label = TRUE)) %>% 
@@ -549,13 +551,14 @@ acled %>%
   summarise(count = n()) %>%
  #  mutate(month = fct_rev(month)) %>% 
   ggplot(aes(x = month, y = count, group = event_type, colour = event_type)) + 
-  geom_smooth(se = FALSE) +
+  geom_line(size = 1) +
   facet_wrap(~event_type, scales = "free_y") + 
   labs(x = "",
        y = "Number of events", 
-       title = "Number of 2021 conflict events, by type",
+       title = "Number of 2021 conflict events per month, by type",
        subtitle = "Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com") + 
-  theme(legend.position = "none")
+  theme(legend.position = "none",
+        axis.text.x = element_text(size = 5))
 
 # cumulative counts results in a less interesting graph 
 # acled %>%  
@@ -576,8 +579,30 @@ acled %>%
 #   theme(legend.position = "none")
 ```
 
-Battles, explosions and remote violence and strategic developments rose steadily until May 2021, then experienced a brief decline before rising again in September 2021. Protests and riots peaked in March 2021, right after the coup. Events involving violence against civilians grew in frequency steadily throughout the year, though a slight decline in intensity was noted at the end of the year. 
+Battles, explosions and remote violence and strategic developments rose steadily until May 2021, then experienced a brief decline before rising again in September 2021. Protests and riots peaked in March 2021, right after the coup. Events involving violence against civilians grew in frequency throughout the year, though a slight decline in intensity was noted at the end of the year. 
 
+<br>
+
+```{r lien-plot-fatalities, fig.height=7}
+acled %>% 
+  filter(year == 2021) %>% 
+  mutate(month = lubridate::month(event_date, label = TRUE)) %>% 
+  group_by(month, event_type) %>% 
+  summarise(fatalities = sum(fatalities)) %>% 
+  ggplot(aes(x = month, y = fatalities, group = event_type, colour = event_type)) + 
+  geom_line(size = 1) +
+  scale_y_continuous(breaks = seq(0, 1200, by = 100)) +
+  theme(legend.position = "top") +
+  labs(x = "",
+       y = "Number of fatalities", 
+       title = "Number of 2021 conflict-related fatalities per month, by event type",
+       subtitle = "Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com", 
+       colour = "") 
+  
+```
+
+
+<br><br>
 
 ### 3.3 Geographic distribution of conflict events
 
@@ -1076,7 +1101,30 @@ acled %>%
 
 ## 6. Text mining the ACLED dataset
 
-The table below shows the correlations between individual words within the column `notes` of the ACLED dataset which contains the descriptions of each conflict event. Only words which appeared more than 50 times in 2021 were included. To reduce the size of the table loaded, only the top 20 matches per word were included. A correlation of 1 means that the word always appears with its match in the dataset, a correlation of 0.5 means that the word shows appears in the same event as its match 50% of the time. 
+### 6.1 Network graph of correlated words
+
+This chapter focuses on data mining the text within the column `notes` of the ACLED dataset, which contains the descriptions of each conflict events. For this first section, it is of interest to the FSC to visualise all the relationships amongst word simultaneously and have arranged these words into a network graph. Below, each word from the conflict description is a node and the opacity of the line denotes the strength of its correlation to other words (that is, the probability that they have been used to describe the same conflict event): 
+
+<br>
+
+[![conflict network graph](conflict_network_graph.png)](https://raw.githubusercontent.com/food-security-cluster-myanmar/exploratory-data-analysis-acled-fsc/master/conflict_network_map.png){target="_blank"}
+click **[here](https://raw.githubusercontent.com/food-security-cluster-myanmar/exploratory-data-analysis-acled-fsc/master/conflict_network_map.png){target="_blank"}** to see the full-sized graph. 
+
+<br>
+
+Several interesting clusters are noticed: the first of which clusters around *protests* and is linked to words such as *coup* and *disobedience*, below it is another closely related cluster containing the words *live*, *rubber*, *bullets*, *disperse* and *crowd*. It can be fairly easily surmised that these words are related to conflict events surrounding the February 2021 coup and the mass demonstrations in response to it -- the word *February* is also closely linked with these clusters. 
+
+Another cluster of note centres around the words *remote*, *controlled* and *explosives*, and is closely linked to the words *convoy*, *trucks* and *landmines* --- these words are likely linked to events where military convoys were bombed and ambushed by People's Defence Forces. 
+
+There is also the Kachin cluster, centred around *Myitkyina*, *Waingmaw*, *Monhyin*, *Hpakant*, *Bhamo* and the *KIA*, the Kachin Independence Army. Noticeably, this cluster also has links with the words *battalion* and *jet* and *fighters*. 
+
+This network graph is not intended to be an exhaustive record of the conflict events in 2021 and merely intends to provide an overview: indeed, only words which appeared more than 70 times in the ACLED dataset and had a correlation of 0.2 or more were included. These thresholds were chosen to improve the readability of the graph, but the inclusion of words with too few occurrences might also to spurious correlations. Click on the link to see the graph at full-size and explore it further. 
+
+<br><br>
+
+### 6.2 Pairwise correlations 
+
+To complement the network graph above, the table below shows correlations between individual words in the ACLED dataset conflict descriptions -- this is especially useful if there is a word of interest that the reader would like to explore in further detail. To reduce the size of table loaded, only words which have appeared more than 50 times in 2021 and only the top 20 matches per word have been included. A correlation of 1 means that the word always appears with its match in the dataset; a correlation of 0.5 means that the word appears in the same event as its match 50% of the time. 
 
 Use the filter above the column **`word`** to try out different words -- try starting with "artillery", "protest", "landmine" or a location of interest. All words are in lower case. The search bar will look in both columns and may prove less useful than the filter bar. 
 
@@ -1112,7 +1160,9 @@ acled_words %>%
 
 ```
 
-<br>
+<br><br>
+
+### 6.3 Sources used by the ACLED dataset
 
 
 ```{r sources-df}
@@ -1161,8 +1211,6 @@ acled_source %>%
 * Compare the conflict score and specific conflict indicators to results of the WFP-FAO food insecurity survey. It is important to understand if there are any significant correlations between the two. Filter the conflict data to only include time periods relevant to WFP-FAO's study. Additionally, conflict scores should be cross-referenced with market prices to see if a predictive model can be established. Additionally, begin the comparison of conflict data and data on malnutrition. There will likely be many challenges in obtaining accurate mortality rates of any kind. 
 
 * Compare conflict indicators to market prices to identify if battles and other violent incidents have had impacts on food prices and their stability; explore if a predictive model can be developed. 
-
-* Begin text mining the column `notes` in the ACLED dataset. 
 
 * Review findings with other humanitarian stakeholders; develop area-specific products, if necessary. It is important to review the conflict score with other stakeholders to assess appetite for its adoption. Most of the data used for its generation is easily accessible and regularly updated, though it remains to be seen to what extent this is true for the data on displacement. 
 

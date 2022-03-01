@@ -139,7 +139,7 @@ fatalities <- acled %>%
 ### network graph
 
 ```{r}
-conflict_network_map <- acled_words %>%  
+conflict_network_graph <- acled_words %>%  
   filter(word %out% c("township", "district", "myanmar", "region", "village", "town", "size", "report", "code", "coded",
                       "dvb", "aapp", "total", "irrawaddy", "rfa", "tract")) %>% 
   distinct(data_id, word) %>% 
@@ -154,10 +154,10 @@ conflict_network_map <- acled_words %>%
   geom_node_point(colour = "blue", alpha = 0.3) +
   geom_node_text(aes(label = name), size = 2) + 
   theme(legend.position = "none") + 
-  labs(title = "Network map of 2021 conflict event descriptions in Myanmar",
+  labs(title = "Network graph of words in 2021 conflict event descriptions in Myanmar",
        subtitle = "Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com")
 
-ggsave("conflict_network_map.png", conflict_network_map, width = 42.0, height = 29.7, units = "cm", dpi = 300)
+ggsave("conflict_network_graph.png", conflict_network_graph, width = 42.0, height = 29.7, units = "cm", dpi = 300)
 
 ```
 
