@@ -39,7 +39,7 @@ always_allow_html: true
 
 ## Introduction
 
-This report provides an overview of the Armed Conflict Location and Event Data Project (ACLED) dataset for Myanmar. This dataset contains information on conflict actors, conflict events, event types, event locations and fatalities dating back to 2010; the data is updated on a monthly basis. With some notable exceptions, this report is largely focused on 2021 data. 
+This report provides an overview of the Armed Conflict Location and Event Data Project (ACLED) dataset for Myanmar. This dataset contains information on conflict actors, conflict events, event types, event locations and fatalities dating back to 2010. The data is updated on a monthly basis. With some notable exceptions, this report is largely focused on 2021 data. 
 
 The aim of ACLED is "to capture the forms, agents, dates and locations of political violence and protests"; its methodology for Myanmar consists of the review of English and Myanmar sources to code political violence and demonstration events: the vast majority (85%) of their information originates from subnational, national and international media sources, with the remainder originating from ACLED's partnership with the Myanmar Peace Monitor and reports by the UN, international monitoring groups and local human rights organisations. Points of alignment and divergence from the conflict events collected by the Nexus Response Mechanism's Conflict Analysis and Research Facility remain to be explored.
 
@@ -88,6 +88,8 @@ library(broom)
 library(xtable)
 library(psych)
 library(tidytext)
+library(corrplot)
+library(RColorBrewer)
 
 theme_set(theme_light())
 
@@ -891,7 +893,7 @@ Kale in Sagaing saw the highest proportions of fatalities involving non-combatan
 
 ```{r map-townships-fatalities-noncombatant, fig.height=10}
 acled %>% 
-  filter(year == 2021 & sub_event_type != "Peaceful protest") %>% 
+  filter(year == 2021) %>% 
   filter(non_combatant == TRUE) %>% 
   group_by(admin1, admin3, admin3_pcode) %>% 
   summarise(events = n(), 
@@ -909,7 +911,6 @@ acled %>%
   scale_fill_viridis_c(option = "magma", direction = -1) +
   theme_void() + 
   labs(title = "Fatalities involving non-combatants by township 2021",
-       subtitle = "Peaceful protests have been excluded",
        caption = "Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com",
        fill = "fatalities") +
   theme(plot.caption=element_text(hjust = 0.2))
@@ -1221,9 +1222,31 @@ conflict_score <- conflict_df %>%
 
 ```
 
-The correlation plot below examines the specific relationships between the individual variables in the dataset -- the histograms down the diagonal show the distributions of townships across the various values; the correlations between variables (all between 0 and 1) are shown in the upper triangle, with the asterisks denoting how significant the correlations are; and the lower triangle shows the specific distribution of observations, with each point representing each township. Beneficiaries have been placed on a logarithmic scale so that the variation is more visible. 
 
-For instance, violence against civilians is highly correlated with strategic developments (with a coefficient of 0.79) -- this means that in the townships where strategic developments occurred (the most common strategic developments were arrests and looting/property damage), violence against civilians also likely occurred. 
+The correlation plot below compares the major conflict indicators with those the numbers of FSC partners and beneficiaries at township level. The darker the colours and the larger the circles, the greater the degree of correlation, with  +1 being a perfect positive correlation and -1 being a perfect negative correlation. To see a specific relationship, find the square where two variables intersect. For instance, the correlation between the number of battles and the number of FSC beneficiaries is the last square in the first row. 
+
+Conflict indicators tend to be highly correlated with each other. Only very weak correlations are noted between the presence of FSC partners beneficiaries and the incidence of conflict. 
+
+<br>
+
+```{r small-corrplot}
+
+conflict_score %>% 
+  select(battles, explosions_remote_violence, protests_and_riots, strategic_developments, violence_against_civilians, 
+         fatalities, partners, beneficiaries) %>% 
+  filter(!is.na(partners) & !is.na(beneficiaries)) %>% 
+  cor(method = c("pearson")) %>% 
+  corrplot(type = "upper", col = brewer.pal(n = 8, name = "RdYlBu"), tl.srt = 35, 
+           title = "Correlation plot between conflict indicators and FSC presence \n",  mar=c(0,0,2,0), diag = FALSE)
+  
+```
+
+<br>
+
+Additional detail is rendered in this next, larger correlation plot. It keeps all the same variables as the plot above, but just provide some more information -- the correlation coefficients are shown in the upper triangle (these are the specific numeric values of the blue and yellow circles above), with the asterisks denoting the level of statistical significance of these correlations; through the centre of the plot are histograms showing the distributions of each of these variables (for the conflict indicators, the bars are skewed to the left, showing that most townships tend to have low levels of conflict). This is borne out in an examination of the lower triangle where it can be observed that the points (each point is a township), tend to be clustered together with several outliers surrounding them. 
+
+For instance, the two variables most highly-correlated with each other are violence against civilians and strategic developments: they share a correlation coefficient of 0.79, meaning that in 79% of the townships in which violence against civilians occurred, strategic developments also took place (the most common strategic developments were arrests and property damage). This relationship is statistically significant, that is to say, it was not by chance that these two types of conflict events tended to occur in the same places. 
+
 
 <br>
 
@@ -1250,20 +1273,8 @@ conflict_score %>%
 
 <br>
 
-The numbers of partners and beneficiaries per township were, unsurprisingly, correlated with each other. However, the number of partners per townships was only slightly correlated with the number of battles and the number of explosions and remote violence -- this pattern likely only holds for certain states. The number of beneficiaries reached is not correlated with any conflict indicators.  
+The numbers of partners and beneficiaries per township were, unsurprisingly, correlated with each other. However, the number of partners per township was only slightly correlated with the number of battles and the number of explosions and remote violence -- this pattern likely only holds for certain states. The number of beneficiaries reached is not correlated with any conflict indicators.  
 
-The various conflict indicators -- as expected -- are highly correlated with each other, with the strongest relationship being between violence against civilians and strategic developments. For reference, the specific sub-events under strategic developments are listed below: 
-
-
-```{r strat-dev-table} 
-acled %>%  filter(year == 2021 & event_type == "Strategic developments") %>% 
-  count(sub_event_type, sort = TRUE, name = "count") %>% 
-  mutate(percentage = round(count / sum(count) * 100, digits = 2)) %>% 
-  kable(caption = "Sub-event types under strategic developments, 2021", format.args = list(big.mark = ",")) %>% 
-  kable_classic_2(full_width = FALSE, position = "left") %>% 
-  footnote(general = "Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com",
-           general_title = "")
-```
 
 <br><br>
 
@@ -1507,11 +1518,12 @@ acled %>%
          beneficiaries, admin3_pcode) %>% 
   arrange(desc(total_events)) %>% 
   datatable(filter = list(position = "top", clear = FALSE),
-            options = list(pageLength = 10, scrollX = TRUE,
-                                           initComplete = htmlwidgets::JS(
-          "function(settings, json) {",
-          paste0("$(this.api().table().container()).css({'font-size': '", "8.5pt", "'});"),
-          "}")),
+            options = list(pageLength = 10, scrollX = TRUE
+         #                                  initComplete = htmlwidgets::JS(
+         # "function(settings, json) {",
+         # paste0("$(this.api().table().container()).css({'font-size': '", "8.5pt", "'});"),
+         # "}")),
+            ),
           caption = htmltools::tags$caption(style = 'caption-side: top; 
                                     text-align: center; 
                                     color:black; font-size:140% ;',
@@ -1543,11 +1555,12 @@ actors %>%
          protests, strategic_developments) %>% 
   arrange(desc(total_events)) %>%
   datatable(filter = list(position = "top", clear = FALSE),
-            options = list(pageLength = 10, scrollX = TRUE,
-                                           initComplete = htmlwidgets::JS(
-          "function(settings, json) {",
-          paste0("$(this.api().table().container()).css({'font-size': '", "8.5pt", "'});"),
-          "}")),
+            options = list(pageLength = 10, scrollX = TRUE
+         #                                  initComplete = htmlwidgets::JS(
+         # "function(settings, json) {",
+         # paste0("$(this.api().table().container()).css({'font-size': '", "8.5pt", "'});"),
+         # "}")),
+            ),
           caption = htmltools::tags$caption(style = 'caption-side: top; 
                                     text-align: center; 
                                     color:black; font-size:140% ;',

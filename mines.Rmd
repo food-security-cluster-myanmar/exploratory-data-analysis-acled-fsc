@@ -1,0 +1,43 @@
+---
+title: "Untitled"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+acled %>% glimpse()
+```
+
+
+
+```{r}
+acled %>% 
+  filter(year == 2021) %>% 
+  filter(str_detect(notes, "IED|remote")) %>% 
+  pull(notes)
+
+acled %>% 
+  filter(year == 2021) %>% 
+  filter(event_type == "Explosions/Remote violence") %>% 
+  count(sub_event_type)
+  
+acled %>% filter(year == 2021) %>% 
+  filter(str_detect(notes, "handmade|mine") & str_detect(notes, "stepped")) %>% 
+  sample_n(10) %>% 
+  pull(notes)
+
+acled %>% 
+  filter(year == 2021) %>% 
+  filter(event_type == "Explosions/Remote violence" | str_detect(notes, "mine")) %>% 
+  sample_n(10) %>% 
+  pull(notes)
+
+```
+
+```{r}
+
+```
+
