@@ -413,7 +413,7 @@ acled_words <- acled %>%
 
 ## 1. Progression of conflict events by interaction type in 2021
 
-The GIF  below shows 2021 conflict events by **month**. The colour of each point indicates the interaction type, which classify conflict events based on what type of actors were involved. The 6 most common interaction types have been included, with all the less frequent ones being recoded as "other". The number of fatalities associated with each even tis indicated by the size of each point.
+The GIF  below shows 2021 conflict events by **month**. The colour of each point indicates the interaction type, which classify conflict events based on what type of actors were involved. The 6 most common interaction types have been included, with all the less frequent ones being recoded as "other". The number of fatalities associated ith each event indicated by the size of each point.
 
 <br>
 
@@ -679,8 +679,8 @@ acled %>%
   scale_fill_manual(values = c("#D95F02", "#7570B3", "#1B9E77", "#E7298A", "#66A61E", "#E6AB02", "#666666", "#A6761D")) +
   theme(legend.position = "top") +
   labs(x = "Month", 
-       y = "Cumulative conflict events", 
-       title = "Cumulative conflict events in 2021 by interaction type, excluding sole protester action",
+       y = "Cumulative fatalities", 
+       title = "Cumulative fatalities in 2021 by interaction type, excluding sole protester action",
        subtitle = "Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com", 
        fill = "")   
 
@@ -792,11 +792,11 @@ acled %>%
   st_as_sf() %>% 
   ggplot() +
   geom_sf(size = 0.1, alpha = 0, data = pcode3_shape) + 
-  geom_point(aes(x = longitude, y = latitude, size = fatalities, colour = has_fatalities), alpha = 0.3) +
+  geom_point(aes(x = longitude, y = latitude, size = fatalities, colour = has_fatalities), alpha = 0.6) +
   geom_sf(data = pcode1_shape, alpha = 0, colour = "black", size = 0.5) +
-  scale_colour_manual(values = c("#280b53", "red")) +
+  scale_colour_manual(values = c("blue", "red")) +
   theme_void() +
-  scale_size_continuous(range = c(0.3, 3.5)) +
+  scale_size_continuous(range = c(0.5, 4)) +
   labs(title = "Distribution of 2021 conflict events involving non-combatants",
        subtitle =  "Civilians and protesters are considered non-combatants",
        caption = "Data sources: Armed Conflict Location & Event Data Project (ACLED); acleddata.com and Food Security Cluster Myanmar",
@@ -1041,7 +1041,7 @@ actors %>%
 <br><br>
 
 
-### 5.3 Which actors are associated with the most fatalities?
+### 5.3 Which actors are associated with the most fatalities per event?
 
 As mentioned, it is difficult at this juncture to state how many of the associated fatalities were persons killed by these groups and how many were members of these groups had been the ones who were killed. Still, it is worthwhile to plot which actors are the "bloodiest", at least in regards to the outcomes of their actions, or have been involved in incidents with the most fatalities. 
 
@@ -1072,7 +1072,7 @@ actors_conf_int %>%
   # scale_colour_brewer(palette = "Dark2") + 
   labs(x = "Average number of fatalities per conflict event",
       y = "Conflict actor", 
-      title = "Which conflict actors are associated with the most fatalities?", 
+      title = "Which conflict actors are associated with the most fatalities per event?", 
       subtitle = "Only includes actors involved in more than 50 conflict events", 
       caption = "Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com",
       colour = "") + 
