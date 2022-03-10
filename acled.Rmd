@@ -1163,7 +1163,7 @@ actors %>%
 
 <br><br><br>
 
-## 5. Correlations between conflict and food security cluster footprint 
+## 6. Correlations between conflict and food security cluster footprint 
 
 
 ### 6.1 Correlation plot
@@ -1221,6 +1221,7 @@ conflict_score <- conflict_df %>%
                         beneficiaries = sum(beneficiaries[unique_beneficiaries == "Yes"])), by = "admin3_pcode")
 
 ```
+
 
 
 The correlation plot below compares the major conflict indicators with those the numbers of FSC partners and beneficiaries at township level. The darker the colours and the larger the circles, the greater the degree of correlation, with  +1 being a perfect positive correlation and -1 being a perfect negative correlation. To see a specific relationship, find the square where two variables intersect. For instance, the correlation between the number of battles and the number of FSC beneficiaries is the last square in the first row. 
