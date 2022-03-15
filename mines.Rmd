@@ -4,7 +4,18 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+
+```{r}
+get_png <- function(filename) {
+  grid::rasterGrob(png::readPNG(filename), interpolate = TRUE)
+}
+
+logo <- get_png("Myanmar_cluster_blue.png")
+
+mylogo <- image_scale(image_read("Myanmar_cluster_blue.png"), "180")
 ```
 
 ```{r}
@@ -133,11 +144,10 @@ acled %>%
   theme_void() +
   labs(colour = "civilians\ninvolved", 
        title = "Incidents of explosions and remote violence (2021)",
-       subtitle = "Size of each point indicates the number of fatalities", 
-       caption = "Data source: ACLED; acleddata.com ") +
+       subtitle = "Size of each point indicates the number of fatalities. Data source: ACLED; acleddata.com") +
   guides(size = guide_legend(override.aes = list(alpha = 1))) +
   theme(plot.caption=element_text(hjust = 0.5),
-        plot.background = element_rect(fill = "white", colour = NA))
+        plot.background = element_rect(fill = "white", colour = NA)) 
 
 ggsave(filename = "./sharing/explosions_remote_violence_map2.png", dpi = 300, height = 12, width = 7, units = "in")
 ```
@@ -178,7 +188,7 @@ acled %>%
                                   str_detect(notes, "civilian|villager|police|car|office|ward|Ward") ~ "yes",
                                   str_detect(notes, "PDF|Defense|convoy|troop|army|Army|military|Military") ~ "no",
                                   TRUE ~ "yes"), 
-         non_military = fct_rev(civ_involved)) %>%
+         civ_involved = fct_rev(civ_involved)) %>%
   select(-non_combatant) %>% 
   write_csv("./sharing/explosions_remote_violence.csv")
   
@@ -210,124 +220,60 @@ acled %>%
 
 ```
 
-
-### Agriculture
-
 ```{r}
-# indicator guide for vulmmr
-indicator_guide <- 
-  read_excel("C:/Users/seany/Documents/R/mmr_5w_initial_observations/Datasets_Vulnerability_Analysis_in_Myanmar_09Jul2018 (1).xlsx",
-           skip = 1) %>% 
-  slice(1:3) %>% 
-  janitor::clean_names() %>% 
-  transpose_df() %>% 
-  rename(indicator = rowname, 
-         age_group = `1`,
-         category = `2`, 
-         source = `3`) %>% 
-  slice(-1)
-
-# reading in vulnerability dataset
-vulmmr <- read_excel("C:/Users/seany/Documents/R/mmr_5w_initial_observations/Datasets_Vulnerability_Analysis_in_Myanmar_09Jul2018 (1).xlsx",
-           skip = 1) %>% 
-  slice(-c(1:3)) %>% 
-  clean_names() %>% 
-  select(-label) %>% 
-  mutate_at(vars(number_of_village_tracts:wb_wealth_rank), as.numeric) %>% 
-  mutate_at(vars(disasters_impacted_by_nargis_2008:acled_2015_2016_data_exists), as.logical) %>% 
-  mutate_at(vars(conflict_2015_2016_number_of_battles:corrected_conflict_index_garry), as.numeric) %>% 
-  select(-starts_with("x")) %>% 
-  select(-c(private_sector_development_2014_2015, protection_2010_2015, shelter_2010_2015, wash_2010_2015))
-```
-
-```{r}
-indicator_guide %>% count(category)
-
-indicator_guide %>% filter(category == "Agriculture") %>% count(indicator)
-
-vulmmr %>% 
-  select(state_region_name, state_region_pcode, township_pcode, 
-         contains("mali"), contains("sown_area"), all_harvested_net_margin_usd, sown_area_of_paddy_acres) %>% 
-  mutate(pc_paddy = sown_area_of_paddy_acres / all_area_sowed_mali) %>% 
-  arrange(desc(all_area_sowed_mali)) %>% 
-  ggplot(aes(x = all_area_sowed_mali)) + 
-  geom_histogram()
+acled %>% count(event_type)
 ```
 
 
-```{r}
-ag_mali <- vulmmr %>% 
-  select(state_region_name, state_region_pcode, township_pcode, 
-         contains("mali"), contains("sown_area"), all_harvested_net_margin_usd, sown_area_of_paddy_acres) %>% 
-  mutate(pc_paddy = sown_area_of_paddy_acres / all_area_sowed_mali) %>% 
-  remove_empty() %>% 
-  pivot_longer(cols = contains("sown_area"), names_to = "crop_type", values_to = "acres") %>%
-  filter(crop_type != "sown_area_of_freen_gram_and_pegion_urad_pea_acres") %>% 
-  mutate(acres = replace_na(acres, 0)) %>% 
-  mutate(pc_total = acres / all_area_sowed_mali) %>% 
-  mutate(crop_type = str_remove_all(crop_type, "sown_area_of_"),
-         crop_type = str_remove_all(crop_type, "_acres"),
-    crop_type = ifelse(crop_type %in% c("paddy", "sesame", "green_gram", 
-                                        "urad_pea", "ground_nut", "pigeon_pea"),
-                       crop_type, "other"), 
-    crop_type = fct_relevel(crop_type, "other", after = Inf))
+```{r barplot-year-events, fig.width = 7}
+acled %>% 
+  filter(!is.na(event_type) & year < 2022) %>%
+  filter(event_type == "Explosions/Remote violence") %>% 
+  mutate(year = round(year)) %>% 
+  group_by(year, sub_event_type) %>%
+  summarise(count = n(), .groups = "drop") %>%
+  ggplot(aes(year, count, fill = sub_event_type, group = sub_event_type)) + 
+  # geom_line(size = 1) + 
+  geom_col() +
+  geom_text(aes(label = comma(stat(y), accuracy = 1), group = year), stat = "summary", fun = sum, vjust = -0.7, size = 3) +
+  scale_x_continuous(breaks = seq(2010, 2021, by = 1)) + 
+  scale_y_continuous(labels = comma, limits = c(0, 3000)) +
+  theme(axis.text.x = element_text(size = 9), 
+        axis.text.y = element_text(size = 9), 
+        legend.text = element_text(size = 5),
+        legend.title = element_text(size = 6),
+        plot.caption = element_text(hjust = 0.5)) +
+  labs(x = "", 
+       y = "Number of events",
+       title = "Explosions and remote violence events, by sub-category, 2010-2021", 
+       caption = "Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com")
 
-
-ag_ord <- ag_mali %>% 
-  group_by(state_region_name) %>% 
-  summarise(acres = sum(acres)) %>% 
-  arrange(desc(acres)) %>%
-  mutate(state_region_name = fct_reorder(state_region_name, acres)) %>% 
-  pull(state_region_name) %>% 
-  as_vector()
-
-ag_mali %>% 
-  group_by(state_region_name, crop_type) %>% 
-  summarise(acres = sum(acres), .group = "drop") %>% 
-  mutate(state_region_name = factor(state_region_name, 
-                                         levels = c("Ayeyarwady", "Sagaing", "Bago", "Magway", "Mandalay", "Shan", "Yangon", "Rakhine",
-                                                    "Kayin", "Mon", "Kachin", "Tanintharyi", "Kayah", "Chin", "Nay Pyi Taw")),
-         state_region_name = fct_rev(state_region_name)) %>% 
-  arrange(desc(acres)) %>% 
-  ggplot(aes(x = state_region_name, y = acres, fill = crop_type)) + 
-  geom_col() + 
-  #scale_fill_viridis_d(option = "turbo") + 
-  theme(axis.text.x = element_text(angle = 30, vjust = 0.7)) +
-  labs(x = "",
-       fill = "",
-       title = "Number of acres sown by crop type")
-
-
-  ggplot(aes(x = pc_total)) +
-  geom_histogram()
-  
 ```
 
 
-```{r fig.height = 10}
+```{r barplot-year-fatalties, fig.width = 7}
+acled %>% 
+  filter(!is.na(event_type) & year < 2022) %>%
+  filter(event_type == "Explosions/Remote violence") %>% 
+  mutate(year = round(year)) %>% 
+  group_by(year, sub_event_type) %>%
+  summarise(fatalities = sum(fatalities), .groups = "drop") %>%
+  ggplot(aes(year, fatalities, fill = sub_event_type, group = sub_event_type)) + 
+  # geom_line(size = 1) + 
+  geom_col() +
+  geom_text(aes(label = comma(stat(y), accuracy = 1), group = year), stat = "summary", fun = sum, vjust = -0.7, size = 3) +
+  scale_x_continuous(breaks = seq(2010, 2021, by = 1)) + 
+  scale_y_continuous(labels = comma, limits = c(0, 3000)) +
+  theme(axis.text.x = element_text(size = 9), 
+        axis.text.y = element_text(size = 9), 
+        legend.text = element_text(size = 5),
+        legend.title = element_text(size = 6),
+        plot.caption = element_text(hjust = 0.5)) +
+  labs(x = "", 
+       y = "Number of conflict-related fatalities",
+       title = "Fatalities from explosions and remote violence, 2010-2021", 
+       caption = "Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com")
 
-acled %>% filter(year == 2021) %>%
-  filter(event_type == "Explosions/Remote violence") %>%
-  right_join(vulmmr %>%
-               select(state_region_name, state_region_pcode, township_pcode,
-                      contains("mali"), contains("sown_area"), 
-                      all_harvested_net_margin_usd, sown_area_of_paddy_acres) %>%
-               mutate(pc_paddy = sown_area_of_paddy_acres / all_area_sowed_mali), by = c("admin3_pcode" = "township_pcode")) %>% 
-  right_join(pcode3_shape, by = "admin3_pcode") %>% 
-  st_as_sf() %>% 
-  ggplot() +
-  geom_sf(aes(fill = all_area_sowed_mali), size = 0.1) + 
-  geom_point(aes(x = longitude, y = latitude, size = fatalities), alpha = 0.5, colour = "red") +
-  scale_colour_manual(values = c("red", "black")) +
-  scale_size_continuous(range = c(0.3, 4)) +
-  geom_sf(data = pcode1_shape, alpha = 0, colour = "black", size = 0.5) +
-  scale_fill_viridis_c(direction = -1, label = scales::comma, breaks = c(0, 50000, 200000, 400000, 600000, 750000)) + 
-  guides(size = guide_legend(override.aes = list(alpha = 1))) +
-  theme_void() + 
-  labs(fill = "sown area (acres)", 
-       title = "Incidents of explosions and remote violence (2021) and agricultural area sown (2015)",
-       caption = "Data source: ACLED; acleddata.com and Ministry of Agriculture and Irrigation") +
-  theme(plot.caption=element_text(hjust = 0.2))
 
 ```
 

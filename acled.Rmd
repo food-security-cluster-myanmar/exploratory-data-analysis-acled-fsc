@@ -90,6 +90,8 @@ library(psych)
 library(tidytext)
 library(corrplot)
 library(RColorBrewer)
+library(treemap)
+library(treemapify)
 
 theme_set(theme_light())
 
@@ -164,7 +166,9 @@ townships <- read_excel("FSC 5W 2021 - GEOADMINS_final 19.xlsx",
          admin3_pcode = admin3pcode,
          state_name   = state_5,
          township_name  = county) %>% 
-  remove_empty()
+  remove_empty() %>% 
+  mutate(admin3_pcode = ifelse(state_name == "Magway" & township_name == "Minhla", "MMR009013", admin3_pcode),
+         admin3_pcode = ifelse(state_name == "Yangon" & township_name == "Htantabin", "MMR013006", admin3_pcode))
 
 # reading in acled
 acled <- read_excel("2010-01-01-2022-01-25-Myanmar.xlsx", 
@@ -391,7 +395,9 @@ townships <- read_excel("FSC 5W 2021 - GEOADMINS_final 19.xlsx",
          admin3_pcode = admin3pcode,
          state_name   = state_5,
          township_name  = county) %>% 
-  remove_empty()
+  remove_empty() %>%
+  mutate(admin3_pcode = ifelse(state_name == "Magway" & township_name == "Minhla", "MMR009013", admin3_pcode),
+         admin3_pcode = ifelse(state_name == "Yangon" & township_name == "Htantabin", "MMR013006", admin3_pcode))
 
 # reading in 5Ws
 fsc <- read_csv("fsc5w_2021.csv")
@@ -405,6 +411,18 @@ acled_words <- acled %>%
   filter(str_detect(word, "[a-z]")) %>% 
   left_join(acled %>% 
               select(data_id, admin3_pcode, event_type, fatalities, inter_type), by = "data_id")
+
+# reading in vulnerability dataset
+vulmmr <- read_excel("C:/Users/seany/Documents/R/mmr_5w_initial_observations/Datasets_Vulnerability_Analysis_in_Myanmar_09Jul2018 (1).xlsx",
+           skip = 1) %>% 
+  slice(-c(1:3)) %>% 
+  clean_names() %>% 
+  select(-label) %>% 
+  mutate_at(vars(number_of_village_tracts:wb_wealth_rank), as.numeric) %>% 
+  mutate_at(vars(disasters_impacted_by_nargis_2008:acled_2015_2016_data_exists), as.logical) %>% 
+  mutate_at(vars(conflict_2015_2016_number_of_battles:corrected_conflict_index_garry), as.numeric) %>% 
+  select(-starts_with("x")) %>% 
+  select(-c(private_sector_development_2014_2015, protection_2010_2015, shelter_2010_2015, wash_2010_2015))
 
 # show_col(viridis_pal()(10))
 
@@ -1163,6 +1181,9 @@ actors %>%
 
 <br><br><br>
 
+
+
+
 ## 6. Correlations between conflict and food security cluster footprint 
 
 
@@ -1369,9 +1390,184 @@ acled %>%
 
 <br><br><br>
 
-## 7. Text mining the ACLED dataset
+## 7. Agriculture and the conflict 
 
-### 7.1 Network graph of correlated words
+### 7.1 Summary of agricultural statistics
+
+```{r df-ag-mali}
+# ag_mali areas sowed dataset
+
+ag_mali <- vulmmr %>% 
+  select(state_region_name, state_region_pcode, township_pcode, 
+         contains("mali"), contains("sown_area"), all_harvested_net_margin_usd, sown_area_of_paddy_acres) %>% 
+  mutate(pc_paddy = sown_area_of_paddy_acres / all_area_sowed_mali) %>% 
+  remove_empty() %>% 
+  pivot_longer(cols = contains("sown_area"), names_to = "crop_type", values_to = "acres") %>%
+  filter(crop_type != "sown_area_of_freen_gram_and_pegion_urad_pea_acres") %>% 
+  mutate(acres = replace_na(acres, 0)) %>% 
+  mutate(pc_total = acres / all_area_sowed_mali) %>% 
+  mutate(crop_type = str_remove_all(crop_type, "sown_area_of_"),
+         crop_type = str_remove_all(crop_type, "_acres"),
+    crop_type = ifelse(crop_type %in% c("paddy", "sesame", "green_gram", 
+                                        "urad_pea", "ground_nut", "pigeon_pea"),
+                       crop_type, "other"), 
+    crop_type = fct_relevel(crop_type, "other", after = Inf))
+```
+
+The last year in which detailed township-level agricultural statistics were made available was 2016, these were included in the MIMU-HARP report *Vulnerability in Myanmar*. It is important to note that the main reason these statistics were released was due to the development of the 2015/2016 National Recovery Framework and Plan for Floods and Landslides, meaning that some of the values, especially related to area harvested, are anomalous. However, agricultural areas sown are unlikely to have shifted greatly in the past 6 years. 
+
+The plot below shows the state/regional breakdown of the total sown area in acres in 2015 by major crop type. Ayeyarwady, Sagaing, Bago and Magway contain the main agricultural production areas of Myanmar. Though the Magway and Sagaing show a much higher diversity of crop types compared to other states/regions which are dominated by paddy. 
+
+
+```{r barplot-area-sown-crop-type-sr}
+ag_mali %>% 
+  group_by(state_region_name, crop_type) %>% 
+  summarise(acres = sum(acres), .group = "drop") %>% 
+  mutate(state_region_name = factor(state_region_name, 
+                                         levels = c("Ayeyarwady", "Sagaing", "Bago", "Magway", "Mandalay", "Shan", "Yangon", "Rakhine",
+                                                    "Kayin", "Mon", "Kachin", "Tanintharyi", "Kayah", "Chin", "Nay Pyi Taw")),
+         state_region_name = fct_rev(state_region_name)) %>% 
+  filter(state_region_name != "Nay Pyi Taw") %>% 
+  arrange(desc(acres)) %>% 
+  ggplot(aes(x = state_region_name, y = acres, fill = crop_type)) + 
+  geom_col() + 
+  scale_y_continuous(label = comma, breaks = seq(0, 7000000, by = 1000000)) +
+  #scale_fill_viridis_d(option = "turbo") + 
+  theme(axis.text.x = element_text(angle = 30, vjust = 0.7)) +
+  labs(x = "",
+       fill = "",
+       title = "Number of acres sown by crop type", 
+       caption = "Data source: Ministry of Agriculture, Livestock and Irrigation (2015)")
+
+```
+
+<br>
+
+Although the 2015/2016 agricultural data were released to document the losses from floods and landslides, much can still be gleaned from aggregating the data. With reference to the table below, it is very important to note that the net margins per acre were lowest for paddy, meaning that areas with greater levels of crop diversification will be suffer greater economic impacts from conflict events. 
+
+```{r table-net-margins}
+vulmmr %>% 
+  select(contains("net_margin")) %>% 
+  pivot_longer(everything(), names_to = "crop_type", values_to = "net_margin") %>% 
+  group_by(crop_type) %>% 
+  summarise(across(where(is.numeric), ~ sum(.x, na.rm = TRUE))) %>% 
+  filter(crop_type %out% c("all_harvested_net_margin_per_capita_usd", "all_harvested_net_margin_usd") &
+           str_detect(crop_type, "share_of", negate = TRUE)) %>%
+  # recoding paddy -- paddy is just coded as "net_margin_usd"
+  mutate(crop_type = recode(crop_type, 
+                             "net_margin_usd" = "paddy")) %>% 
+  mutate(crop_type = str_remove_all(crop_type, "net_margin_"), 
+         crop_type = str_remove_all(crop_type, "_usd")) %>% 
+  left_join(vulmmr %>%
+              select(contains("harvested_area_of")) %>% 
+              pivot_longer(everything(), names_to = "crop_type", values_to = "harvested_area") %>%
+              group_by(crop_type) %>% 
+              summarise(across(where(is.numeric), ~ sum(.x, na.rm = TRUE))) %>%
+              mutate(crop_type = str_remove_all(crop_type, "harvested_area_of_"), 
+                     crop_type = str_remove_all(crop_type, "_acres")) %>% 
+              mutate(crop_type = recode(crop_type, 
+                                        "ground_nut" = "groundnut",
+                                        "sun_flower" = "sun_flower_seeds")), 
+              by = "crop_type") %>% 
+  mutate(margin_per_acre = round(net_margin / harvested_area)) %>% 
+  arrange(desc(margin_per_acre)) %>% 
+  filter(harvested_area > 600000) %>% 
+  rename(harvested_area_acres = harvested_area, 
+         net_margin_usd = net_margin, 
+         margin_per_acre_usd = margin_per_acre) %>% 
+  kable(caption = "Net margin per acre of major crops (2015)", format.args = list(big.mark = ",")) %>% 
+  kable_classic_2("striped", full_width = FALSE) %>% 
+  footnote("Data source: Ministry of Agriculture, Livestock and Irrigation (2015/2016)", general_title = "")
+
+```
+
+<br>
+
+### 7.2 Conflict index and agriculture
+
+To visualise the intersection of acres of land sown and the newly-recalculated conflict index, the treemap below shows townships according to the total area sown in them (size) and the severity of conflict (colour):  
+
+```{r treemap-conflict-score-area-sown}
+vulmmr %>%  
+  select(admin3_pcode = township_pcode, area_sown = all_area_sowed_mali) %>% 
+  left_join(conflict_score %>% 
+            select(score_i, admin3_pcode, battles, explosions_remote_violence, 
+                   violence_against_civilians, fatalities), by = "admin3_pcode") %>% 
+  left_join(townships %>% select(state_name, township_name, admin3_pcode), by = "admin3_pcode") %>% 
+  mutate(score_i = replace_na(score_i, 0)) %>% 
+  ggplot(aes(area = area_sown, fill = score_i, subgroup = state_name, 
+             text = paste0(township_name, "\n",
+                           state_name, "\n",
+                           "area_sown: ", area_sown, "\n",
+                           "fatalitie: ", fatalities, "\n",
+                           "battles: ", battles, "\n",
+                           "explosions& remote violence: ", explosions_remote_violence, "\n",
+                           "violence against civilians: ", violence_against_civilians))) +
+  geom_treemap() +
+  geom_treemap_subgroup_text(place = "centre", grow = TRUE, alpha = 0.5, colour = "black", fontface = "italic") +
+  geom_treemap_subgroup_border(colour = "white", size = 5) + 
+  scale_fill_viridis_c(option = "magma", direction = -1) +
+  labs(fill = "conflict\nscore", 
+       title = "Treemap of townships agricultural area sown", 
+       caption = "Data source: ACLED, acleddata.com (2022); Ministry of Agriculture and Irrigation (2015)") +
+  theme(plot.caption=element_text(hjust = 0.5))
+
+```
+
+<br>
+
+Agricultural areas in Ayeyarwady, Bago, Yangon, Rakhine and Shan (East) have been the least affected by conflict events and fatalities, indicating that access to fields has not been disrupted and existing programme designs (focused on improving livelihoods) may be sufficient in these areas. 
+
+However, to ensure food security in Sagaing, Magway, Mandalay, Mon, Kayin, Kachin, Kayah, Tanintharyi and Shan North and Shan South, livelihood programming should be predicated on safe access to agricultural land and markets. Food and cash distributions might also be necessary for extended periods of time in several of the more heavily-affected areas. The necessity for mine-risk education for farmers should also e investigated in these areas, especially where farmers continue to attend fields which might be contaminated by UXOs. 
+
+<br><br>
+
+### 7.3 Reference map -- agriculture and conflict 
+
+link to interactive reference map 
+
+```{r fig.height = 10}
+
+vulmmr %>%
+  select(state_region_name, state_region_pcode, admin3_pcode = township_pcode, 
+         contains("mali"), contains("sown_area"),
+         all_harvested_net_margin_usd, sown_area_of_paddy_acres) %>%
+  mutate(pc_paddy = sown_area_of_paddy_acres / all_area_sowed_mali) %>% 
+  right_join(pcode3_shape, by = "admin3_pcode") %>% 
+  st_as_sf() %>%
+  ggplot() +
+  geom_sf(aes(fill = all_area_sowed_mali), size = 0.1) + 
+  geom_point(data = acled %>% filter(year == 2021 & sub_event_type != "Peaceful protest") %>% 
+               select(latitude, longitude, fatalities), 
+             aes(x = longitude, y = latitude, size = fatalities), alpha = 0.5, colour = "red") +
+  scale_colour_manual(values = c("red", "black")) +
+  scale_size_continuous(range = c(0.3, 4)) +
+  geom_sf(data = pcode1_shape, alpha = 0, colour = "black", size = 0.5) +
+  scale_fill_viridis_c(direction = -1, label = scales::comma, breaks = c(0, 50000, 200000, 400000, 600000, 750000)) + 
+  guides(size = guide_legend(override.aes = list(alpha = 1))) +
+  theme_void() + 
+  labs(fill = "sown area (acres)", 
+       title = "Conflict events (2021) and agricultural area sown (2015)",
+       caption = "Data source: ACLED; acleddata.com and Ministry of Agriculture and Irrigation") +
+  theme(plot.caption=element_text(hjust = 0.2),
+        plot.background = element_rect(fill = "white", colour = NA),
+        plot.title = element_text(size = 12)) 
+
+
+```
+
+
+
+ 
+
+
+
+
+<br><br><br>
+
+## 8. Text mining the ACLED dataset
+
+### 8.1 Network graph of correlated words
 
 This chapter focuses on data mining the text within the column `notes` of the ACLED dataset, which contains the descriptions of each conflict events. For this first section, it is of interest to the FSC to visualise all the relationships amongst word simultaneously and have arranged these words into a network graph. Below, each word from the conflict description is a node and the opacity of the line denotes the strength of its correlation to other words (that is, the probability that they have been used to describe the same conflict event): 
 
@@ -1392,7 +1588,7 @@ This network graph is not intended to be an exhaustive record of the conflict ev
 
 <br><br>
 
-### 7.2 Pairwise correlations 
+### 8.2 Pairwise correlations 
 
 To complement the network graph above, the table below shows correlations between individual words in the ACLED dataset conflict descriptions -- this is especially useful if there is a word of interest that the reader would like to explore in further detail. To reduce the size of table loaded, only words which have appeared more than 50 times in 2021 and only the top 20 matches per word have been included. A correlation of 1 means that the word always appears with its match in the dataset; a correlation of 0.5 means that the word appears in the same event as its match 50% of the time. 
 
@@ -1432,7 +1628,7 @@ acled_words %>%
 
 <br><br>
 
-### 7.3 Sources used by the ACLED dataset
+### 8.3 Sources used by the ACLED dataset
 
 
 ```{r sources-df}
@@ -1474,7 +1670,7 @@ acled_source %>%
 
 <br><br><br>
 
-## 8. Next steps
+## 9. Next steps
 
 * Re-calculate the conflict score once IDP data is obtained and compare these results to previous results recorded by MIMU-HARP in their vulnerability analysis. To note, displacement is likely to be highly correlated with the other conflict indicators (this was the case with the MIMU-HARP conflict index). Nevertheless, it was a key component of the MIMU-HARP model and its inclusion will aid in improving comparability. 
 
@@ -1491,10 +1687,10 @@ acled_source %>%
 <br><br><br>
 
 
-## 9. Reference maps and tables
+## 10. Reference maps and tables
 
 
-### 9.1 Reference table of 2021 conflict events aggregated at township level 
+### 10.1 Reference table of 2021 conflict events aggregated at township level 
 
 ```{r DT-by-township}
 acled %>% 
@@ -1535,7 +1731,7 @@ acled %>%
 
 <br><br>
 
-### 9.2 Reference table by conflict actors in 2021
+### 10.2 Reference table by conflict actors in 2021
 
 ```{r DT-conflict-actors}
 actors %>% 
@@ -1573,7 +1769,7 @@ actors %>%
 
 <br><br>
 
-### 9.3 Reference maps
+### 10.3 Reference maps
 
 ```{r patchwork-maps, fig.height=16} 
 acled %>%  

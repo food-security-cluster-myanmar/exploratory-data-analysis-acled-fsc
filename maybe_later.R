@@ -226,3 +226,87 @@ acled %>% filter(str_detect(admin1, "Shan") | admin1 %in% c("Kayah", "Kayin", "M
        subtitle = "Peaceful protests have been excluded",
        caption = "Data source: ACLED; acleddata.com") +
   theme(plot.caption=element_text(hjust = 0.2))
+
+conflict_score %>% 
+  ggplot(aes(x = score_i, y = score_env)) + 
+  geom_point() +
+  geom_smooth(method = "lm")
+
+conflict_score %>% 
+  right_join(pcode3_shape, by = "admin3_pcode") %>% 
+  st_as_sf() %>% 
+  ggplot() +
+  geom_sf(aes(fill = score_i), size = 0.1) +
+  geom_sf(data = pcode1_shape, size = 0.5, colour = "black", alpha = 0) + 
+  scale_fill_viridis_c(option = "plasma", direction = -1) + 
+  theme_void() +
+  labs(title = "Score_i") +
+  theme(plot.caption=element_text(hjust = 0.2)) +
+  
+  conflict_score %>% 
+  right_join(pcode3_shape, by = "admin3_pcode") %>% 
+  st_as_sf() %>% 
+  ggplot() +
+  geom_sf(aes(fill = score_env), size = 0.1) +
+  geom_sf(data = pcode1_shape, size = 0.5, colour = "black", alpha = 0) + 
+  scale_fill_viridis_c(option = "plasma", direction = -1) + 
+  theme_void() +
+  labs(title = "Score_env") +
+  theme(plot.caption=element_text(hjust = 0.2))
+
+
+fsc %>%
+  group_by(admin3_pcode) %>%
+  summarise(partners = n_distinct(implementing_partners), by = "admin3_pcode") %>%
+  right_join(pcode3_shape, by = "admin3_pcode") %>% 
+  st_as_sf() %>% 
+  ggplot() +
+  geom_sf(aes(fill = partners), size = 0.1) +
+  geom_sf(data = pcode1_shape, size = 0.5, colour = "black", alpha = 0) + 
+  scale_fill_viridis_c(option = "mako", direction = -1, breaks = c(1, 3, 6, 9, 12)) + 
+  theme_void() +
+  labs(title = "Distribution of food security partners in 2021",
+       caption = "Data source: Food Security Cluster Myanmar",
+       fill = "number of\npartners") +
+  theme(plot.caption=element_text(hjust = 0.2)) 
+
+# table-sr-events-fatalities-sown-area
+# replaced by treemap
+acled %>% filter(year == 2021) %>%
+  filter(sub_event_type != "Peaceful protest") %>% 
+  # filter(event_type == "Explosions/Remote violence") %>%
+  group_by(admin3_pcode) %>% 
+  summarise(events = n(),
+            fatalities = sum(fatalities, na.rm = TRUE)) %>% 
+  full_join(vulmmr %>%
+              select(state_region_pcode, admin3_pcode = township_pcode,
+                     contains("mali"), contains("sown_area"), 
+                     all_harvested_net_margin_usd, sown_area_of_paddy_acres) %>%
+              mutate(pc_paddy = sown_area_of_paddy_acres / all_area_sowed_mali), by = "admin3_pcode") %>%
+  left_join(townships %>% select(state_name, admin3_pcode), by = "admin3_pcode") %>%
+  filter(!is.na(state_name)) %>% 
+  group_by(state_name) %>% 
+  summarise(area_sown = sum(all_area_sowed_mali, na.rm = TRUE),
+            events = n(), 
+            fatalities = sum(fatalities, na.rm = TRUE), .groups = "drop") %>% 
+  adorn_percentages("col") %>%   
+  mutate(state_name = factor(state_name,
+                             levels = c("Sagaing", "Magway", "Chin", "Mandalay", "Kachin", "Kayin", "Kayah", "Shan (North)", "Yangon",
+                                        "Mon", "Shan (South)", "Bago (East)", "Tanintharyi", "Ayeyarwady", "Bago (West)", "Nay Pyi Taw",
+                                        "Rakhine", "Shan (East)")),
+         state_name = fct_rev(state_name)) %>% 
+  pivot_longer(cols = c(area_sown, events, fatalities), names_to = "type", values_to = "value") %>% 
+  filter(state_name != "Nay Pyi Taw") %>% 
+  ggplot(aes(x = state_name, y = value, fill = type)) +
+  geom_col(position = "dodge") +  
+  scale_fill_manual(values = c("#39b600", "#9590ff", "#f8766d")) +
+  theme(axis.text.x = element_text(angle = 40, vjust = 0.7, hjust = 0.7)) +
+  scale_y_continuous(label = percent_format(accuracy = 1)) + 
+  labs(x = "",
+       y = "Percentage of total",
+       fill = "",
+       title = "Conflict events, conflict fatalities and area sown",
+       subtitle = "Values show a state's percentage of the total",
+       caption = "Data source: ACLED, acleddata.com (2022); Ministry of Agriculture and Irrigation (2015)")
+
+

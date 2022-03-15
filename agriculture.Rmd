@@ -7,6 +7,15 @@ output: html_document
 knitr::opts_chunk$set(echo = FALSE)
 ```
 
+```{r}
+get_png <- function(filename) {
+  grid::rasterGrob(png::readPNG(filename), interpolate = TRUE)
+}
+
+logo <- get_png("Myanmar_cluster_blue.png")
+```
+
+
 ### Agriculture
 
 ```{r}
@@ -48,10 +57,76 @@ vulmmr %>%
   arrange(desc(all_area_sowed_mali)) %>% 
   ggplot(aes(x = all_area_sowed_mali)) + 
   geom_histogram()
+
+indicator_guide %>% filter(str_detect(indicator, "paddy"))
+```
+
+```{r table-net-margins}
+vulmmr %>% 
+  select(contains("net_margin")) %>% 
+  pivot_longer(everything(), names_to = "crop_type", values_to = "net_margin") %>% 
+  group_by(crop_type) %>% 
+  summarise(across(where(is.numeric), ~ sum(.x, na.rm = TRUE))) %>% 
+  filter(crop_type %out% c("all_harvested_net_margin_per_capita_usd", "all_harvested_net_margin_usd") &
+           str_detect(crop_type, "share_of", negate = TRUE)) %>%
+  # recoding paddy -- paddy is just coded as "net_margin_usd"
+  mutate(crop_type = recode(crop_type, 
+                             "net_margin_usd" = "paddy")) %>% 
+  mutate(crop_type = str_remove_all(crop_type, "net_margin_"), 
+         crop_type = str_remove_all(crop_type, "_usd")) %>% 
+  left_join(vulmmr %>%
+              select(contains("harvested_area_of")) %>% 
+              pivot_longer(everything(), names_to = "crop_type", values_to = "harvested_area") %>%
+              group_by(crop_type) %>% 
+              summarise(across(where(is.numeric), ~ sum(.x, na.rm = TRUE))) %>%
+              mutate(crop_type = str_remove_all(crop_type, "harvested_area_of_"), 
+                     crop_type = str_remove_all(crop_type, "_acres")) %>% 
+              mutate(crop_type = recode(crop_type, 
+                                        "ground_nut" = "groundnut",
+                                        "sun_flower" = "sun_flower_seeds")), 
+              by = "crop_type") %>% 
+  mutate(margin_per_acre = round(net_margin / harvested_area)) %>% 
+  arrange(desc(margin_per_acre)) %>% 
+  filter(harvested_area > 600000) %>% 
+  rename(harvested_area_acres = harvested_area, 
+         net_margin_usd = net_margin, 
+         margin_per_acre_usd = margin_per_acre) %>% 
+  kable(caption = "Net margin per acre of major crops (2015)", format.args = list(big.mark = ",")) %>% 
+  kable_classic_2("striped", full_width = FALSE) %>% 
+  footnote("Data source: Ministry of Agriculture, Livestock and Irrigation (2015/2016)", general_title = "")
+
+
+
+```
+
+```{r}
+
+#  mutate(
+#    across(everything(), ~replace_na(.x, 0))
+#  ) %>%
+#  group_by()
+
+
+vulmmr %>% 
+  ggplot(aes(x = net_margin_usd)) + 
+  geom_histogram() +
+  scale_x_continuous(label = comma, trans = "log")
 ```
 
 
 ```{r}
+acled %>% 
+  filter(event_type == "Strategic developments") %>% 
+  count(sub_event_type)
+```
+
+
+
+### areas_sowed dataset
+
+```{r}
+# ag_mali areas sowed dataset
+
 ag_mali <- vulmmr %>% 
   select(state_region_name, state_region_pcode, township_pcode, 
          contains("mali"), contains("sown_area"), all_harvested_net_margin_usd, sown_area_of_paddy_acres) %>% 
@@ -77,6 +152,10 @@ ag_ord <- ag_mali %>%
   pull(state_region_name) %>% 
   as_vector()
 
+```
+
+
+```{r}
 ag_mali %>% 
   group_by(state_region_name, crop_type) %>% 
   summarise(acres = sum(acres), .group = "drop") %>% 
@@ -84,36 +163,36 @@ ag_mali %>%
                                          levels = c("Ayeyarwady", "Sagaing", "Bago", "Magway", "Mandalay", "Shan", "Yangon", "Rakhine",
                                                     "Kayin", "Mon", "Kachin", "Tanintharyi", "Kayah", "Chin", "Nay Pyi Taw")),
          state_region_name = fct_rev(state_region_name)) %>% 
+  filter(state_region_name != "Nay Pyi Taw") %>% 
   arrange(desc(acres)) %>% 
   ggplot(aes(x = state_region_name, y = acres, fill = crop_type)) + 
   geom_col() + 
+  scale_y_continuous(label = comma, breaks = seq(0, 7000000, by = 1000000)) +
   #scale_fill_viridis_d(option = "turbo") + 
   theme(axis.text.x = element_text(angle = 30, vjust = 0.7)) +
   labs(x = "",
        fill = "",
-       title = "Number of acres sown by crop type")
+       title = "Number of acres sown by crop type", 
+       caption = "Data source: Ministry of Agriculture, Livestock and Irrigation (2015)")
 
+ggsave(filename = "./agriculture_barplot.png", dpi = 300, width = 11, units = "in")
 
-  ggplot(aes(x = pc_total)) +
-  geom_histogram()
-  
 ```
 
 
 ```{r fig.height = 10}
 
-acled %>% filter(year == 2021) %>%
-  filter(event_type == "Explosions/Remote violence") %>%
-  right_join(vulmmr %>%
-               select(state_region_name, state_region_pcode, township_pcode,
-                      contains("mali"), contains("sown_area"), 
-                      all_harvested_net_margin_usd, sown_area_of_paddy_acres) %>%
-               mutate(pc_paddy = sown_area_of_paddy_acres / all_area_sowed_mali), by = c("admin3_pcode" = "township_pcode")) %>% 
+vulmmr %>%
+  select(state_region_name, state_region_pcode, admin3_pcode = township_pcode, 
+         contains("mali"), contains("sown_area"),
+         all_harvested_net_margin_usd, sown_area_of_paddy_acres) %>%
+  mutate(pc_paddy = sown_area_of_paddy_acres / all_area_sowed_mali) %>% 
   right_join(pcode3_shape, by = "admin3_pcode") %>% 
-  st_as_sf() %>% 
+  st_as_sf() %>%
   ggplot() +
   geom_sf(aes(fill = all_area_sowed_mali), size = 0.1) + 
-  geom_point(aes(x = longitude, y = latitude, size = fatalities), alpha = 0.5, colour = "red") +
+  geom_point(data = acled %>% filter(event_type == "Explosions/Remote violence") %>% select(latitude, longitude, fatalities), 
+             aes(x = longitude, y = latitude, size = fatalities), alpha = 0.5, colour = "red") +
   scale_colour_manual(values = c("red", "black")) +
   scale_size_continuous(range = c(0.3, 4)) +
   geom_sf(data = pcode1_shape, alpha = 0, colour = "black", size = 0.5) +
@@ -123,6 +202,201 @@ acled %>% filter(year == 2021) %>%
   labs(fill = "sown area (acres)", 
        title = "Incidents of explosions and remote violence (2021) and agricultural area sown (2015)",
        caption = "Data source: ACLED; acleddata.com and Ministry of Agriculture and Irrigation") +
-  theme(plot.caption=element_text(hjust = 0.2))
+  theme(plot.caption=element_text(hjust = 0.2),
+        plot.background = element_rect(fill = "white", colour = NA),
+        plot.title = element_text(size = 12)) 
+
+ggsave(filename = "./agriculture_explosions_remote_violence_map.png", dpi = 300, height = 12, width = 7, units = "in")
 
 ```
+
+```{r}
+acled %>% filter(year == 2021) %>%
+  filter(event_type == "Explosions/Remote violence") %>%
+  group_by(admin3_pcode) %>% 
+  summarise(events = n(),
+            fatalities = sum(fatalities, na.rm = TRUE)) %>% 
+  
+  full_join(vulmmr %>%
+              select(state_region_name, state_region_pcode, admin3_pcode = township_pcode,
+                      contains("mali"), contains("sown_area"), 
+                      all_harvested_net_margin_usd, sown_area_of_paddy_acres) %>%
+              mutate(pc_paddy = sown_area_of_paddy_acres / all_area_sowed_mali), by = "admin3_pcode") %>%
+  rename(area_sown = all_area_sowed_mali) %>% 
+  left_join(townships %>% select(state_name, admin3_pcode), by = "admin3_pcode") %>%
+  mutate(pc_sown = area_sown / sum(area_sown, na.rm = TRUE),
+         pc_events = events / sum(events, na.rm = TRUE), 
+         pc_fatalities = fatalities / sum(fatalities, na.rm = TRUE)) %>%
+  arrange(desc(fatalities)) %>% 
+  mutate(state_name = ifelse(state_name %in% c("Sagaing", "Magway", "Ayeyarwady", "Mandalay", "Bago (East)", 
+                                               "Yangon", "Bago (West)", "Kachin", "Shan (North)"), state_name, "Other")) %>% 
+  ggplot(aes(x = pc_sown, y = pc_fatalities, colour = state_name)) +
+  geom_point()  
+  # scale_x_continuous(trans = "log", labels = percent) +
+  #  scale_y_continuous(trans = "log", labels = percent)
+  
+glimpse(index_shares)
+
+index_shares$data %>% 
+  select(score_i, admin3_pcode) %>% 
+  full_join(vulmmr %>%
+              select(state_region_name, state_region_pcode, admin3_pcode = township_pcode,
+                      contains("mali"), contains("sown_area"), 
+                      all_harvested_net_margin_usd, sown_area_of_paddy_acres) %>%
+              mutate(pc_paddy = sown_area_of_paddy_acres / all_area_sowed_mali), by = "admin3_pcode") %>%
+  rename(area_sown = all_area_sowed_mali) %>% 
+  mutate(pc_sown = area_sown / sum(area_sown, na.rm = TRUE)) %>% 
+  left_join(townships %>% select(state_name, admin3_pcode), by = "admin3_pcode") %>%
+  mutate(state_name = ifelse(state_name %in% c("Sagaing", "Magway", "Ayeyarwady", "Mandalay", "Bago (East)", 
+                                               "Yangon", "Bago (West)", "Kachin", "Shan (North)"), state_name, "Other")) %>% 
+  ggplot(aes(x = pc_sown, y = score_i, colour = state_name)) +
+  geom_point() + 
+  scale_x_continuous(labels = percent_format(accuracy = 0.5))
+  
+```
+
+```{r}
+index_shares$data %>% 
+  select(score_i, admin3_pcode) %>%
+  ggplot(aes(x = score_i)) + 
+  geom_histogram() + 
+  scale_x_continuous(breaks = seq(0, 0.6, by = 0.1))
+
+```
+
+```{r}
+glimpse(ag_mali)
+
+vulmmr %>%  
+  select(admin3_pcode = township_pcode, area_sown = all_area_sowed_mali) %>% 
+  left_join(conflict_score %>% 
+            select(score_i, admin3_pcode), by = "admin3_pcode") %>% 
+  left_join(townships %>% select(state_name, township_name, admin3_pcode), by = "admin3_pcode") %>% 
+  mutate(score_i = replace_na(score_i, 0)) %>% 
+  ggplot(aes(area = area_sown, fill = score_i, subgroup = state_name)) + 
+  geom_treemap() +
+  geom_treemap_subgroup_text(place = "centre", grow = TRUE, alpha = 0.5, colour = "black", fontface = "italic") +
+  geom_treemap_subgroup_border(colour = "white", size = 5) + 
+  scale_fill_viridis_c(option = "magma", direction = -1) +
+  labs(fill = "conflict_score", 
+       title = "Treemap of agricultural area sown", 
+       caption = "")
+
+
+```
+
+
+### ignore this whole chunk until the displacement figures are updated 
+```{r conflict-score-df, warning=FALSE}
+conflict_df2 <- acled %>% 
+  # do you really need this step since you're using Betti-Verma
+  mutate(event_type = case_when(event_type == "Protests" ~ "Protests_and_Riots",
+                                event_type == "Riots" ~ "Protests_and_Riots", 
+                                TRUE ~ event_type)) %>% 
+  filter(year == 2021 & sub_event_type != "Peaceful protest") %>%
+  group_by(admin3_pcode, event_type) %>% 
+  summarise(count = n(), .groups = "drop") %>%  
+  pivot_wider(names_from = event_type, values_from = count) %>% 
+  clean_names() %>% 
+  replace_na(list(battles = 0, explosions_remote_violence = 0, violence_against_civilians = 0,
+                  strategic_developments = 0, protests_and_riots = 0)) %>% 
+  # mutate(total_events = rowSums(across(where(is.numeric)), na.rm = TRUE)) %>% 
+  left_join(acled %>% 
+              filter(year == 2021) %>% 
+              group_by(admin3_pcode) %>% 
+              summarise(fatalities = sum(fatalities)), by = "admin3_pcode") %>% 
+  left_join(read_excel("2022 HPC - PiN and PT.xlsx", skip = 1) %>%
+              clean_names() %>% 
+              mutate(displaced_pop = pin_id_ps + pin_idp_returnees) %>% 
+              select(admin3_pcode = township_pcode, displaced_pop), by = "admin3_pcode") %>% 
+  ungroup()
+  
+index_shares2 <- conflict_df2 %>%   
+  mutate_at(vars(c(battles, explosions_remote_violence, violence_against_civilians, fatalities,
+                   strategic_developments, protests_and_riots, displaced_pop)), 
+           scale) %>%  
+  mutate_at(vars(c(battles, explosions_remote_violence, violence_against_civilians, fatalities,
+                   strategic_developments, protests_and_riots, displaced_pop)), 
+           funs((. - min(., na.rm = T))/(max(., na.rm = T) - min(., na.rm = T)))) %>% 
+  mdepriv(c("battles", "explosions_remote_violence", "violence_against_civilians", "fatalities", "strategic_developments", "protests_and_riots", "displaced_pop"),
+          method = "bv", output = "all")
+
+conflict_score2 <- conflict_df2 %>% 
+  left_join(index_shares2$data %>% 
+              select(admin3_pcode, 
+                     score_i,
+                     index_battles = battles, 
+                     index_explosions_remote_violence = explosions_remote_violence,
+                     index_violence_against_civilians = violence_against_civilians, 
+                     index_fatalities = fatalities, 
+                     index_strategic_developments = strategic_developments, 
+                     index_protests_and_riots = protests_and_riots,
+                     index_displaced_pop = displaced_pop), by = "admin3_pcode") %>% 
+  mutate(env_battles = battles / max(battles), 
+         env_explosions_remote_violence = explosions_remote_violence / max(explosions_remote_violence),
+         env_violence_against_civilians = violence_against_civilians / max(violence_against_civilians), 
+         env_fatalities = fatalities / max(fatalities), 
+         env_displaced_pop = displaced_pop / max(displaced_pop),
+         score_env = (env_battles + env_explosions_remote_violence + env_violence_against_civilians + 
+                        env_fatalities + env_displaced_pop) / 5) %>% 
+  left_join(acled %>% 
+              distinct(admin1, admin3, admin3_pcode), by = "admin3_pcode") %>% 
+  left_join(fsc %>%  
+              group_by(admin3_pcode) %>% 
+              summarise(partners = n_distinct(implementing_partners),
+                        beneficiaries = sum(beneficiaries[unique_beneficiaries == "Yes"])), by = "admin3_pcode")
+
+```
+
+```{r small-corrplot}
+
+conflict_score2 %>% 
+  select(battles, explosions_remote_violence, protests_and_riots, strategic_developments, violence_against_civilians, 
+         fatalities, displaced_pop, partners, beneficiaries) %>% 
+  filter(!is.na(partners) & !is.na(beneficiaries)) %>% 
+  cor(method = c("pearson")) %>% 
+  corrplot(type = "upper", col = brewer.pal(n = 8, name = "RdYlBu"), tl.srt = 35, 
+           title = "Correlation plot between conflict indicators and FSC presence \n",  mar=c(0,0,2,0), diag = FALSE)
+  
+```
+
+```{r}
+glimpse(conflict_score)
+```
+
+
+
+
+```{r}
+acled %>% filter(year == 2021) %>%
+  filter(event_type == "Explosions/Remote violence") %>%
+  group_by(admin3_pcode) %>% 
+  summarise(events = n(),
+            fatalities = sum(fatalities, na.rm = TRUE)) %>% 
+  full_join(vulmmr %>%
+              select(state_region_name, state_region_pcode, admin3_pcode = township_pcode,
+                      contains("mali"), contains("sown_area"), 
+                      all_harvested_net_margin_usd, sown_area_of_paddy_acres) %>%
+              mutate(pc_paddy = sown_area_of_paddy_acres / all_area_sowed_mali), by = "admin3_pcode") %>%
+  left_join(townships %>% select(state_name, admin3_pcode), by = "admin3_pcode") %>%
+  filter(!is.na(admin3_pcode)) %>% 
+  group_by(state_name) %>% 
+  summarise(area_sown = sum(all_area_sowed_mali, na.rm = TRUE),
+            events = n(), 
+            fatalities = sum(fatalities, na.rm = TRUE), .groups = "drop") %>% 
+  arrange(desc(fatalities)) %>% 
+  adorn_percentages("col") %>% 
+  adorn_pct_formatting() %>% 
+  kable(caption = "Agricultural area sown and incidents of explosions and remote violence (by percentage of total)") %>% 
+  kable_classic_2("striped", full_width = FALSE) %>% 
+  footnote("Data source: ACLED, acleddata.com; Ministry of Agriculture and Irrigation (no data from Nay Pyi Taw)", 
+           general_title = "") %>% 
+  save_kable(file = "./sr_ag_table.png", zoom = 3)
+  
+```
+
+
+```{r}
+
+```
+

@@ -542,3 +542,69 @@ acled %>%
   
 ```
 
+### mine action
+
+```{r}
+acled_words_mine <- acled %>% 
+  filter(year == 2021) %>% 
+  filter(event_type == "Explosions/Remote violence") %>% 
+  select(data_id, notes) %>% 
+  unnest_tokens(word, notes) %>% 
+  anti_join(stop_words, by = "word") %>% 
+  filter(str_detect(word, "[a-z]")) %>% 
+  left_join(acled %>% 
+              select(data_id, admin3_pcode, event_type, fatalities, inter_type), by = "data_id")
+```
+
+```{r}
+mine_network_graph <- acled_words_mine %>%  
+  filter(word %out% c("township", "district", "myanmar", "region", "village", "town", "size", "report", "code", "coded",
+                      "dvb", "aapp", "total", "irrawaddy", "rfa", "tract")) %>% 
+  distinct(data_id, word) %>% 
+  add_count(word) %>% 
+  filter(n >= 20) %>% 
+  pairwise_cor(word, data_id, sort = TRUE) %>% 
+  filter(correlation >= 0.2) %>% 
+  igraph::graph_from_data_frame() %>% 
+  ggraph(layout = "fr") + 
+  geom_edge_link(aes(alpha = correlation), colour = "blue") + 
+  scale_alpha_continuous(range = c(0.1, 0.4)) +
+  geom_node_point(colour = "blue", alpha = 0.3) +
+  geom_node_text(aes(label = name), size = 3) + 
+  theme(legend.position = "none") + 
+  labs(title = "Network graph of words in descriptions of 2021 incidents of explosions and remote violence in Myanmar",
+       subtitle = "Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com")
+
+ggsave("mine_network_graph.png", mine_network_graph, width = 42.0, height = 29.7, units = "cm", dpi = 300)
+
+```
+
+```{r dt-pairwise-words}
+acled_words_mine %>%  
+  filter(word %out% c("township", "district", "myanmar", "region", "village", "town", "size", "report", "code", "coded",
+                      "dvb", "aapp", "rfa", "irrawaddy")) %>% 
+  distinct(data_id, word) %>% 
+  add_count(word) %>% 
+  filter(n >= 50) %>% 
+  pairwise_cor(word, data_id, sort = TRUE) %>%
+  rename(word = item1, match = item2) %>% 
+  group_by(word) %>% 
+  top_n(correlation, n = 20) %>% 
+  datatable(filter = list(position = "top", clear = FALSE), 
+            options = list(pageLength = 10, scrollX = TRUE,
+                           search = list(regex = TRUE)
+  #                         
+  #                         ,
+  #                                         initComplete = htmlwidgets::JS(
+  #        "function(settings, json) {",
+  #        paste0("$(this.api().table().container()).css({'font-size': '", "8.5pt", "'});"),
+  #        "}")
+       ),
+  caption = htmltools::tags$caption(style = 'caption-side: top; 
+                                    text-align: center; 
+                                    color:black; font-size:130% ;',
+                                    "Pairwise correlations in conflict event descriptions of incidents of explosions and remote violence")
+     ) %>% 
+  formatRound(c("correlation"), digits = 3)
+
+```
