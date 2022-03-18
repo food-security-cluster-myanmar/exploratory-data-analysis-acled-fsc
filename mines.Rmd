@@ -20,6 +20,11 @@ mylogo <- image_scale(image_read("Myanmar_cluster_blue.png"), "180")
 
 ```{r}
 acled %>% glimpse()
+
+acled %>% max(date)
+
+acled %>% slice(which.max(event_date))
+
 ```
 
 ### sub-event types
@@ -178,6 +183,13 @@ acled %>%
 
 ```
 
+```{r}
+acled %>% filter(year == 2021 & sub_event_type == "Remote explosive/landmine/IED") %>% 
+  filter(inter_type == "sole political militia action") %>% 
+  sample_n(10) %>% pull(notes)
+```
+
+
 
 ```{r}
 acled %>% 
@@ -275,5 +287,9 @@ acled %>%
        caption = "Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com")
 
 
+```
+
+```{r}
+acled %>% glimpse()
 ```
 

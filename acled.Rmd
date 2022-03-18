@@ -36,6 +36,33 @@ always_allow_html: true
 </style>
 ```
 
+```{r table-acronyms, echo = FALSE, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(kableExtra)
+
+tribble(
+  ~acronym, ~name, 
+  "ACLED", "Armed Conflict Location and Event Data Project",
+  "CCCM", "Camp Management and Camp Coordination",
+  "CSO", "Civil Society Organisation",
+  "FAO", "Food and Agriculture Organisation",
+  "FSC", "Food Security Cluster",
+  "HARP", "Humanitarian Assistance and Resilience Programme (DfID)",
+  "HNO", "Humanitarian Needs Overview",
+  "HRP", "Humanitarian Response Plan",
+  "IDP", "Internally Displaced Person", 
+  "IERP", "Interim Emergency Response Plan",
+  "MIMU", "Myanmar Information Management Unit (UN RC's Office)",
+  "NNGO", "National Non-governmental Organisation", 
+  "OCHA", "UN Office for the Coordination of Humanitarian Affairs",
+  "UXO", "Unexploded Oednance",
+  "WFP", "World Food Programme"
+) %>% 
+  kable(caption = "**Acronyms**", col.names = NULL) %>% 
+  kable_classic_2(position = "left", full_width = FALSE)
+```
+
+<br>
 
 ## Introduction
 
@@ -242,7 +269,7 @@ acled <- read_excel("2010-01-01-2022-01-25-Myanmar.xlsx",
   mutate(month = lubridate::month(event_date, label = TRUE)) %>%
   mutate(non_combatant = case_when(event_type == "Violence against civilians" ~ TRUE, 
                                    str_detect(inter_type, "civilian|protester") ~ TRUE, 
-                                   str_detect(notes, "civilian|protester") ~ TRUE, 
+                                   str_detect(notes, "civilian|protester|villager") ~ TRUE, 
                                    TRUE ~ FALSE))
 
 # actor-level dataset
@@ -476,7 +503,7 @@ acled %>%
 
 ### 3.1 Annual distribution of conflict events and fatalities by event type
 
-The plot below shows a massive spike in conflict events in 2021, bearing in mind that Myanmar has long been embroiled in a 70-year civil war. Previously, when the MIMU-HARP vulnerability index was developed in 2016, climate risk, underdevelopment and conflict risk were all taken into account in the index with equal weighting. However, given the massive increase in conflict events, conflict indicators should be afforded much greater weights in any consideration of vulnerability and the reorientation of activities around conflict loci is very much warranted. 
+The plot below shows a massive spike in conflict events in 2021, bearing in mind that Myanmar has long been embroiled in a 70-year civil war. Previously, when the [MIMU-HARP Vulnerability Index](http://themimu.info/vulnerability-in-myanmar) was developed in 2016, climate risk, underdevelopment and conflict risk were all taken into account in the index with equal weighting. However, given the massive increase in conflict events, conflict indicators should be afforded much greater weights in any consideration of vulnerability and the reorientation of activities around conflict loci is very much warranted. 
 
 <br>
 
@@ -706,7 +733,7 @@ acled %>%
 
 <br>
 
-The largest numbers of fatalities are related to events involving the military, political militias (including the PDF) and rebel groups: 
+The largest numbers of fatalities are related to events involving the military, political militias (including the People's Defense Force) and rebel groups: 
 
 ```{r fatalities-summary-2021-inter-type}
 acled %>%  
@@ -798,7 +825,7 @@ acled %>%
 
 It is estimated that `r round(filter(acled, year == 2021 & non_combatant == TRUE) %>% {sum(.$fatalities)} / (filter(acled, year == 2021) %>% {sum(.$fatalities)}) * 100, digits = 2)`% of the `r filter(acled, year == 2021) %>% {sum(.$fatalities)} %>% format(big.mark = ",")` conflict-related fatalities involved non-combatants. 
 
-In this chapter, the ACLED dataset has been filtered down to events involving non-combatants: the filter applied selected events under the `event_type` "Violence against civilians", conflict interactions involving civilians or protesters and any events with the word "civilian" or "protester" in their description. Peaceful protests were filtered out as these were largely one-sided events (where the only actors were protesters) and did not result in property damage or casualties. These events involving non-combatants have been plotted in the map below: conflict events with fatalities are coloured red. 
+In this chapter, the ACLED dataset has been filtered down to events involving non-combatants: the filter applied selected events under the **`event_type`** "Violence against civilians", conflict interactions involving civilians or protesters and any events with the word "civilian", "protester" or "villager" in their description. Peaceful protests were filtered out as these were largely one-sided events (where the only actors were protesters) and did not result in property damage or casualties. These events involving non-combatants have been plotted in the map below: conflict events with fatalities are coloured red. 
 
 
 ```{r map-non-combatants, fig.height=10}
@@ -1059,7 +1086,34 @@ actors %>%
 <br><br>
 
 
-### 5.3 Which actors are associated with the most fatalities per event?
+### 5.3 Which actors are associated with the most fatalities?
+
+The table below summarises the number of fatalities and conflict events associated with the largest actors. The table has been sorted in descending order of number of fatalities; only actors associated with more than 100 fatalities are shown and all other actors have been lumped together as "Other". 
+
+```{r table-fatalities-summary}
+actors %>% 
+  filter(year == 2021) %>% 
+  group_by(actor_simple) %>% 
+  summarise(fatalities = sum(fatalities),
+            events = n()) %>% 
+  mutate(actor_simple = ifelse(fatalities >= 100, actor_simple, "Other")) %>% 
+  group_by(actor_simple) %>% 
+  summarise(fatalities = sum(fatalities),
+            events = sum(events)) %>%
+  left_join(actors %>% select(actor_simple, inter1) %>% distinct(), by = "actor_simple") %>% 
+  mutate(actor_simple = str_remove(actor_simple, "\\:.*"),
+         fatalities_per_event = round(fatalities / events, digits = 2)) %>% 
+  select(actor = actor_simple, actor_type = inter1, fatalities, events, fatalities_per_event) %>% 
+  arrange(desc(fatalities)) %>% 
+  kable(caption = "Top 2021 actors in terms of fatalities; actors associated with less than 100 fatalities have been lumped together as 'Other'",
+        format.args = list(big.mark = ",")) %>% 
+  kable_classic_2("striped") %>% 
+  footnote(general = "Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com", 
+           general_title = "")
+
+```
+
+<br>
 
 As mentioned, it is difficult at this juncture to state how many of the associated fatalities were persons killed by these groups and how many were members of these groups had been the ones who were killed. Still, it is worthwhile to plot which actors are the "bloodiest", at least in regards to the outcomes of their actions, or have been involved in incidents with the most fatalities. 
 
@@ -1101,36 +1155,9 @@ actors_conf_int %>%
 
 ```
 
-<br>
-
-The table below summarises the number of fatalities and conflict events associated with the largest actors. The table has been sorted in descending order of number of fatalities; only actors associated with more than 100 fatalities are shown and all other actors have been lumped together as "Other". 
-
-```{r table-fatalities-summary}
-actors %>% 
-  filter(year == 2021) %>% 
-  group_by(actor_simple) %>% 
-  summarise(fatalities = sum(fatalities),
-            events = n()) %>% 
-  mutate(actor_simple = ifelse(fatalities >= 100, actor_simple, "Other")) %>% 
-  group_by(actor_simple) %>% 
-  summarise(fatalities = sum(fatalities),
-            events = sum(events)) %>%
-  left_join(actors %>% select(actor_simple, inter1) %>% distinct(), by = "actor_simple") %>% 
-  mutate(actor_simple = str_remove(actor_simple, "\\:.*"),
-         fatalities_per_event = round(fatalities / events, digits = 2)) %>% 
-  select(actor = actor_simple, actor_type = inter1, fatalities, events, fatalities_per_event) %>% 
-  arrange(desc(fatalities)) %>% 
-  kable(caption = "Top 2021 actors in terms of fatalities; actors associated with less than 100 fatalities have been lumped together as 'Other'",
-        format.args = list(big.mark = ",")) %>% 
-  kable_classic_2("striped") %>% 
-  footnote(general = "Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com", 
-           general_title = "")
-
-```
-
 <br><br> 
 
-### 5.4 Summary table of main conflict actors
+### 5.4 Summary table of main conflict actors by actor type
 
 ```{r table-main-conflict-actors}
 top_actors <- actors %>%  
@@ -1158,7 +1185,9 @@ kable(top_actors, caption = "Top 5 conflict actors in 2021 by actor type", forma
 
 ### 5.5 Geographic distribution of conflict actors
 
-Sagaing, again, is an outlier and is home to a massive concentration of conflict actors. 
+Sagaing, again, is an outlier and is home to a massive concentration of conflict actors, exceeding even traditionally-targeted areas in Kachin, northern Shan and Rakhine. 
+
+<br>
 
 ```{r map-conflict-actors-township, fig.height=10}
 actors %>% 
@@ -1302,9 +1331,9 @@ The numbers of partners and beneficiaries per township were, unsurprisingly, cor
 
 ### 6.2 Revisiting the MIMU-HARP conflict index
 
-A conflict score was then calculated using ACLED data: its construction was similar to the conflict index in the MIMU-HARP Vulnerability Analysis, with the notable omission of data on displacement -- this has been requested and the score will be updated once that data has been made available.
+A conflict score was then calculated using ACLED data: its construction was similar to the conflict index in the [MIMU-HARP Vulnerability Analysis](http://themimu.info/vulnerability-in-myanmar), with the notable omission of data on displacement -- this has been requested and the score will be updated once that data has been made available.
 
-The conflict score -- at its most basic level -- is an average of the normalised values of battles, explosions and remote violence, violence against civilians, strategic developments, non-peaceful protests and riots and the conflict-related fatalities. However, these normalised values have be re-weighted with the Betti-Verma method, which penalises redundancy and rewards variation; this is the other notable divergence from MIMU-HARP's methodology. The Betti-Verma method was employed through the `mdepriv` R package developed by Atillio Benini and Aldo Benini. 
+The conflict score -- at its most basic level -- is an average of the normalised values of battles, explosions and remote violence, violence against civilians, strategic developments, non-peaceful protests and riots and the conflict-related fatalities. However, these normalised values have be re-weighted with the Betti-Verma method, which penalises redundancy and rewards variation; this is the other notable divergence from MIMU-HARP's methodology. The Betti-Verma method was employed through the **`mdepriv`** R package developed by Atillio Benini and Aldo Benini. 
 
 Below is a plot of townships comparing the conflict score with the number of beneficiaries. 
 
@@ -1447,7 +1476,7 @@ ag_mali %>%
 
 <br>
 
-Although the 2015/2016 agricultural data were released to document the losses from floods and landslides, much can still be gleaned from aggregating the data. With reference to the table below, it is very important to note that the net margins per acre were lowest for paddy, meaning that areas with greater levels of crop diversification will be suffer greater economic impacts from conflict events. 
+Although the 2015/2016 agricultural data were released to document the losses from floods and landslides, much can still be gleaned from aggregating the data. With reference to the table below, it is very important to note that the net margins per acre were lowest for paddy, meaning that areas with greater levels of crop diversification will be suffer greater economic impacts from conflict events. But only general trends can be gleaned from the net margins of crops as 2015/2016 were anomalous due to the widespread flooding and landslides.  
 
 <br>
 
@@ -1475,7 +1504,8 @@ vulmmr %>%
                                         "ground_nut" = "groundnut",
                                         "sun_flower" = "sun_flower_seeds")), 
               by = "crop_type") %>% 
-  mutate(margin_per_acre = round(net_margin / harvested_area)) %>% 
+  mutate(`harvested_area_%` = round(harvested_area / sum(harvested_area) * 100, digits = 2),
+         margin_per_acre = round(net_margin / harvested_area)) %>% 
   arrange(desc(margin_per_acre)) %>% 
   filter(harvested_area > 600000) %>% 
   rename(harvested_area_acres = harvested_area, 
@@ -1495,7 +1525,7 @@ To visualise the intersection of acres of land sown and the newly-recalculated c
 
 Agricultural areas in Ayeyarwady, Bago, Yangon, Rakhine and Shan (East) have been the least affected by conflict events and fatalities, indicating that access to fields has not been disrupted and existing programme designs (focused on improving livelihoods) may be sufficient in these areas. 
 
-However, to ensure food security in Sagaing, Magway, Mandalay, Mon, Kayin, Kachin, Kayah, Tanintharyi and Shan North and Shan South, livelihood programming should be predicated on safe access to agricultural land and markets. Food and cash distributions might also be necessary for extended periods of time in several of the more heavily-affected areas. The necessity for mine-risk education for farmers should also e investigated in these areas, especially where farmers continue to attend fields which might be contaminated by UXOs. 
+However, to ensure food security in Sagaing, Magway, Mandalay, Mon, Kayin, Kachin, Kayah, Tanintharyi and Shan North and Shan South, livelihood programming should be predicated on safe access to agricultural land and markets. Food and cash distributions might also be necessary for extended periods of time in several of the more heavily-affected areas. The necessity for mine-risk education for farmers should also be investigated in these areas, especially where farmers continue to attend fields which might be contaminated by UXOs. 
 
 <br> 
 
@@ -1508,10 +1538,11 @@ vulmmr %>%
   left_join(townships %>% select(state_name, township_name, admin3_pcode), by = "admin3_pcode") %>% 
   mutate(score_i = replace_na(score_i, 0)) %>% 
   ggplot(aes(area = area_sown, fill = score_i, subgroup = state_name, 
+             # these next arguments are unnecessary as the ggplotly doesn't work for treemaps 
              text = paste0(township_name, "\n",
                            state_name, "\n",
                            "area_sown: ", area_sown, "\n",
-                           "fatalitie: ", fatalities, "\n",
+                           "fatalities: ", fatalities, "\n",
                            "battles: ", battles, "\n",
                            "explosions& remote violence: ", explosions_remote_violence, "\n",
                            "violence against civilians: ", violence_against_civilians))) +
@@ -1520,12 +1551,44 @@ vulmmr %>%
   geom_treemap_subgroup_border(colour = "white", size = 5) + 
   scale_fill_viridis_c(option = "magma", direction = -1) +
   labs(fill = "conflict\nscore", 
-       title = "Treemap of townships agricultural area sown", 
+       title = "Treemap of townships by agricultural area sown", 
        subtitle = "Colours indicate conflict score; areas of each square correspond to acres sown by township", 
        caption = "Data source: ACLED, acleddata.com (2021); Ministry of Agriculture and Irrigation (2015)") +
   theme(plot.caption=element_text(hjust = 0.5))
 
 ```
+
+<br>
+
+The next treemap uses the same area scale as the one above (where the size corresponds to the acres of agricultural land sown), but the colours of each township have been recalculated to reflect the net margins that townships earn in 2015/2016 from agricultural production. It bears mentioning again that the net margins in 2015/2016 were anomalous, with the country having been affected by widespread and severe flooding and landslides. 
+
+Of note, though is that is that whilst Ayeyarwady has the largest cultivated area of all the states and regions, its share of the net margins per acre tended to be lower than in many other parts of the country. This is largely due to the much higher levels of crop diversification in Magway and Sagaing or rather, the predominance of paddy cultivation in Ayeyarwady. 
+
+<br>
+
+```{r treemap-conflict-score-net_margin}
+vulmmr %>% select(all_net_margin = all_harvested_net_margin_usd, all_area_harvested = all_areas_harvested_mali, 
+                  area_sown = all_area_sowed_mali, admin3_pcode = township_pcode) %>% 
+  mutate(net_margin_acre = all_net_margin / all_area_harvested) %>% 
+  left_join(conflict_score %>% 
+            select(score_i, admin3_pcode, battles, explosions_remote_violence, 
+                   violence_against_civilians, fatalities), by = "admin3_pcode") %>% 
+  left_join(townships %>% select(state_name, township_name, admin3_pcode), by = "admin3_pcode") %>% 
+  mutate(score_i = replace_na(score_i, 0)) %>% 
+  ggplot(aes(area = area_sown, fill = net_margin_acre, subgroup = state_name)) +
+  geom_treemap() +
+  geom_treemap_subgroup_text(place = "centre", grow = TRUE, alpha = 0.5, colour = "black", fontface = "italic") +
+  geom_treemap_subgroup_border(colour = "white", size = 5) + 
+  scale_fill_viridis_c(direction = -1, labels = comma) +
+  labs(fill = "net margin\nper acre\n(USD)", 
+       title = "Treemap of townships by total net margins of agricultural production", 
+       subtitle = "Colours USD net margins of agricultural production by township;\nAreas of each square correspond to acres sown by township", 
+       caption = "Data source: ACLED, acleddata.com (2021); Ministry of Agriculture and Irrigation (2015)") +
+  theme(plot.caption=element_text(hjust = 0.5))
+  
+```
+
+
 
 <br><br>
 
@@ -1585,7 +1648,7 @@ conflict_score %>%
 
 ### 8.1 Network graph of correlated words
 
-This chapter focuses on data mining the text within the column `notes` of the ACLED dataset, which contains the descriptions of each conflict events. For this first section, it is of interest to the FSC to visualise all the relationships amongst word simultaneously and have arranged these words into a network graph. Below, each word from the conflict description is a node and the opacity of the line denotes the strength of its correlation to other words (that is, the probability that they have been used to describe the same conflict event): 
+This chapter focuses on data mining the text within the column **`notes`** of the ACLED dataset, which contains the descriptions of each conflict events. For this first section, it is of interest to the FSC to visualise all the relationships amongst word simultaneously and have arranged these words into a network graph. Below, each word from the conflict description is a node and the opacity of the line denotes the strength of its correlation to other words (that is, the probability that they have been used to describe the same conflict event): 
 
 <br>
 
@@ -1858,5 +1921,5 @@ fsc %>%
 
 ```
 
-
+Interactive versions of some of these maps can be found here
 

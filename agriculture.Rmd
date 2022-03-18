@@ -285,6 +285,58 @@ vulmmr %>%
 
 ```
 
+```{r}
+vulmmr %>% select(contains("harvested"))
+
+vulmmr %>% select(all_net_margin = all_harvested_net_margin_usd, all_area_harvested = all_areas_harvested_mali, 
+                  admin3_pcode = township_pcode) %>% 
+  left_join(conflict_score %>% 
+            select(score_i, admin3_pcode, battles, explosions_remote_violence, 
+                   violence_against_civilians, fatalities), by = "admin3_pcode") %>% 
+  left_join(townships %>% select(state_name, township_name, admin3_pcode), by = "admin3_pcode") %>% 
+  mutate(score_i = replace_na(score_i, 0)) %>% 
+  ggplot(aes(area = all_net_margin, fill = score_i, subgroup = state_name)) +
+  geom_treemap() +
+  geom_treemap_subgroup_text(place = "centre", grow = TRUE, alpha = 0.5, colour = "black", fontface = "italic") +
+  geom_treemap_subgroup_border(colour = "white", size = 5) + 
+  scale_fill_viridis_c(option = "magma", direction = -1) +
+  labs(fill = "conflict\nscore", 
+       title = "Treemap of townships by total net margins of agricultural production", 
+       subtitle = "Colours indicate conflict score;\nAreas of each square correspond to the USD net margins of agricultural production by township", 
+       caption = "Data source: ACLED, acleddata.com (2021); Ministry of Agriculture and Irrigation (2015)") +
+  theme(plot.caption=element_text(hjust = 0.5))
+  
+```
+
+
+```{r treemap-conflict-score-area-sown}
+vulmmr %>%  
+  select(admin3_pcode = township_pcode, area_sown = all_area_sowed_mali) %>% 
+  left_join(conflict_score %>% 
+            select(score_i, admin3_pcode, battles, explosions_remote_violence, 
+                   violence_against_civilians, fatalities), by = "admin3_pcode") %>% 
+  left_join(townships %>% select(state_name, township_name, admin3_pcode), by = "admin3_pcode") %>% 
+  mutate(score_i = replace_na(score_i, 0)) %>% 
+  ggplot(aes(area = area_sown, fill = score_i, subgroup = state_name, 
+             text = paste0(township_name, "\n",
+                           state_name, "\n",
+                           "area_sown: ", area_sown, "\n",
+                           "fatalitie: ", fatalities, "\n",
+                           "battles: ", battles, "\n",
+                           "explosions& remote violence: ", explosions_remote_violence, "\n",
+                           "violence against civilians: ", violence_against_civilians))) +
+  geom_treemap() +
+  geom_treemap_subgroup_text(place = "centre", grow = TRUE, alpha = 0.5, colour = "black", fontface = "italic") +
+  geom_treemap_subgroup_border(colour = "white", size = 5) + 
+  scale_fill_viridis_c(option = "magma", direction = -1) +
+  labs(fill = "conflict\nscore", 
+       title = "Treemap of townships agricultural area sown", 
+       subtitle = "Colours indicate conflict score; areas of each square correspond to acres sown by township", 
+       caption = "Data source: ACLED, acleddata.com (2021); Ministry of Agriculture and Irrigation (2015)") +
+  theme(plot.caption=element_text(hjust = 0.5))
+
+```
+
 
 ### ignore this whole chunk until the displacement figures are updated 
 ```{r conflict-score-df, warning=FALSE}
