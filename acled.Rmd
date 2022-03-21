@@ -55,7 +55,7 @@ tribble(
   "MIMU", "Myanmar Information Management Unit (UN RC's Office)",
   "NNGO", "National Non-governmental Organisation", 
   "OCHA", "UN Office for the Coordination of Humanitarian Affairs",
-  "UXO", "Unexploded Oednance",
+  "UXO", "Unexploded Ordnance",
   "WFP", "World Food Programme"
 ) %>% 
   kable(caption = "**Acronyms**", col.names = NULL) %>% 
@@ -461,7 +461,6 @@ vulmmr <- read_excel("C:/Users/seany/Documents/R/mmr_5w_initial_observations/Dat
 The GIF  below shows 2021 conflict events by **month**. The colour of each point indicates the interaction type, which classify conflict events based on what type of actors were involved. The 6 most common interaction types have been included, with all the less frequent ones being recoded as "other". The number of fatalities associated ith each event indicated by the size of each point.
 
 <br>
-
 ![](acled4.gif)
 
 <br><br><br>
@@ -1848,11 +1847,8 @@ actors %>%
 
 <br><br>
 
-### 10.3 Agriculture reference table
 
-<br><br>
-
-### 10.4 Reference maps
+### 10.3 Reference maps
 
 ```{r patchwork-maps, fig.height=16} 
 acled %>%  
@@ -1921,5 +1917,5 @@ fsc %>%
 
 ```
 
-Interactive versions of some of these maps can be found here
+Interactive versions of some of these maps can be found **[here](https://food-security-cluster-myanmar.github.io/acled_maps/)**. Please note that these maps are quite large and will take a long time to load. 
 
