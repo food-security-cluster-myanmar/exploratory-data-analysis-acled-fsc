@@ -33,7 +33,7 @@ tribble(
   "MIMU", "Myanmar Information Management Unit (UN RC's Office)",
   "NNGO", "National Non-governmental Organisation", 
   "OCHA", "UN Office for the Coordination of Humanitarian Affairs",
-  "UXO", "Unexploded Oednance",
+  "UXO", "Unexploded Ordnance",
   "WFP", "World Food Programme"
 ) %>% 
   kable(caption = "Acronyms", col.names = NULL) %>% 

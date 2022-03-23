@@ -66,7 +66,7 @@ tribble(
 
 ## Introduction
 
-This report provides an overview of the Armed Conflict Location and Event Data Project (ACLED) dataset for Myanmar. This dataset contains information on conflict actors, conflict events, event types, event locations and fatalities dating back to 2010. The data is updated on a monthly basis. With some notable exceptions, this report is largely focused on 2021 data. 
+This report provides an overview of the Armed Conflict Location and Event Data Project (ACLED) dataset for Myanmar. This dataset contains information on conflict actors, conflict events, event types, event locations and fatalities dating back to 2010. The data are updated on a monthly basis. With some notable exceptions, this report is largely focused on 2021 data. 
 
 The aim of ACLED is "to capture the forms, agents, dates and locations of political violence and protests"; its methodology for Myanmar consists of the review of English and Myanmar sources to code political violence and demonstration events: the vast majority (85%) of their information originates from subnational, national and international media sources, with the remainder originating from ACLED's partnership with the Myanmar Peace Monitor and reports by the UN, international monitoring groups and local human rights organisations. Points of alignment and divergence from the conflict events collected by the Nexus Response Mechanism's Conflict Analysis and Research Facility remain to be explored.
 
@@ -79,8 +79,9 @@ The terminology employed with this report follows what has been laid out in the 
 * ACLED, (2022). ACLED data for Myanmar (2010-2022). https://acleddata.com
 * ACLED, (2020). ACLED Methodology and Coding Decisions around Political Violence in Myanmar. https://acleddata.com/acleddatanew/wp-content/uploads/2021/11/ACLED_Political-Violence-in-Myanmar_February-2020.pdf
 * Atillio Benini, Aldo Benini (2021). mdepriv: Synthetic scores of multiple deprivation. R package version 0.0.3.  https://github.com/a-benini/mdepriv/
-* Food Security Cluster, Myanmar (2021). 5Ws reporting tool. 
-
+* Food Security Cluster, Myanmar (2021). 5Ws reporting tool.
+* HARP-F and MIMU (2018). Vulnerability in Myanmar: A Secondary Data Review of Needs, Coverage and Gaps. http://themimu.info/vulnerability-in-myanmar
+* Silge J, Robinson D (2016). “tidytext: Text Mining and Analysis Using Tidy Data Principles in R.” JOSS, 1(3). doi: 10.21105/joss.00037, http://dx.doi.org/10.21105/joss.00037.
 <br><br><br>
 
 
@@ -429,7 +430,7 @@ townships <- read_excel("FSC 5W 2021 - GEOADMINS_final 19.xlsx",
 # reading in 5Ws
 fsc <- read_csv("fsc5w_2021.csv")
 
-# acled words
+# acled_words df
 acled_words <- acled %>% 
   filter(year == 2021) %>% 
   select(data_id, notes) %>% 
@@ -437,7 +438,8 @@ acled_words <- acled %>%
   anti_join(stop_words, by = "word") %>% 
   filter(str_detect(word, "[a-z]")) %>% 
   left_join(acled %>% 
-              select(data_id, admin3_pcode, event_type, fatalities, inter_type), by = "data_id")
+              select(data_id, admin1, admin3_pcode, event_type, sub_event_type, fatalities, inter_type), by = "data_id")
+
 
 # reading in vulnerability dataset
 vulmmr <- read_excel("C:/Users/seany/Documents/R/mmr_5w_initial_observations/Datasets_Vulnerability_Analysis_in_Myanmar_09Jul2018 (1).xlsx",
@@ -458,7 +460,7 @@ vulmmr <- read_excel("C:/Users/seany/Documents/R/mmr_5w_initial_observations/Dat
 
 ## 1. Progression of conflict events by interaction type in 2021
 
-The GIF  below shows 2021 conflict events by **month**. The colour of each point indicates the interaction type, which classify conflict events based on what type of actors were involved. The 6 most common interaction types have been included, with all the less frequent ones being recoded as "other". The number of fatalities associated ith each event indicated by the size of each point.
+The GIF  below shows 2021 conflict events by **month**. The colour of each point indicates the interaction type, which classify conflict events based on what type of actors were involved. The 6 most common interaction types have been included, with all the less frequent ones being recoded as "other". The number of fatalities associated with each event indicated by the size of each point.
 
 <br>
 ![](acled4.gif)
@@ -813,6 +815,13 @@ acled %>%
        caption = "Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com")
  
 ```
+
+### 3.4 Progression of the conflict in 2021 by event type
+
+The GIF  below shows 2021 conflict events by **month**. The colour of each point indicates the type of conflict event. The number of fatalities associated with each event is indicated by the size of each point. 
+
+<br>
+![](event_type.gif)
 
 <br><br><br>
 
@@ -1446,7 +1455,7 @@ ag_mali <- vulmmr %>%
 
 The last year in which detailed township-level agricultural statistics were made available was 2016, these were included in the MIMU-HARP report [Vulnerability in Myanmar](http://themimu.info/vulnerability-in-myanmar). It is also important to note that the main reason these statistics were released was due to the development of the 2015/2016 National Recovery Framework and Plan for Floods and Landslides, meaning that some of the values, especially related to area harvested, are anomalous. However, agricultural areas sown are unlikely to have shifted greatly in the past 6 years. 
 
-The plot below shows the state/regional breakdown of the total sown area in acres in 2015 by major crop type. Ayeyarwady, Sagaing, Bago and Magway contain the main agricultural production areas of Myanmar. Though the Magway and Sagaing show a much higher diversity of crop types compared to other states/regions which are dominated by paddy. 
+The plot below shows the state/regional breakdown of the total sown area in acres in 2015 by major crop type. Ayeyarwady, Sagaing, Bago and Magway contain the main agricultural production areas of Myanmar. Though Mandalay, Magway and Sagaing show a much higher diversity of crop types compared to other states/regions which are dominated by paddy. 
 
 <br>
 
@@ -1647,7 +1656,7 @@ conflict_score %>%
 
 ### 8.1 Network graph of correlated words
 
-This chapter focuses on data mining the text within the column **`notes`** of the ACLED dataset, which contains the descriptions of each conflict events. For this first section, it is of interest to the FSC to visualise all the relationships amongst word simultaneously and have arranged these words into a network graph. Below, each word from the conflict description is a node and the opacity of the line denotes the strength of its correlation to other words (that is, the probability that they have been used to describe the same conflict event): 
+This chapter focuses on data mining the text within the column **`notes`** of the ACLED dataset, which contains a descriptions of each conflict event. For this first section, it is of interest to the FSC to visualise all the relationships amongst word simultaneously and have arranged these words into a network graph. Below, each word from the conflict description is a node and the opacity of the line denotes the strength of its correlation to other words (that is, the probability that they have been used to describe the same conflict event): 
 
 <br>
 

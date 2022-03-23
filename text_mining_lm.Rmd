@@ -15,6 +15,7 @@ library(rattle)
 library(stringi)
 library(ggraph)
 library(ggridges)
+library(tidylo)
 
 acled_words <- acled %>% 
   filter(year == 2021) %>% 
@@ -23,7 +24,7 @@ acled_words <- acled %>%
   anti_join(stop_words, by = "word") %>% 
   filter(str_detect(word, "[a-z]")) %>% 
   left_join(acled %>% 
-              select(data_id, admin3_pcode, event_type, fatalities, inter_type), by = "data_id")
+              select(data_id, admin1, admin3_pcode, event_type, sub_event_type, fatalities, inter_type), by = "data_id")
 
 ```
 
@@ -179,7 +180,7 @@ acled_words %>%
   geom_node_point(colour = "blue", alpha = 0.3) +
   geom_node_text(aes(label = name), size = 2) + 
   theme(legend.position = "none") + 
-  labs(title = "Network map of 2021 conflict event descriptions in Myanmar",
+  labs(title = "Network map of 2021 descriptions of conflict events in Myanmar with fatalities",
        subtitle = "Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com")
   
   acled %>% count(event_type)
@@ -608,3 +609,231 @@ acled_words_mine %>%
   formatRound(c("correlation"), digits = 3)
 
 ```
+
+### fatalities
+
+```{r}
+# this is a little more helpful
+acled_words %>%
+  # filter(sub_event_type != "Peaceful protest") %>% 
+  filter(word %out% c("fatality", "coded", "death", "village", "township", "district", "villages",
+                      "town", "tract", "fatalities", "dvb", "aapp", "total", "irrawaddy", "rfa", "died",
+                      "killing", "killed", "dead", "event", "events", "casualty", "casualties",
+                      "size", "code", "report", "myanmar","coded")) %>% 
+  mutate(has_fatalities = ifelse(fatalities > 0, "yes", "no")) %>% 
+  count(has_fatalities, word) %>% 
+  bind_log_odds(has_fatalities, word, n) %>% 
+  group_by(has_fatalities) %>% 
+  top_n(50, log_odds_weighted) %>% 
+  ungroup() %>% 
+  mutate(word = reorder_within(word, log_odds_weighted, has_fatalities)) %>% 
+  ggplot(aes(x = log_odds_weighted, y = word)) + 
+  geom_col() +
+  scale_y_reordered() +
+  facet_wrap(~ has_fatalities, scales = "free")
+
+acled_words %>% count(fatalities)
+
+# histogram fatalities 
+acled %>% 
+  filter(year == 2021) %>% 
+  count(fatalities) %>% 
+  ggplot(aes(x = fatalities, y = n)) +
+  geom_col() + 
+  scale_y_log10() 
+
+townships
+
+# ayeyarwaddy keeps on showing up because of the ayeyarwady river
+acled %>% filter(year == 2021) %>% 
+  filter(admin1 == "Sagaing") %>% 
+  filter(str_detect(notes, "Ayeyarwady|ayeyarwady")) %>% 
+  pull(notes)
+
+acled %>% filter(year == 2021) %>% count(fatalities)
+
+```
+
+
+```{r}
+acled_words %>% 
+  filter(sub_event_type != "Peaceful protest") %>% 
+  mutate(fatalities_bin = case_when(fatalities == 0 ~ "0", 
+                                    fatalities == 1 ~ "1", 
+                                    fatalities > 1 & fatalities < 6 ~ "2-5", 
+                                    fatalities > 5 & fatalities < 11 ~ "5-10", 
+                                    fatalities > 10 & fatalities < 21 ~ "11-20", 
+                                    fatalities > 20 & fatalities < 31 ~ "21-30", 
+                                    fatalities > 30 & fatalities < 51 ~ "31-50",
+                                    fatalities > 50 ~ "51-88")) %>% 
+  mutate(fatalities_bin = fct_relevel(fatalities_bin, c("0", "1", "2-5", "5-10", "11-20", "21-30", "31-50", "51-99", ">=100"))) %>% 
+  filter(word %out% c("fatality", "coded", "death", "village", "township", "district", "villages",
+                      "town", "tract", "fatalities", "dvb", "aapp", "total", "irrawaddy", "rfa", "died",
+                      "killing", "killed", "dead", "event", "events", "casualty", "casualties",
+                      "size", "code", "report", "myanmar","coded")) %>% 
+  count(fatalities_bin, word) %>% 
+  bind_log_odds(fatalities_bin, word, n) %>% 
+  group_by(fatalities_bin) %>% 
+  top_n(20, log_odds_weighted) %>% 
+  ungroup() %>% 
+  mutate(word = reorder_within(word, log_odds_weighted, fatalities_bin)) %>% 
+  ggplot(aes(x = log_odds_weighted, y = word)) + 
+  geom_col() +
+  scale_y_reordered() +
+  facet_wrap(~ fatalities_bin, scales = "free")
+
+  
+```
+
+```{r}
+
+acled_words %>%
+  # filter(sub_event_type != "Peaceful protest") %>% 
+  filter(word %out% c("fatality", "coded", "death", "village", "township", "district", "villages",
+                      "town", "tract", "fatalities", "dvb", "aapp", "total", "irrawaddy", "rfa", "died",
+                      "killing", "killed", "dead", "event", "events", "casualty", "casualties",
+                      "size", "code", "report", "myanmar","coded")) %>% 
+  mutate(has_fatalities = ifelse(fatalities > 0, "yes", "no")) %>% 
+  count(has_fatalities, word) %>% 
+  bind_log_odds(has_fatalities, word, n) %>% 
+  group_by(has_fatalities) %>% 
+  top_n(50, log_odds_weighted) %>% 
+  ungroup() %>% 
+  mutate(word = reorder_within(word, log_odds_weighted, has_fatalities)) %>% 
+  ggplot(aes(x = log_odds_weighted, y = word)) + 
+  geom_col() +
+  scale_y_reordered() +
+  facet_wrap(~ has_fatalities, scales = "free")
+
+acled_words %>%
+  anti_join(townships %>% 
+              mutate(word = tolower(township_name)) %>% 
+              select(word), by = "word") %>% 
+  count(admin1, word) %>% 
+  bind_tf_idf(word, admin1, n) %>% 
+  group_by(admin1) %>% 
+  top_n(tf_idf, n = 5) %>% 
+  ungroup() %>% 
+  mutate(word = reorder_within(word, tf_idf, admin1)) %>% 
+  ggplot(aes(x = tf_idf, y = word)) + 
+  geom_col() +
+  scale_y_reordered() +
+  facet_wrap(~ admin1, scales = "free")
+
+# log odds here is not very helpful; tf_idf is also not very helpful 
+acled_words %>%
+  left_join(townships %>% select(state_name, admin3_pcode), by = "admin3_pcode") %>% 
+  anti_join(townships %>% 
+              mutate(word = tolower(township_name)) %>%
+              select(word), by = "word") %>% 
+  anti_join(townships %>% select(state_name) %>% 
+              mutate(word = tolower(state_name)), by = "word") %>% 
+  count(state_name, word) %>% 
+  bind_log_odds(state_name, word, n) %>% 
+  group_by(state_name) %>% 
+  top_n(10, log_odds_weighted) %>% 
+  ungroup() %>%
+  ggplot(aes(x = log_odds_weighted, y = reorder_within(word, log_odds_weighted, state_name))) +
+  geom_col() +
+  scale_y_reordered() +
+  facet_wrap(~ state_name, scales = "free_y")
+
+
+```
+
+### effects on liveihoods
+
+```{r}
+acled_words %>% 
+  filter(word %out% c("township", "district", "myanmar", "region", "village", "town", "size", "report", "code", "coded",
+                      "dvb", "aapp", "total", "irrawaddy", "rfa", "tract", "kic", "voa", "bbc")) %>% 
+  distinct(data_id, word, fatalities) %>% 
+  group_by(word) %>% 
+  summarise(mean_fatalities = mean(fatalities),
+            n = n()) %>% 
+  filter(n >= 5) %>% 
+  arrange(desc(mean_fatalities))
+
+acled_words %>%  
+  filter(word %out% c("township", "district", "myanmar", "region", "village", "town", "size", "report", "code", "coded",
+                      "dvb", "aapp", "total", "irrawaddy", "rfa", "tract", "kic", "voa")) %>% 
+  distinct(data_id, word) %>% 
+  add_count(word) %>% 
+  filter(n >= 5) %>% 
+  pairwise_cor(word, data_id, sort = TRUE) %>% 
+  filter(correlation >= 0.2)
+
+acled %>% filter(year == 2021) %>% 
+  filter(str_detect(notes, "nationals")) %>% 
+  pull(notes)
+
+actors %>% filter(str_detect(actor1, "KIC"))
+
+actors %>% count(actor1)
+
+# this is interesting -- can you see if there is a pattern to the looting?
+acled %>% filter(year == 2021) %>% 
+  filter(str_detect(notes, "railway")) %>% 
+  sample_n(10) %>% 
+  pull(notes)
+
+acled %>%  filter(year == 2021 & admin1 == "Yangon") %>% 
+  top_n(20, wt = fatalities) %>% 
+  pull(notes)
+```
+
+```{r}
+# convoys, roads
+acled %>% filter(year == 2021) %>% 
+  filter(sub_event_type %out% c("Peaceful protest", "Change to group/activity")) %>% 
+  filter(str_detect(notes,"road|convoy| car|vehicle|truck|business|Business|Shop|shop|loot|Loot|mine|highway|bomb|street|confiscated|barricade|factory|neighbourhood|ward")) %>% 
+  mutate(sub_event_type = fct_lump(sub_event_type, 6)) %>% 
+  right_join(pcode3_shape, by = "admin3_pcode") %>% 
+  st_as_sf() %>% 
+  filter(!is.na(sub_event_type)) %>% 
+  ggplot() +
+  geom_sf(alpha = 0, size = 0.1) +
+  geom_point(aes(x = longitude, y = latitude, colour = sub_event_type, size = fatalities), alpha = 0.7) +
+  scale_colour_manual(values = c("#D95F02", "#7570B3", "#1B9E77", "#E7298A", "#E6AB02", "#66A61E", "#666666", "#A6761D")) +
+  scale_size_continuous(range = c(0.5, 3)) +
+  geom_sf(data = pcode1_shape, alpha = 0, colour = "black", size = 0.5) +
+  theme_void() +
+  guides(colour = guide_legend(override.aes = list(size = 5))) +
+  labs(title = "2021 Conflict events related to supply disruptions",
+       subtitle = "Events related to transport infrastructure and property destruction/looting",
+       caption = "Data source: ACLED: acleddata.com") + 
+  theme(plot.background = element_rect(fill = "white", colour = NA),
+        plot.caption = element_text(hjust = 0.5))
+
+
+```
+
+```{r}
+# just ignore this whole chunk -- this was for the data sharing protocols 
+
+fsc %>% 
+  mutate(partner_code = case_when(reporting_organization %in% c("ACTED", "AVSI", "Danish Refugee Council") ~ "org4478",
+                                  reporting_organization %in% c("ACTED", "Cordaid", "FAO") ~ "org0145",
+                                  reporting_organization %in% c("Mercy Corps", "Oxfam", "Karuna Mission Social Solidarity") ~ "org2091",
+                                  reporting_organization %in% c("Norwegian Refugee Council", "Trocaire") ~ "org0763",
+                                  reporting_organization %in% c("Save the Children", "Helvetas", "Action Contre la Faim") ~ "org9963",
+                                  TRUE ~ NA_character_)) %>%
+  mutate(activity2 = case_when(activity == "Cash for Work / Food for Assets" ~ "Shelter kits", 
+                              activity == "Provide monthly cash-based transfers" ~ "Hygiene kits", 
+                              activity == "Provide technical training" ~ "Education kits",
+                              activity == "Provide crops & vegetable kits" ~ "Multi-purpose cash",
+                              TRUE ~ NA_character_)) %>% 
+  filter(!is.na(partner_code) & !is.na(activity2)) %>% 
+  filter(unique_beneficiaries == "Yes") %>% 
+  ggplot(aes(x = partner_code, y = beneficiaries, fill = activity2)) + 
+  geom_col() +
+  scale_fill_brewer(palette = "Accent") +
+  scale_y_continuous(labels = comma) +
+  labs(fill = "activity", 
+       title = "Beneficiaries reached by partner")
+
+ggsave(filename = "./example_partner_tokens.png", dpi = 300, height = 4, width = 7, units = "in")
+  
+  
+```
+

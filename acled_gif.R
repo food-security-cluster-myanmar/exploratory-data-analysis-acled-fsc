@@ -50,7 +50,7 @@ anim_acled <- acled %>%
         plot.caption = element_text(hjust = 0.2)) + 
   transition_manual(month) +
   labs(title = "Conflict events in { current_frame }",
-       subtitle = "Showing the 6 most common interaction types\nPeaceful protests have been excluded",
+       subtitle = "Showing the 6 most common interaction types",
        caption = "Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com",
        colour = "interaction type")
 
@@ -81,4 +81,34 @@ static <- acled %>%
        caption = "Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com",
        colour = "interaction type")
 
-ggsave(filename = "./static_version_of_gif.png", dpi = 300, height = 16.5, width = 11.7, units = "in")
+ggsave(filename = "./static_version_of_gif.png", dpi = 300, height = 16.5, width = 11.7, units = "in") 
+
+# new gif for event types
+
+event_type <- acled %>%
+  filter(year == 2021) %>% 
+  mutate(month = floor_date(event_date, "month")) %>% 
+  mutate(month = map(month, ~ seq.Date(as.Date(.), as.Date("2021/12/01"), by = "month"))) %>% 
+  unnest(month) %>% 
+  mutate(month = format_ISO8601(month, precision = "ym")) %>%
+  # filter(sub_event_type != "Peaceful protest") %>% 
+  select(admin3_pcode, data_id, event_type, longitude, latitude, event_type, month, fatalities) %>% 
+  left_join(townships %>%  select(admin1_pcode, admin3_pcode), by = "admin3_pcode") %>% 
+  ggplot() + 
+  geom_sf(data = pcode1_shape, size = 0.5, colour = "black", alpha = 0) +
+  geom_point(aes(x = longitude, y = latitude, colour = event_type, size = fatalities)) +
+  # scale_colour_manual(values = c("#D95F02", "#7570B3", "#1B9E77", "#E7298A", "#E6AB02", "#00AFBB", "#666666", "#A6761D", "#66A61E")) +
+  theme_void() + 
+  guides(colour = guide_legend(override.aes = list(size = 5), order = 1)) +
+  theme(legend.text = element_text(size = 11), 
+        legend.title = element_text(face = "bold"),
+        plot.caption = element_text(hjust = 0.2)) + 
+  transition_manual(month) +
+  labs(title = "Types of conflict events in { current_frame }",
+       caption = "Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com",
+       colour = "event type")
+
+animate(event_type, width = 1748, height = 2480, res = 150, duration = 22)
+
+anim_save("event_type.gif")
+

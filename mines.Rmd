@@ -95,6 +95,21 @@ acled %>%
 ```
 
 
+```{r}
+acled %>% 
+  filter(year == 2021) %>% 
+  mutate(civ_involved = case_when(str_detect(actor1, "Civilian") ~ "yes",
+                                  str_detect(actor2, "Civilian") ~ "yes",
+                                  str_detect(notes, "civilian|villager|police|car|office|ward|Ward") ~ "yes",
+                                  str_detect(notes, "PDF|Defense|convoy|troop|army|Army|military|Military") ~ "no",
+                                  TRUE ~ "yes")) %>% 
+  filter(civ_involved == "yes") %>% 
+  group_by(event_type) %>% 
+  summarise(fatalities = sum(fatalities))
+  
+```
+
+
 ```{r fig.height = 10}
 # map 1
 acled %>% 
