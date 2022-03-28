@@ -77,7 +77,7 @@ static <- acled %>%
         plot.background = element_rect(fill = "white", colour = NA),
         plot.caption = element_text(hjust = 0.2)) +
   labs(title = "Conflict events in 2021 by type of interaction",
-       subtitle = "Showing the 6 most common interaction types\n Peaceful protests have been excluded",
+       subtitle = "Showing the 6 most common interaction types\nPeaceful protests have been excluded",
        caption = "Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com",
        colour = "interaction type")
 

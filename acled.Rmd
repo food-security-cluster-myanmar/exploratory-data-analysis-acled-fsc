@@ -1389,7 +1389,7 @@ conflict_score %>%
 
 <br><br>
 
-### 6.3 Township-level distributions of conflict events and fatalities
+### 6.3 Township-level distribution of conflict events and fatalities
 
 The scatterplot below shows the distribution of conflict events and fatalities by township. The means of both number of conflict events and number of fatalities have been marked by dotted red lines, dividing the plot into four quadrants. Whilst more detailed prioritisation is warranted, it is already very clear that interventions should be targeted at, above all, the 57 townships in the upper-right quadrant; that is, those which have experienced an above average number of conflict fatalities and events. More detailed information can be obtained from the township reference table in section 9.1.  
 
@@ -1649,7 +1649,7 @@ conflict_score %>%
 
 ## 8. Text mining the ACLED dataset
 
-### 8.1 Network graph of correlated words
+### 8.1 Network graph of conflict descriptions
 
 This chapter focuses on data mining the text within the column **`notes`** of the ACLED dataset, which contains a descriptions of each conflict event. For this first section, the relationships between individual words in the conflict descriptions have been presented in a network graph. Each word is a node and the opacity of the line denotes the strength of its correlation to other words (that is, the probability that they have been used to describe the same conflict event). Only words that have appeared more than 70 times in the dataset are shown: 
 
