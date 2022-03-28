@@ -83,7 +83,7 @@ The terminology employed with this report follows what has been laid out in the 
 * Atillio Benini, Aldo Benini (2021). mdepriv: Synthetic scores of multiple deprivation. R package version 0.0.3.  https://github.com/a-benini/mdepriv/.
 * Food Security Cluster, Myanmar (2021). 5Ws reporting tool.
 * HARP-F and MIMU (2018). Vulnerability in Myanmar: A Secondary Data Review of Needs, Coverage and Gaps. http://themimu.info/vulnerability-in-myanmar.
-IFPRI (2022). Agricultural value chains in a fragile state: the case of rice in Myanmar. https://www.ifpri.org/publication/agricultural-value-chains-fragile-state-case-rice-myanmar.
+* IFPRI (2022). Agricultural value chains in a fragile state: the case of rice in Myanmar. https://www.ifpri.org/publication/agricultural-value-chains-fragile-state-case-rice-myanmar.
 * Silge J, Robinson D (2016). tidytext: Text Mining and Analysis Using Tidy Data Principles in R. JOSS, 1(3). doi: 10.21105/joss.00037, http://dx.doi.org/10.21105/joss.00037.
 <br><br><br>
 
@@ -1317,7 +1317,6 @@ The numbers in the upper triangle are the specific numeric values of the blue an
 
 This is borne out in an examination of the lower triangle, where each point is a township and the red line shows the linear fit between each pair of variables. Most townships tend to be concentrated around the bottom-left quadrant of the chart, with many outliers. The steeper the gradient of red line, the stronger the correlation. 
 
-
 For instance, the two variables most highly-correlated with each other are violence against civilians and strategic developments: they share a correlation coefficient of 0.79, meaning that in 79% of the townships in which violence against civilians occurred, strategic developments also took place (the most common strategic developments were arrests and property damage). This relationship is statistically significant, that is to say, it was not by chance that these two types of conflict events tended to occur in the same places. 
 
 
@@ -1445,7 +1444,7 @@ ag_mali <- vulmmr %>%
 
 <br> 
 
-The last year in which detailed township-level agricultural statistics were made available was 2016, these were included in the MIMU-HARP report [Vulnerability in Myanmar](http://themimu.info/vulnerability-in-myanmar). It is also important to note that the main reason these statistics were released was due to the development of the 2015/2016 National Recovery Framework and Plan for Floods and Landslides, meaning that some of the values, especially related to area harvested, are anomalous. However, agricultural areas sown are unlikely to have shifted greatly in the past 6 years -- indeed, the sown area of paddy has only by 0.1% between 2015/2016 and 2018/2019 when comparing acres sown at the national level. 
+The last year in which detailed township-level agricultural statistics were made available was 2016, these were included in the MIMU-HARP report [Vulnerability in Myanmar](http://themimu.info/vulnerability-in-myanmar). It is also important to note that the main reason these statistics were released was due to the development of the 2015/2016 National Recovery Framework and Plan for Floods and Landslides, meaning that some of the values, especially related to area harvested, are anomalous. However, agricultural areas sown are unlikely to have shifted greatly in the past 6 years -- -- indeed, the sown area of paddy has only varied by 0.1% between 2015/2016 and 2018/2019 when being compared at the national level. 
 
 The plot below shows the state/regional breakdown of the total sown area in acres in 2015/2016 by major crop type. Ayeyarwady, Sagaing, Bago and Magway contain the main agricultural production areas of Myanmar. Though Mandalay, Magway and Sagaing show a much higher diversity of crop types compared to other states/regions which are dominated by paddy. 
 
