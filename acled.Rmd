@@ -1,5 +1,6 @@
 ---
-title: "Exploratory data analysis of conflict data and food security cluster presence"
+title: "An Analysis of ACLED Data"
+subtitle: "Understanding the Conflict Dynamics in Myanmar through Conflict and Incident Data: A Food Security Perspctive"
 author: "Myanmar Food Security Cluster"
 date: "11/02/2022"
 output: 
@@ -52,6 +53,7 @@ tribble(
   "HRP", "Humanitarian Response Plan",
   "IDP", "Internally Displaced Person", 
   "IERP", "Interim Emergency Response Plan",
+  "IFPRI", "International Food Policy Research Institute",
   "MIMU", "Myanmar Information Management Unit (UN RC's Office)",
   "NNGO", "National Non-governmental Organisation", 
   "OCHA", "UN Office for the Coordination of Humanitarian Affairs",
@@ -75,13 +77,14 @@ The terminology employed with this report follows what has been laid out in the 
 <br>
 
 ### References for this report
-* ACLED, (2019). Armed Conflict Location & Event Data Project (ACLED) Codebook. https://www.acleddata.com/wp-content/uploads/dlm_uploads/2017/10/ACLED_Codebook_2019FINAL_pbl.pdf
-* ACLED, (2022). ACLED data for Myanmar (2010-2022). https://acleddata.com
-* ACLED, (2020). ACLED Methodology and Coding Decisions around Political Violence in Myanmar. https://acleddata.com/acleddatanew/wp-content/uploads/2021/11/ACLED_Political-Violence-in-Myanmar_February-2020.pdf
-* Atillio Benini, Aldo Benini (2021). mdepriv: Synthetic scores of multiple deprivation. R package version 0.0.3.  https://github.com/a-benini/mdepriv/
+* ACLED, (2019). Armed Conflict Location & Event Data Project (ACLED) Codebook. https://www.acleddata.com/wp-content/uploads/dlm_uploads/2017/10/ACLED_Codebook_2019FINAL_pbl.pdf.
+* ACLED, (2022). ACLED data for Myanmar (2010-2022). https://acleddata.com.
+* ACLED, (2020). ACLED Methodology and Coding Decisions around Political Violence in Myanmar. https://acleddata.com/acleddatanew/wp-content/uploads/2021/11/ACLED_Political-Violence-in-Myanmar_February-2020.pdf.
+* Atillio Benini, Aldo Benini (2021). mdepriv: Synthetic scores of multiple deprivation. R package version 0.0.3.  https://github.com/a-benini/mdepriv/.
 * Food Security Cluster, Myanmar (2021). 5Ws reporting tool.
-* HARP-F and MIMU (2018). Vulnerability in Myanmar: A Secondary Data Review of Needs, Coverage and Gaps. http://themimu.info/vulnerability-in-myanmar
-* Silge J, Robinson D (2016). “tidytext: Text Mining and Analysis Using Tidy Data Principles in R.” JOSS, 1(3). doi: 10.21105/joss.00037, http://dx.doi.org/10.21105/joss.00037.
+* HARP-F and MIMU (2018). Vulnerability in Myanmar: A Secondary Data Review of Needs, Coverage and Gaps. http://themimu.info/vulnerability-in-myanmar.
+IFPRI (2022). Agricultural value chains in a fragile state: the case of rice in Myanmar. https://www.ifpri.org/publication/agricultural-value-chains-fragile-state-case-rice-myanmar.
+* Silge J, Robinson D (2016). tidytext: Text Mining and Analysis Using Tidy Data Principles in R. JOSS, 1(3). doi: 10.21105/joss.00037, http://dx.doi.org/10.21105/joss.00037.
 <br><br><br>
 
 
@@ -120,6 +123,7 @@ library(corrplot)
 library(RColorBrewer)
 library(treemap)
 library(treemapify)
+library(tidylo)
 
 theme_set(theme_light())
 
@@ -457,13 +461,15 @@ vulmmr <- read_excel("C:/Users/seany/Documents/R/mmr_5w_initial_observations/Dat
 
 ```
 
-
 ## 1. Progression of conflict events by interaction type in 2021
 
 The GIF  below shows 2021 conflict events by **month**. The colour of each point indicates the interaction type, which classify conflict events based on what type of actors were involved. The 6 most common interaction types have been included, with all the less frequent ones being recoded as "other". The number of fatalities associated with each event indicated by the size of each point.
 
+The type of interaction that resulted in the most fatalities were between the military and political militia (57% of fatalities), these were followed by military versus rebels (19%), then the military versus civilians (9%) and political militia versus civilians (8%). An alternative GIF, showing the progression of the conflict in 2021 by event type is shown in section 3.5. 
+
 <br>
 ![](acled4.gif)
+
 
 <br><br><br>
 
@@ -632,7 +638,7 @@ It is currently unknown what caused the relative dip in the intensity of conflic
 
 <br>
 
-```{r line-plot-sub-event-type-2021, fig.height=6}
+```{r line-plot-sub-event-type-2021, fig.height=5}
 acled %>% 
   filter(year == 2021) %>% 
   filter(sub_event_type != "Peaceful protest") %>% 
@@ -641,7 +647,7 @@ acled %>%
   summarise(count = n()) %>% 
   ggplot(aes(x = month, y = count, colour = sub_event_type, group = sub_event_type)) +
   geom_line(size = 0.7) + 
-  scale_colour_viridis_d(option = "turbo") + 
+  scale_colour_viridis_d(direction = -1, option = "turbo") + 
   labs(x = "Month", 
        y = "Number of conflict events", 
        title = "2021 conflict events by sub-event type (peaceful protests excluded)", 
@@ -816,9 +822,11 @@ acled %>%
  
 ```
 
-### 3.4 Progression of the conflict in 2021 by event type
+<br><br>
 
-The GIF  below shows 2021 conflict events by **month**. The colour of each point indicates the type of conflict event. The number of fatalities associated with each event is indicated by the size of each point. 
+### 3.5 Progression of the conflict in 2021 by event type
+
+The GIF  below shows 2021 conflict events by **month**. The colour of each point indicates the type of conflict event. The number of fatalities associated with each event is indicated by the size of each point. It is interesting to note that after the protests in February and March 2021, the conflict moves on to a new stage in April and May, visibly increasing in intensity. 
 
 <br>
 ![](event_type.gif)
@@ -1278,6 +1286,7 @@ conflict_score <- conflict_df %>%
               summarise(partners = n_distinct(implementing_partners),
                         beneficiaries = sum(beneficiaries[unique_beneficiaries == "Yes"])), by = "admin3_pcode")
 
+# conflict_score %>% do.call(data.frame, .) %>% as_tibble() %>% write_csv("conflict_score.csv")
 ```
 
 
@@ -1302,7 +1311,12 @@ conflict_score %>%
 
 <br>
 
-Additional detail is rendered in this next, larger correlation plot. It keeps all the same variables as the plot above, but just provide some more information -- the correlation coefficients are shown in the upper triangle (these are the specific numeric values of the blue and yellow circles above), with the asterisks denoting the level of statistical significance of these correlations; through the centre of the plot are histograms showing the distributions of each of these variables (for the conflict indicators, the bars are skewed to the left, showing that most townships tend to have low levels of conflict). This is borne out in an examination of the lower triangle where it can be observed that the points (each point is a township), tend to be clustered together with several outliers surrounding them. 
+Additional detail is rendered in this next, larger correlation plot. It keeps all the same variables as the plot above, but just provides some more information. The plot below is split into upper and lower triangles, divided down the diagonal by the histograms in blue. 
+
+The numbers in the upper triangle are the specific numeric values of the blue and yellow circles above, indicating the correlation coefficient (between +1 and -1), with the asterisks denoting the level of statistical significance of these correlations. The histograms down the diagonal show the distribution of each variable -- for the conflict variables, the bars are skewed to the left, indicating that most townships have relatively low levels of conflict. 
+
+This is borne out in an examination of the lower triangle, where each point is a township and the red line shows the linear fit between each pair of variables. Most townships tend to be concentrated around the bottom-left quadrant of the chart, with many outliers. The steeper the gradient of red line, the stronger the correlation. 
+
 
 For instance, the two variables most highly-correlated with each other are violence against civilians and strategic developments: they share a correlation coefficient of 0.79, meaning that in 79% of the townships in which violence against civilians occurred, strategic developments also took place (the most common strategic developments were arrests and property damage). This relationship is statistically significant, that is to say, it was not by chance that these two types of conflict events tended to occur in the same places. 
 
@@ -1357,7 +1371,7 @@ conflict_score %>%
   labs(x = "Number of beneficiaries",
        y = "Conflict score", 
        title = "Relationship between beneficiaries reached and conflict score at township level",
-       subtitle = "Higher conflict scores indicate more conflict events anf fatalities", 
+       subtitle = "Higher conflict scores indicate more conflict events and fatalities", 
        caption = "Data sources: Armed Conflict Location & Event Data Project (ACLED); acleddata.com and Food Security Cluster Myanmar") +
   theme(plot.caption = element_text(hjust = 0.5))
 ```
@@ -1378,50 +1392,28 @@ conflict_score %>%
 
 ### 6.3 Township-level distributions of conflict events and fatalities
 
-These two histograms shows the distribution of conflict events and fatalities per township. Additional analysis will be performed at a later date. However, townships with more than 100 conflict events should be considered priorities for humanitarian action. More detailed information can be obtained from the township reference table in section 9.1.  
+The scatterplot below shows the distribution of conflict events and fatalities by township. The means of both number of conflict events and number of fatalities have been marked by dotted red lines, dividing the plot into four quadrants. Whilst more detailed prioritisation is warranted, it is already very clear that interventions should be targeted at, above all, the 57 townships in the upper-right quadrant; that is, those which have experienced an above average number of conflict fatalities and events. More detailed information can be obtained from the township reference table in section 9.1.  
 
 <br>
 
-```{r histogram-conflict-events}
-acled %>% 
+```{r scatterplot-events-fatalities-tsp}
+acled %>%
   filter(year == 2021 & sub_event_type != "Peaceful protests") %>% 
-  group_by(admin1, admin3) %>% 
+  group_by(admin3_pcode) %>% 
   summarise(events = n(),
             fatalities = sum(fatalities)) %>% 
-  arrange(desc(events)) %>% 
-  ggplot(aes(x = events)) + 
-  geom_histogram() + 
-  labs(x = "Number of conflict events",
-       y = "Number of townships", 
-       title = "Histogram of conflict events by township",
-       subtitle = "Peaceful protests have been excluded",
-       caption = "Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com") + 
-  theme(plot.caption = element_text(hjust = 0.5))
+  ggplot(aes(x = events, y = fatalities)) +
+  geom_point(aes(size = fatalities, colour = events)) +
+  scale_colour_viridis(option = "magma", direction = -1) +
+  scale_y_continuous(breaks = seq(0, 500, by = 100)) +
+  geom_hline(aes(yintercept = mean(fatalities)), colour = "red", lty = 2) +
+  geom_vline(aes(xintercept = mean(events)), colour = "red", lty = 2) +
+  labs(x = "Conflict events", 
+       y = "Fatalities",
+       title = "Conflict events and fatalities by township", 
+       subtitle = "Means of both axes are marked by the dotted red line")
   
-```
-
-<br>
-
-Similar to the plot above on conflict events, there are some very clear outliers in terms of fatalities. It would also be important to establish thresholds (with the conflict score or any of its constituent components) and target heavily-affected areas for humanitarian intervention -- at least, all townships with more than 100 conflict fatalities should be prioritised. 
-
-<br>
-
-```{r histogram-fatalities}
-acled %>% 
-  filter(year == 2021) %>% 
-  group_by(admin1, admin3) %>% 
-  summarise(events = n(),
-            fatalities = sum(fatalities)) %>% 
-  arrange(desc(events)) %>% 
-  ggplot(aes(x = fatalities)) + 
-  geom_histogram() + 
-  scale_x_continuous(breaks = seq(0, 600, by = 100)) + 
-  labs(x = "Number of conflict-related fatalities",
-       y = "Number of townships", 
-       title = "Histogram of conflict-related fatalities by township", 
-       caption = "Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com") + 
-  theme(plot.caption = element_text(hjust = 0.5))
-
+  
 ```
 
 
@@ -1453,9 +1445,9 @@ ag_mali <- vulmmr %>%
 
 <br> 
 
-The last year in which detailed township-level agricultural statistics were made available was 2016, these were included in the MIMU-HARP report [Vulnerability in Myanmar](http://themimu.info/vulnerability-in-myanmar). It is also important to note that the main reason these statistics were released was due to the development of the 2015/2016 National Recovery Framework and Plan for Floods and Landslides, meaning that some of the values, especially related to area harvested, are anomalous. However, agricultural areas sown are unlikely to have shifted greatly in the past 6 years. 
+The last year in which detailed township-level agricultural statistics were made available was 2016, these were included in the MIMU-HARP report [Vulnerability in Myanmar](http://themimu.info/vulnerability-in-myanmar). It is also important to note that the main reason these statistics were released was due to the development of the 2015/2016 National Recovery Framework and Plan for Floods and Landslides, meaning that some of the values, especially related to area harvested, are anomalous. However, agricultural areas sown are unlikely to have shifted greatly in the past 6 years -- indeed, the sown area of paddy has only by 0.1% between 2015/2016 and 2018/2019 when comparing acres sown at the national level. 
 
-The plot below shows the state/regional breakdown of the total sown area in acres in 2015 by major crop type. Ayeyarwady, Sagaing, Bago and Magway contain the main agricultural production areas of Myanmar. Though Mandalay, Magway and Sagaing show a much higher diversity of crop types compared to other states/regions which are dominated by paddy. 
+The plot below shows the state/regional breakdown of the total sown area in acres in 2015/2016 by major crop type. Ayeyarwady, Sagaing, Bago and Magway contain the main agricultural production areas of Myanmar. Though Mandalay, Magway and Sagaing show a much higher diversity of crop types compared to other states/regions which are dominated by paddy. 
 
 <br>
 
@@ -1529,11 +1521,15 @@ vulmmr %>%
 
 ### 7.2 Conflict index and agriculture
 
-To visualise the intersection of acres of land sown and the newly-recalculated conflict index, the treemap below shows townships according to the total area sown in them (size) and the severity of conflict (colour). 
+Conflict has a real effect on food prices, as demonstrated by the International Food Policy Research Institute (IFPRI) in their working paper [Agricultural value chains in a fragile state: the case of rice in Myanmar](https://www.ifpri.org/publication/agricultural-value-chains-fragile-state-case-rice-myanmar). IFPRI noted that whilst neither paddy nor milled rice had not seen any major price changes after the coup, the retail price of rice has been noticeably higher since the coup. This is in line with a steep increase in food vendors surveyed experiencing "local farmer supply difficulties" and "outside village supply difficulties. 
 
-Agricultural areas in Ayeyarwady, Bago, Yangon, Rakhine and Shan (East) have been the least affected by conflict events and fatalities, indicating that access to fields has not been disrupted and existing programme designs (focused on improving livelihoods) may be sufficient in these areas. 
+All this indicates that the conflict has been impacting agricultural supply chains and prices -- an 11% increase in the retail prices of rice were noted after the coup. IFPRI noted that "an additional 10 violent events in the month-of and month before price measurement was associated with a 1 and 2 percent increase in price dispersion at the mill and vendor levels [...] the impact of 10 violent events is approximately equivalent to a 167-333 km of distance between mills and vendors." 
 
-However, to ensure food security in Sagaing, Magway, Mandalay, Mon, Kayin, Kachin, Kayah, Tanintharyi and Shan North and Shan South, livelihood programming should be predicated on safe access to agricultural land and markets. Food and cash distributions might also be necessary for extended periods of time in several of the more heavily-affected areas. The necessity for mine-risk education for farmers should also be investigated in these areas, especially where farmers continue to attend fields which might be contaminated by UXOs. 
+In light of these findings, the FSC visualises below the intersection of acres of land sown and the newly-recalculated conflict index. The treemap below shows **townships** according to their state/region and the total area sown in them (size of the rectangle) and the severity of conflict (colour).  
+
+To ensure food security in Sagaing, Magway, Mandalay, Mon, Kayin, Kachin and Kayah, livelihood programming should be predicated on safe access to agricultural land and markets. A more thorough analysis of market access in these areas is warranted; facilitating access between producers, millers and vendors in these areas will contribute to the stabilisation of prices. There is also the necessity for mine-risk education as many areas might be contaminated by UXOs (see the GIF in section [3.4](https://food-security-cluster-myanmar.github.io/exploratory-data-analysis-acled-fsc/#progression-of-conflict-events-by-event-type-in-2021) to see where explosions and remote violence have occurred). 
+
+Agricultural areas in Ayeyarwady, Bago, Yangon, Rakhine and Shan (East) have been less affected by conflict events and fatalities, indicating that access to fields and markets not been disrupted and existing livelihoods programme designs may be sufficient in these areas. 
 
 <br> 
 
@@ -1570,7 +1566,7 @@ vulmmr %>%
 
 The next treemap uses the same area scale as the one above (where the size corresponds to the acres of agricultural land sown), but the colours of each township have been recalculated to reflect the net margins that townships earn in 2015/2016 from agricultural production. It bears mentioning again that the net margins in 2015/2016 were anomalous, with the country having been affected by widespread and severe flooding and landslides. 
 
-Of note, though is that is that whilst Ayeyarwady has the largest cultivated area of all the states and regions, its share of the net margins per acre tended to be lower than in many other parts of the country. This is largely due to the much higher levels of crop diversification in Magway and Sagaing or rather, the predominance of paddy cultivation in Ayeyarwady. 
+Of note is that is that whilst Ayeyarwady has the largest cultivated area of all the states and regions, its share of the net margins per acre tended to be lower than in many other parts of the country. This is largely due to the much higher levels of crop diversification in Magway and Sagaing or rather, the predominance of paddy cultivation in Ayeyarwady. 
 
 <br>
 
@@ -1604,7 +1600,7 @@ vulmmr %>% select(all_net_margin = all_harvested_net_margin_usd, all_area_harves
 
 Click **[here](https://food-security-cluster-myanmar.github.io/acled_maps/)** to see interactive versions of these maps. Please note that these maps are quite large and will take a long time to load. Static versions are found below. 
 
-```{r fig.height = 10}
+```{r fig.height = 10, patchwork-ag-conflict-maps}
 
 ag_mali %>% 
   group_by(township_pcode) %>% 
@@ -1656,7 +1652,7 @@ conflict_score %>%
 
 ### 8.1 Network graph of correlated words
 
-This chapter focuses on data mining the text within the column **`notes`** of the ACLED dataset, which contains a descriptions of each conflict event. For this first section, it is of interest to the FSC to visualise all the relationships amongst word simultaneously and have arranged these words into a network graph. Below, each word from the conflict description is a node and the opacity of the line denotes the strength of its correlation to other words (that is, the probability that they have been used to describe the same conflict event): 
+This chapter focuses on data mining the text within the column **`notes`** of the ACLED dataset, which contains a descriptions of each conflict event. For this first section, the relationships between individual words in the conflict descriptions have been presented in a network graph. Each word is a node and the opacity of the line denotes the strength of its correlation to other words (that is, the probability that they have been used to describe the same conflict event). Only words that have appeared more than 70 times in the dataset are shown: 
 
 <br>
 
@@ -1665,19 +1661,49 @@ click **[here](https://raw.githubusercontent.com/food-security-cluster-myanmar/e
 
 <br>
 
-Several interesting clusters are noticed: the first of which clusters around *protests* and is linked to words such as *coup* and *disobedience*, below it is another closely related cluster containing the words *live*, *rubber*, *bullets*, *disperse* and *crowd*. It can be fairly easily surmised that these words are related to conflict events surrounding the February 2021 coup and the mass demonstrations in response to it -- the word *February* is also closely linked with these clusters. 
+The first cluster of note is around the word "protests", these are linked to words such as "coup" and "disobedience";  below it is another closely-related cluster containing the words "live", "rubber", "bullets", "disperse" and "crowd". It can be fairly easily surmised that these words are related to conflict events surrounding the February 2021 coup and the mass demonstrations in response to it -- the word "February" is also closely linked with these clusters. 
 
-Another cluster of note centres around the words *remote*, *controlled* and *explosives*, and is closely linked to the words *convoy*, *trucks* and *landmines* --- these words are likely linked to events where military convoys were bombed and ambushed by People's Defence Forces. 
+Another cluster of note centres around the words "remote", "controlled" and "explosives", and is closely linked to the words "convoy", "trucks" and "landmines" --- these words are likely linked to events where military convoys were bombed and ambushed by People's Defence Forces. 
 
-There is also the Kachin cluster, centred around *Myitkyina*, *Waingmaw*, *Monhyin*, *Hpakant*, *Bhamo* and the *KIA*, the Kachin Independence Army. Noticeably, this cluster also has links with the words *battalion* and *jet* and *fighters*. 
+There is also the Kachin cluster, centred around "Myitkyina", "Waingmaw", "Monhyin", "Hpakant", "Bhamo" and the "KIA", the Kachin Independence Army. Noticeably, this cluster also has links with the words "battalion" and "jet" and "fighters". 
 
-This network graph is not intended to be an exhaustive record of the conflict events in 2021 and merely intends to provide an overview: only words which appeared more than 70 times in the ACLED dataset and had a correlation of 0.2 or more were included. These thresholds were chosen to improve the readability of the graph, but the inclusion of words with too few occurrences might also to spurious correlations. Click on the link to see the graph at full-size and explore it further. 
+This network graph is not intended to be an exhaustive record of the conflict events in 2021 and merely intends to provide an overview: only words which appeared more than 70 times in the ACLED dataset and had a correlation of 0.2 or more were included. The inclusion of words with too few occurrences might also include those with spurious correlations;but the readability of the graph was also a factor. Click on the link to see the graph at full-size and explore it further. 
+
+As a minor addendum to the network graph, the plot below shows the top 20 words most likely to be associated with each type of conflict event. For instance, the word "clashed" is most likely to appear in the descriptions of battles than any of the other event types. 
+
+<br>
+
+```{r facet-log-odds-event-type, fig.height=6.5}
+acled_words %>%
+  filter(word %out% c("fatality", "coded", "death", "village", "township", "district", "villages",
+                      "town", "tract", "fatalities", "dvb", "aapp", "total", "irrawaddy", "rfa", "died",
+                      "killing", "killed", "dead", "event", "events", "casualty", "casualties",
+                      "size", "code", "report", "myanmar","coded")) %>% 
+  mutate(has_fatalities = ifelse(fatalities > 0, "yes", "no")) %>% 
+  count(event_type, word) %>% 
+  bind_log_odds(event_type, word, n) %>% 
+  group_by(event_type) %>% 
+  top_n(20, log_odds_weighted) %>% 
+  ungroup() %>% 
+  mutate(word = reorder_within(word, log_odds_weighted, event_type)) %>% 
+  ggplot(aes(x = log_odds_weighted, y = word, fill = event_type)) + 
+  geom_col() +
+  scale_y_reordered() +
+  facet_wrap(~ event_type, scales = "free") + 
+  theme(legend.position = "none",
+        plot.caption = element_text(hjust = 0.5)) +
+  labs(title = "Top 20 words by event type",
+       subtitle = "Odds of words used to describe conflict events",
+       caption = "Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com", 
+       y = "")
+```
+
 
 <br><br>
 
 ### 8.2 Pairwise correlations 
 
-To complement the network graph above, the table below shows correlations between individual words in the ACLED dataset conflict descriptions -- this is especially useful if there is a word of interest that the reader would like to explore in further detail. To reduce the size of table loaded, only words which have appeared more than 50 times in 2021 and only the top 20 matches per word have been included. A correlation of 1 means that the word always appears with its match in the dataset; a correlation of 0.5 means that the word appears in the same event as its match 50% of the time. 
+To complement the network graph above, the table below shows correlations between individual words in the ACLED dataset conflict descriptions (that is, how often they were used to describe the same event) -- this is especially useful if there is a word of interest that the reader would like to explore in further detail. To reduce the size of table loaded, only words which have appeared more than 50 times in 2021 and only the top 20 matches per word have been included. A correlation of 1 means that the word always appears with its match in the dataset; a correlation of 0.5 means that the word appears in the same event as its match 50% of the time. 
 
 Use the filter above the column **`word`** to try out different words -- try starting with "artillery", "protest", "landmine" or a location of interest. All words are in lower case. The search bar will look in both columns and may prove less useful than the filter bar. 
 
@@ -1712,6 +1738,42 @@ acled_words %>%
   formatRound(c("correlation"), digits = 3)
 
 ```
+
+<br>
+
+As a minor addendum, below is a plot of the top 30 words associated with conflict events that resulted in fatalities ("yes", in red) and those that did not ("no", in blue). They are ranked below in order of their odds of being described conflict events that did and did not result in fatalities -- with reference to the plot below, the words "shot", "soldiers", "injured", "PDF" and "military are the most likely to be be used in descriptions of conflict events that resulted in fatalities. The words "displacement", "change", "formed", "arrested" and "offices" were least likely to be used to describe events that resulted in fatalities. 
+
+An interesting next step might be to try and develop a predictive model based on the various conflict descriptions to understand which types of events are more likely to result in conflict fatalities. 
+
+<br>
+
+```{r facet_has_fatalities, fig.height = 6}
+acled_words %>%
+  filter(sub_event_type != "Peaceful protest") %>% 
+  filter(word %out% c("fatality", "coded", "death", "village", "township", "district", "villages",
+                      "town", "tract", "fatalities", "dvb", "aapp", "total", "irrawaddy", "rfa", "died",
+                      "killing", "killed", "dead", "event", "events", "casualty", "casualties",
+                      "size", "code", "report", "myanmar","coded")) %>% 
+  mutate(has_fatalities = ifelse(fatalities > 0, "yes", "no"),
+         has_fatalities = fct_rev(has_fatalities)) %>% 
+  count(has_fatalities, word) %>% 
+  bind_log_odds(has_fatalities, word, n) %>% 
+  group_by(has_fatalities) %>% 
+  top_n(30, log_odds_weighted) %>% 
+  ungroup() %>% 
+  mutate(word = reorder_within(word, log_odds_weighted, has_fatalities)) %>% 
+  ggplot(aes(x = log_odds_weighted, y = word, fill = has_fatalities)) + 
+  geom_col() +
+  scale_y_reordered() +
+  facet_wrap(~ has_fatalities, scales = "free") + 
+  theme(legend.position = "none",
+        plot.caption = element_text(hjust = 0.5)) +
+  labs(title = "Top 30 words by whether the event resulted in fatalities",
+       subtitle = "Odds of words used to describe conflict events with and without fatalities",
+       caption = "Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com",
+       y = "")
+```
+
 
 <br><br>
 

@@ -16,6 +16,7 @@ library(stringi)
 library(ggraph)
 library(ggridges)
 library(tidylo)
+library(ggrepel)
 
 acled_words <- acled %>% 
   filter(year == 2021) %>% 
@@ -610,27 +611,68 @@ acled_words_mine %>%
 
 ```
 
-### fatalities
+### event types
 
 ```{r}
-# this is a little more helpful
 acled_words %>%
-  # filter(sub_event_type != "Peaceful protest") %>% 
   filter(word %out% c("fatality", "coded", "death", "village", "township", "district", "villages",
                       "town", "tract", "fatalities", "dvb", "aapp", "total", "irrawaddy", "rfa", "died",
                       "killing", "killed", "dead", "event", "events", "casualty", "casualties",
                       "size", "code", "report", "myanmar","coded")) %>% 
   mutate(has_fatalities = ifelse(fatalities > 0, "yes", "no")) %>% 
+  count(event_type, word) %>% 
+  bind_log_odds(event_type, word, n) %>% 
+  group_by(event_type) %>% 
+  top_n(20, log_odds_weighted) %>% 
+  ungroup() %>% 
+  mutate(word = reorder_within(word, log_odds_weighted, event_type)) %>% 
+  ggplot(aes(x = log_odds_weighted, y = word, fill = event_type)) + 
+  geom_col() +
+  scale_y_reordered() +
+  facet_wrap(~ event_type, scales = "free") + 
+  theme(legend.position = "none") +
+  labs(title = "Odds of words used to describe conflict events",
+       subtitle = "Top 20 words by event type",
+       caption = "Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com")
+
+acled %>% 
+  filter(year == 2021) %>% 
+  filter(str_detect(notes, "food")) %>% 
+  sample_n(10) %>% 
+  pull(notes)
+
+```
+
+
+
+### fatalities
+
+```{r}
+# this is a little more helpful
+acled_words %>%
+  filter(sub_event_type != "Peaceful protest") %>% 
+  filter(word %out% c("fatality", "coded", "death", "village", "township", "district", "villages",
+                      "town", "tract", "fatalities", "dvb", "aapp", "total", "irrawaddy", "rfa", "died",
+                      "killing", "killed", "dead", "event", "events", "casualty", "casualties",
+                      "size", "code", "report", "myanmar","coded")) %>% 
+  mutate(has_fatalities = ifelse(fatalities > 0, "yes", "no"),
+         has_fatalities = fct_rev(has_fatalities)) %>% 
   count(has_fatalities, word) %>% 
   bind_log_odds(has_fatalities, word, n) %>% 
   group_by(has_fatalities) %>% 
-  top_n(50, log_odds_weighted) %>% 
+  top_n(30, log_odds_weighted) %>% 
   ungroup() %>% 
   mutate(word = reorder_within(word, log_odds_weighted, has_fatalities)) %>% 
-  ggplot(aes(x = log_odds_weighted, y = word)) + 
+  ggplot(aes(x = log_odds_weighted, y = word, fill = has_fatalities)) + 
   geom_col() +
   scale_y_reordered() +
-  facet_wrap(~ has_fatalities, scales = "free")
+  facet_wrap(~ has_fatalities, scales = "free") + 
+  theme(legend.position = "none",
+        plot.caption = element_text(hjust = 0.5)) +
+  labs(title = "Odds of words used to describe conflict events with and without fatalities",
+       subtitle = "Top 30 words by whether the event resulted in fatalities",
+       caption = "Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com",
+       y = "")
 
 acled_words %>% count(fatalities)
 
@@ -658,15 +700,19 @@ acled %>% filter(year == 2021) %>% count(fatalities)
 ```{r}
 acled_words %>% 
   filter(sub_event_type != "Peaceful protest") %>% 
-  mutate(fatalities_bin = case_when(fatalities == 0 ~ "0", 
-                                    fatalities == 1 ~ "1", 
-                                    fatalities > 1 & fatalities < 6 ~ "2-5", 
-                                    fatalities > 5 & fatalities < 11 ~ "5-10", 
-                                    fatalities > 10 & fatalities < 21 ~ "11-20", 
-                                    fatalities > 20 & fatalities < 31 ~ "21-30", 
-                                    fatalities > 30 & fatalities < 51 ~ "31-50",
+  # mutate(fatalities_bin = case_when(fatalities == 0 ~ "0", 
+  #                                   fatalities == 1 ~ "1", 
+  #                                   fatalities > 1 & fatalities < 6 ~ "2-5", 
+  #                                   fatalities > 5 & fatalities < 11 ~ "5-10", 
+  #                                   fatalities > 10 & fatalities < 21 ~ "11-20", 
+  #                                   fatalities > 20 & fatalities < 31 ~ "21-30", 
+  #                                   fatalities > 30 & fatalities < 51 ~ "31-50",
+  #                                   fatalities > 50 ~ "51-88")) %>% 
+  mutate(fatalities_bin = case_when(fatalities == 0 ~ "0",
+                                    fatalities > 0 & fatalities < 6 ~ "1-5", 
+                                    fatalities > 5 & fatalities < 51 ~ "5-50",
                                     fatalities > 50 ~ "51-88")) %>% 
-  mutate(fatalities_bin = fct_relevel(fatalities_bin, c("0", "1", "2-5", "5-10", "11-20", "21-30", "31-50", "51-99", ">=100"))) %>% 
+  # mutate(fatalities_bin = fct_relevel(fatalities_bin, c("0", "1", "2-5", "5-10", "11-20", "21-30", "31-50", "51-99", ">=100"))) %>% 
   filter(word %out% c("fatality", "coded", "death", "village", "township", "district", "villages",
                       "town", "tract", "fatalities", "dvb", "aapp", "total", "irrawaddy", "rfa", "died",
                       "killing", "killed", "dead", "event", "events", "casualty", "casualties",
@@ -684,6 +730,30 @@ acled_words %>%
 
   
 ```
+
+```{r}
+# this is not bad
+acled %>% 
+  filter(year == 2021) %>% 
+  group_by(sub_event_type, event_type) %>% 
+  summarise(mean_fatalities = mean(fatalities),
+            count = n()) %>% 
+  ungroup() %>% 
+  filter(count != 0) %>%
+  mutate(sub_event_type = fct_reorder(sub_event_type, mean_fatalities)) %>% 
+  ggplot(aes(x = count, fill = mean_fatalities, y = sub_event_type)) +
+  geom_col() +
+  geom_text(aes(label = round(mean_fatalities, digits = 2)), size = 2.5, hjust = -0.3) +
+  scale_fill_viridis(direction = -1) +
+  scale_x_continuous(trans = "log10", label = scales::comma_format(accuracy = 1)) +
+  labs(fill = "mean\nfatalities",
+       title = "Average fatalities per sub event type",
+       y = "", 
+       x = "Number of events in 2021") + 
+  theme(legend.position = "none")
+ 
+```
+
 
 ```{r}
 
@@ -835,5 +905,30 @@ fsc %>%
 ggsave(filename = "./example_partner_tokens.png", dpi = 300, height = 4, width = 7, units = "in")
   
   
+```
+
+```{r}
+fsc %>% filter(str_detect(township, "ggyi")) %>% distinct(township)
+
+fsc %>% filter(township == "Thandaunggyi") %>% 
+  filter(implementing_partners == "AVSI") %>% pull(date)
+  group_by(delivery_modality) %>% 
+  filter(unique_beneficiaries == "Yes") %>% 
+  summarise(beneficiaries = sum(beneficiaries))
+  
+```
+
+```{r}
+fsc %>% filter(str_detect(state, "Bago")) %>% 
+  distinct(implementing_partners)
+
+fsc %>% filter(str_detect(state, "Bago")) %>% distinct(state)
+
+fsc %>% count(implementing_partners)
+fsc %>% filter(str_detect(implementing_partners, "order"))
+```
+
+```{r}
+
 ```
 

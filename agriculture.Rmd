@@ -7,14 +7,6 @@ output: html_document
 knitr::opts_chunk$set(echo = FALSE)
 ```
 
-```{r}
-get_png <- function(filename) {
-  grid::rasterGrob(png::readPNG(filename), interpolate = TRUE)
-}
-
-logo <- get_png("Myanmar_cluster_blue.png")
-```
-
 
 ### Agriculture
 
@@ -44,6 +36,15 @@ vulmmr <- read_excel("C:/Users/seany/Documents/R/mmr_5w_initial_observations/Dat
   select(-starts_with("x")) %>% 
   select(-c(private_sector_development_2014_2015, protection_2010_2015, shelter_2010_2015, wash_2010_2015))
 ```
+
+```{r}
+indicator_guide %>% filter(category == "VULNERABILITY ASSESSMENT")
+  count(category)
+  filter(category == "Natural disasters")
+
+vulmmr %>% glimpse()
+```
+
 
 ```{r}
 indicator_guide %>% count(category)
@@ -155,6 +156,8 @@ ag_ord <- ag_mali %>%
 ```
 
 
+
+
 ```{r}
 ag_mali %>% 
   group_by(state_region_name, crop_type) %>% 
@@ -177,6 +180,27 @@ ag_mali %>%
 
 ggsave(filename = "./agriculture_barplot.png", dpi = 300, width = 11, units = "in")
 
+```
+
+
+```{r}
+vulmmr %>%
+  select(state_region_name, state_region_pcode, township_name, admin3_pcode = township_pcode, 
+         contains("mali"), contains("sown_area"),
+         all_harvested_net_margin_usd, sown_area_of_paddy_acres) %>%
+  group_by(state_region_name) %>% 
+  summarise(sown_area_paddy = sum(sown_area_of_paddy_acres, na.rm = TRUE),
+            townships = n())
+  filter(state_region_name == "Sagaing") %>% 
+  summarise(sown_area = sum(sown_area_of_paddy_acres, na.rm = TRUE))
+ summarise(paddy_sown = sum(sown_area_of_paddy_acres, na.rm = TRUE))
+  filter(all_area_sowed_mali > 0) %>% 
+  filter(township_name == "Khin-U")
+  summarise(sown_area = sum(all_area_sowed_mali))
+
+townships %>% count(township_name)
+
+(17861055 - 17640351) / 17640351
 ```
 
 
