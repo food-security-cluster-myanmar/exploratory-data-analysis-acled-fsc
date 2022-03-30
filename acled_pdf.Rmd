@@ -43,9 +43,16 @@ tribble(
   kable_styling(latex_options = c("HOLD_position"), position = "left", full_width = FALSE)
 ```
 
-<br>
+\newpage
 
 ## Introduction
+
+According to Armed Conflict Location and Event Data Project (ACLED), Myanmar had the highest number of conflict events in 2021 out of any country. The plot below shows the yearly trends of the top 10 countries by number of conflict events (excluding peaceful protests where no fatalities or property destruction was reported). In 2021, more conflict events were recorded in Myanmar than in Syria. Though its top ranking may be superseded by the Russo-Ukrainian war in 2022, Myanmar remains one of the most critical global conflict hotspots. 
+
+<br>
+![](all_acled_2010_2021.png)
+
+<br>
 
 This report provides an overview of the Armed Conflict Location and Event Data Project (ACLED) dataset for Myanmar. This dataset contains information on conflict actors, conflict events, event types, event locations and fatalities dating back to 2010. The data is updated on a monthly basis. With some notable exceptions, this report is largely focused on 2021 data. 
 
@@ -1095,28 +1102,25 @@ actors %>%
 
 ### 5.3 Which actors are associated with the most fatalities?
 
-The table below summarises the number of fatalities and conflict events associated with the largest actors. The table has been sorted in descending order of number of fatalities; only actors associated with more than 100 fatalities are shown and all other actors have been lumped together as "Other". 
+The table below summarises the number of fatalities associated with interactions between pairs of actors. Only the top 20 pairs in terms of fatalities have been printed. Worryingly, civilians show up quite prominently in this list, both in interactions between them and the Military as well as with Unidentified Armed Groups fighting the Military. 
 
-```{r table-fatalities-summary}
+<br>
+
+```{r table-actor-pairs-fatalities}
+
 actors %>% 
   filter(year == 2021) %>% 
-  group_by(actor_simple) %>% 
-  summarise(fatalities = sum(fatalities),
-            events = n()) %>% 
-  mutate(actor_simple = ifelse(fatalities >= 100, actor_simple, "Other")) %>% 
-  group_by(actor_simple) %>% 
-  summarise(fatalities = sum(fatalities),
-            events = sum(events)) %>%
-  left_join(actors %>% select(actor_simple, inter1) %>% distinct(), by = "actor_simple") %>% 
-  mutate(actor_simple = str_remove(actor_simple, "\\:.*"),
-         fatalities_per_event = round(fatalities / events, digits = 2)) %>% 
-  select(actor = actor_simple, actor_type = inter1, fatalities, events, fatalities_per_event) %>% 
-  arrange(desc(fatalities)) %>% 
-  kable(caption = "Top 2021 actors in terms of fatalities; actors associated with less than 100 fatalities have been lumped together as 'Other'",
+  filter(sub_event_type != "Peaceful protest") %>% 
+  pairwise_count(actor_simple, data_id, sort = TRUE, upper = FALSE, wt = fatalities) %>% 
+  transmute(actor1 = item1, 
+            actor2 = item2,
+            fatalities = n) %>% 
+  head(20) %>% 
+  kable(caption = "Conflict actor pairs with the highest fatalities in 2021", 
         format.args = list(big.mark = ","), booktabs = TRUE) %>% 
-  footnote(general = "Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com", 
-           general_title = "") %>% 
+  footnote("Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com", general_title = "") %>% 
   kable_styling(latex_options = c("HOLD_position"))
+
 
 ```
 

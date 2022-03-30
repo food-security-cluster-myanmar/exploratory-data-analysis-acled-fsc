@@ -68,7 +68,14 @@ tribble(
 
 ## Introduction
 
-This report provides an overview of the Armed Conflict Location and Event Data Project (ACLED) dataset for Myanmar. This dataset contains information on conflict actors, conflict events, event types, event locations and fatalities dating back to 2010. The data are updated on a monthly basis. With some notable exceptions, this report is largely focused on 2021 data. 
+According to Armed Conflict Location and Event Data Project (ACLED), Myanmar had the highest number of conflict events in 2021 out of any country. The plot below shows the yearly trends of the top 10 countries by number of conflict events (excluding peaceful protests). In 2021, more conflict events were recorded in Myanmar than in Syria. Though it might be superseded by the Russo-Ukrainian war in 2022, Myanmar remains one of the most critical global conflict hotspots. 
+
+<br>
+![](all_acled_2010_2021.png)
+
+<br>
+
+In light of this, a deeper exploration of conflict data is warranted. this reported provides an overview of the ACLED dataset for Myanmar and its impact on food security programming. This dataset contains information on conflict actors, conflict events, event types, event locations and fatalities dating back to 2010. The data are updated on a monthly basis. With some notable exceptions, this report is largely focused on 2021 data. 
 
 The aim of ACLED is "to capture the forms, agents, dates and locations of political violence and protests"; its methodology for Myanmar consists of the review of English and Myanmar sources to code political violence and demonstration events: the vast majority (85%) of their information originates from subnational, national and international media sources, with the remainder originating from ACLED's partnership with the Myanmar Peace Monitor and reports by the UN, international monitoring groups and local human rights organisations. Points of alignment and divergence from the conflict events collected by the Nexus Response Mechanism's Conflict Analysis and Research Facility remain to be explored.
 
@@ -1104,36 +1111,28 @@ actors %>%
 
 ### 5.3 Which actors are associated with the most fatalities?
 
-The table below summarises the number of fatalities and conflict events associated with the largest actors. The table has been sorted in descending order of number of fatalities; only actors associated with more than 100 fatalities are shown and all other actors have been lumped together as "Other". 
+The table below summarises the number of fatalities associated with interactions between pairs of actors. Only the top 20 pairs in terms of fatalities have been printed. Worryingly, civilians show up quite prominently in this list, both in interactions between them and the Military as well as with Unidentified Armed Groups fighting the Military. 
 
-```{r table-fatalities-summary}
+
+```{r table-actor-pairs-fatalities}
 actors %>% 
   filter(year == 2021) %>% 
-  group_by(actor_simple) %>% 
-  summarise(fatalities = sum(fatalities),
-            events = n()) %>% 
-  mutate(actor_simple = ifelse(fatalities >= 100, actor_simple, "Other")) %>% 
-  group_by(actor_simple) %>% 
-  summarise(fatalities = sum(fatalities),
-            events = sum(events)) %>%
-  left_join(actors %>% select(actor_simple, inter1) %>% distinct(), by = "actor_simple") %>% 
-  mutate(actor_simple = str_remove(actor_simple, "\\:.*"),
-         fatalities_per_event = round(fatalities / events, digits = 2)) %>% 
-  select(actor = actor_simple, actor_type = inter1, fatalities, events, fatalities_per_event) %>% 
-  arrange(desc(fatalities)) %>% 
-  kable(caption = "Top 2021 actors in terms of fatalities; actors associated with less than 100 fatalities have been lumped together as 'Other'",
-        format.args = list(big.mark = ",")) %>% 
+  filter(sub_event_type != "Peaceful protest") %>% 
+  pairwise_count(actor_simple, data_id, sort = TRUE, upper = FALSE, wt = fatalities) %>% 
+  transmute(actor1 = item1, 
+            actor2 = item2,
+            fatalities = n) %>% 
+  head(20) %>% 
+  kable(caption = "Conflict actor pairs with the highest fatalities in 2021", format.args = list(big.mark = ",")) %>% 
   kable_classic_2("striped") %>% 
-  footnote(general = "Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com", 
-           general_title = "")
-
+  footnote("Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com", general_title = "")
 ```
 
 <br>
 
 As mentioned, it is difficult at this juncture to state how many of the associated fatalities were persons killed by these groups and how many were members of these groups had been the ones who were killed. Still, it is worthwhile to plot which actors are the "bloodiest", at least in regards to the outcomes of their actions, or have been involved in incidents with the most fatalities. 
 
-The plot below seeks to examine which actors have been associated with the most fatalities per event, and only actors which have participated in more than 50 conflict events have been included. The point shows the average number of fatalities associated with each actor per conflict event it was involved in. The whiskers show the upper and lower ranges of fatalities per event, that is, 95% of all conflict events that an actor participated in fell within that range. The highest numbers of fatalities per event are associated with political militias and rebel groups.  
+The plot below seeks to examine which actors have been associated with the most fatalities per event, and only actors which have participated in more than 50 conflict events have been included. The point shows the average number of fatalities associated with each actor per conflict event it was involved in. The whiskers show the upper and lower ranges of fatalities per event, that is, 95% of all conflict events that an actor participated in fell within that range. The highest numbers of fatalities per event are associated with political militias and rebel groups, which, with reference to the table above, makes sense considering that incidents between the PDF and the Military resulted in the highest number of fatalities. 
 
 <br>
 
