@@ -309,4 +309,24 @@ acled %>% filter(year == 2021) %>%
        subtitle = "Values show a state's percentage of the total",
        caption = "Data source: ACLED, acleddata.com (2022); Ministry of Agriculture and Irrigation (2015)")
 
+# replaced with new table on actor pair fatalities
+actors %>% 
+  filter(year == 2021) %>% 
+  group_by(actor_simple) %>% 
+  summarise(fatalities = sum(fatalities),
+            events = n()) %>% 
+  mutate(actor_simple = ifelse(fatalities >= 100, actor_simple, "Other")) %>% 
+  group_by(actor_simple) %>% 
+  summarise(fatalities = sum(fatalities),
+            events = sum(events)) %>%
+  left_join(actors %>% select(actor_simple, inter1) %>% distinct(), by = "actor_simple") %>% 
+  mutate(actor_simple = str_remove(actor_simple, "\\:.*"),
+         fatalities_per_event = round(fatalities / events, digits = 2)) %>% 
+  select(actor = actor_simple, actor_type = inter1, fatalities, events, fatalities_per_event) %>% 
+  arrange(desc(fatalities)) %>% 
+  kable(caption = "Top 2021 actors in terms of fatalities; actors associated with less than 100 fatalities have been lumped together as 'Other'",
+        format.args = list(big.mark = ",")) %>% 
+  kable_classic_2("striped") %>% 
+  footnote(general = "Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com", 
+           general_title = "")
 

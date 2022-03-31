@@ -928,7 +928,121 @@ fsc %>% count(implementing_partners)
 fsc %>% filter(str_detect(implementing_partners, "order"))
 ```
 
+### actors pairwise count
+
+```{r}
+actors %>% 
+  filter(year == 2021) %>% 
+  filter(sub_event_type != "Peaceful protest") %>% 
+  pairwise_count(actor_simple, data_id, sort = TRUE, upper = FALSE) %>% 
+  transmute(actor1 = item2, 
+            actor2 = item1,
+            count = n) %>% 
+  head(20) %>% 
+  kable(caption = "Most common interaction pairs between conflict actors", format.args = list(big.mark = ",")) %>% 
+  kable_classic_2("striped") %>% 
+  footnote("Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com", general_title = "")
+
+actors %>% 
+  filter(year == 2021) %>% 
+  filter(sub_event_type != "Peaceful protest") %>% 
+  pairwise_count(actor_simple, data_id, sort = TRUE, upper = FALSE, wt = fatalities) %>% 
+  transmute(actor1 = item1, 
+            actor2 = item2,
+            fatalities = n) %>% 
+  head(20) %>% 
+  kable(caption = "Conflict actor pairs with the highest fatalities in 2021", format.args = list(big.mark = ",")) %>% 
+  kable_classic_2("striped") %>% 
+  footnote("Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com", general_title = "")
+
+acled %>% 
+  filter(year == 2021) %>% 
+  filter(actor1 == "Civilians (Myanmar)" | actor2  == "Civilians (Myanmar)") %>%
+  mutate(sub_event_type = fct_lump(sub_event_type, 8)) %>% 
+  group_by(sub_event_type) %>% 
+  summarise(events = n(), 
+            fatalities = sum(fatalities))
+  
+  count(event_type)
+  
+  
+```
+
 ```{r}
 
+# how to get the counts of words alongside the correlation?
+
+acled_words %>%  
+  filter(word %out% c("township", "district", "myanmar", "region", "village", "town", "size", "report", "code", "coded",
+                      "dvb", "aapp", "rfa", "irrawaddy")) %>% 
+  distinct(data_id, word) %>% 
+  add_count(word) %>% 
+  filter(n >= 50) %>% 
+  pairwise_cor(word, data_id, sort = TRUE) %>%
+  left_join(
+    acled_words %>%
+      filter(word %out% c("township", "district", "myanmar", "region", "village", "town", "size", "report", "code", "coded",
+                      "dvb", "aapp", "rfa", "irrawaddy")) %>%
+      distinct(data_id, word) %>%
+      add_count(word) %>%
+      filter(n >= 50) %>%
+      pairwise_count(word, data_id, sort = TRUE),
+    by = "word"
+  )
+  rename(word = item1, match = item2) %>% 
+  group_by(word) %>% 
+  top_n(correlation, n = 20) %>% 
+  datatable(filter = list(position = "top", clear = FALSE), 
+            options = list(pageLength = 10, scrollX = TRUE,
+                           search = list(regex = TRUE)),
+  caption = htmltools::tags$caption(style = 'caption-side: top; 
+                                    text-align: center; 
+                                    color:black; font-size:140% ;',
+                                    "Pairwise correlations in conflict event descriptions")
+     ) %>% 
+  formatRound(c("correlation"), digits = 3)
+```
+
+
+### all acled
+
+```{r}
+# be careful -- this file is 650 mb
+all_acled <- read_csv("D:/Downloads/acled_1900-01-01-2022-03-30.csv") %>% 
+  clean_names() %>% 
+  filter(year >= 2010) %>% 
+  select(data_id, year, event_date, country, region, fatalities, iso3, event_type, sub_event_type)
+  
+all_acled %>% filter(year == 2021) %>% 
+  filter(sub_event_type != "Peaceful protest") %>% 
+  group_by(country) %>% 
+  summarise(events = n(), 
+            fatalities = sum(fatalities)) %>% 
+  arrange(desc(events)) %>% 
+  head(10) %>% pull(country)
+
+
+all_acled %>% 
+  filter(year >= 2010 & year < 2022) %>% 
+  filter(sub_event_type != "Peaceful protest") %>% 
+  filter(country %in% c("Myanmar", "Syria", "Afghanistan", "Mexico", "Yemen", "Brazil", "Ukraine", "Iraq", 
+                        "Democratic Republic of Congo", "India")) %>% 
+  mutate(country = recode(country, "Democratic Republic of Congo" = "DRC")) %>% 
+  group_by(year, country) %>% 
+  summarise(events = n(), 
+            fatalities = sum(fatalities)) %>% 
+  ggplot(aes(x = year, y = events, colour = country)) +
+  geom_line(size = 0.7) +
+  scale_x_continuous(breaks = seq(2010, 2021, by = 1)) +
+  scale_y_continuous(labels = comma) +
+  theme(plot.caption = element_text(hjust = 0.5)) +
+  labs(title = "Number of conflict events per year -- top 10 countries",
+       subtitle = "Excluding peaceful protests",
+       caption = "Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com",
+       colour = "",
+       y = "Number of conflict events",
+       x = "Year")
+
+ggsave("all_acled_2010_2021.png", height = 5.5, width = 9, units = "in", dpi = 300, device = "png")
 ```
 
