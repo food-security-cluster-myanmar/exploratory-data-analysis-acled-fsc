@@ -1,6 +1,6 @@
 ---
 title: "**An Analysis of ACLED Data**"
-subtitle: "Understanding the Conflict Dynamics in Myanmar through Conflict and Incident Data:   A Food Security Perspctive"
+subtitle: "Understanding Conflict Dynamics in Myanmar through Conflict and Incident Data:   A Food Security Perspctive"
 author: "Myanmar Food Security Cluster"
 date: "11/02/2022"
 output:
@@ -111,6 +111,7 @@ library(RColorBrewer)
 library(treemap)
 library(treemapify)
 library(tidylo)
+library(formatR)
 
 theme_set(theme_light())
 
@@ -456,7 +457,7 @@ The type of interaction that resulted in the most fatalities were between the mi
 
 Click **[here](https://food-security-cluster-myanmar.github.io/exploratory-data-analysis-acled-fsc/#progression-of-conflict-events-by-interaction-type-in-2021)** to see the GIF. A static version has been reproduced below: 
 
-![](static_version_of_gif.png)
+![](static_version_interaction_type.png)
 
 <br><br><br>
 
@@ -943,7 +944,7 @@ acled %>%
 
 <br>
 
-Kale in Sagaing saw the highest proportions of fatalities involving non-combatants in 2021 -- 7% of non-combatant-related fatalities occurred there, or `r filter(acled, year == 2021 & admin3_pcode == "MMR005027" & non_combatant == TRUE) %>% {sum(.$fatalities)}` persons. `r filter(acled, year == 2021 & fatalities > 0 & non_combatant == TRUE) %>% distinct(admin3_pcode) %>% nrow()` townships reported fatalities involving non-combatants in 20201. Of the top 20 townships in terms of fatalities involving non-combatants, 11 of them were in Sagaing: 
+Kale in Sagaing saw the highest proportions of fatalities involving non-combatants in 2021 -- 7% of non-combatant-related fatalities occurred there, or `r filter(acled, year == 2021 & admin3_pcode == "MMR005027" & non_combatant == TRUE) %>% {sum(.$fatalities)}` persons. `r filter(acled, year == 2021 & fatalities > 0 & non_combatant == TRUE) %>% distinct(admin3_pcode) %>% nrow()` townships reported fatalities involving non-combatants in 2021. Of the top 20 townships in terms of fatalities involving non-combatants, 11 of them were in Sagaing: 
 
 <br>
 
@@ -1599,7 +1600,7 @@ vulmmr %>% select(all_net_margin = all_harvested_net_margin_usd, all_area_harves
 
 Click **[here](https://food-security-cluster-myanmar.github.io/acled_maps/)** to see interactive versions of these maps. Please note that these maps are quite large and will take a long time to load. Static versions are found below. 
 
-```{r fig.height = 9, patchwork-ag-conflict-maps}
+```{r fig.height = 8, patchwork-ag-conflict-maps}
 
 ag_mali %>% 
   group_by(township_pcode) %>% 
@@ -1653,8 +1654,15 @@ conflict_score %>%
 
 ### 8.1 Network graph of conflict descriptions
 
+This chapter focuses on data mining the text within the column **`notes`** of the ACLED dataset, which contains a descriptions of each conflict event. Please find below a sample of conflict event descriptions from the ACLED dataset: 
 
-This chapter focuses on data mining the text within the column **`notes`** of the ACLED dataset, which contains a descriptions of each conflict event. For this first section, the relationships between individual words in the conflict descriptions have been presented in a network graph. Each word is a node and the opacity of the line denotes the strength of its correlation to other words (that is, the probability that they have been used to describe the same conflict event). Only words that have appeared more than 70 times in the dataset are shown: 
+![](conflict_descriptions.png)
+
+<br>
+
+The descriptions of all 16,263 conflict events in 2021 were then broken down from paragraphs into individual words so that the relationships between key words may be studied. An initial overview of these relationships have been presented in the network graph below. 
+
+Each word is a node and the opacity of the line denotes the strength of its correlation to other words (that is, the probability that they have been used to describe the same conflict event). Only words that have appeared in at least 70 times in the dataset and have a correlation of above 0.2 with at least one other word are shown: 
 
 <br>
 

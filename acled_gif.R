@@ -81,7 +81,7 @@ static <- acled %>%
        caption = "Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com",
        colour = "interaction type")
 
-ggsave(filename = "./static_version_of_gif.png", dpi = 300, height = 16.5, width = 11.7, units = "in") 
+ggsave(filename = "./static_version_interaction_type.png", dpi = 300, height = 16.5, width = 11.7, units = "in") 
 
 # new gif for event types
 

@@ -187,6 +187,20 @@ acled_words %>%
   acled %>% count(event_type)
 ```
 
+```{r}
+acled %>% filter(year == 2021)
+```
+
+
+```{r}
+
+acled %>% 
+  filter(year == 2021 & admin1 == "Kayin") %>% 
+  filter(str_detect(actor1, "Border Guard Force") | str_detect(actor2, "Border Guard Force")) %>% 
+  sample_n(10) %>% 
+  pull(notes)
+```
+
 
 
 ### glmnet models
@@ -643,6 +657,30 @@ acled %>%
 
 ```
 
+```{r}
+acled_words %>%
+  filter(word %out% c("fatality", "coded", "death", "village", "township", "district", "villages",
+                      "town", "tract", "fatalities", "dvb", "aapp", "total", "irrawaddy", "rfa", "died",
+                      "killing", "killed", "dead", "event", "events", "casualty", "casualties",
+                      "size", "code", "report", "myanmar","coded")) %>% 
+  mutate(has_fatalities = ifelse(fatalities > 0, "yes", "no")) %>% 
+  count(admin1, word) %>% 
+  bind_log_odds(admin1, word, n) %>% 
+  group_by(admin1) %>% 
+  top_n(10, log_odds_weighted) %>% 
+  ungroup() %>% 
+  mutate(word = reorder_within(word, log_odds_weighted, admin1)) %>% 
+  ggplot(aes(x = log_odds_weighted, y = word, fill = admin1)) + 
+  geom_col() +
+  scale_y_reordered() +
+  facet_wrap(~ admin1, scales = "free") + 
+  theme(legend.position = "none") +
+  labs(title = "Odds of words used to describe conflict events",
+       subtitle = "Top 20 words by state/region",
+       caption = "Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com")
+
+acled_words %>% glimpse()
+```
 
 
 ### fatalities
@@ -808,7 +846,8 @@ acled_words %>%
   scale_y_reordered() +
   facet_wrap(~ state_name, scales = "free_y")
 
-
+acled %>% filter(year == 2021) %>% 
+  filter(str_detect(notes, "ARSA|arsa")) %>% pull(notes)
 ```
 
 ### effects on liveihoods
@@ -852,7 +891,7 @@ acled %>%  filter(year == 2021 & admin1 == "Yangon") %>%
   pull(notes)
 ```
 
-```{r}
+```{r fig.height=8}
 # convoys, roads
 acled %>% filter(year == 2021) %>% 
   filter(sub_event_type %out% c("Peaceful protest", "Change to group/activity")) %>% 
@@ -878,34 +917,6 @@ acled %>% filter(year == 2021) %>%
 
 ```
 
-```{r}
-# just ignore this whole chunk -- this was for the data sharing protocols 
-
-fsc %>% 
-  mutate(partner_code = case_when(reporting_organization %in% c("ACTED", "AVSI", "Danish Refugee Council") ~ "org4478",
-                                  reporting_organization %in% c("ACTED", "Cordaid", "FAO") ~ "org0145",
-                                  reporting_organization %in% c("Mercy Corps", "Oxfam", "Karuna Mission Social Solidarity") ~ "org2091",
-                                  reporting_organization %in% c("Norwegian Refugee Council", "Trocaire") ~ "org0763",
-                                  reporting_organization %in% c("Save the Children", "Helvetas", "Action Contre la Faim") ~ "org9963",
-                                  TRUE ~ NA_character_)) %>%
-  mutate(activity2 = case_when(activity == "Cash for Work / Food for Assets" ~ "Shelter kits", 
-                              activity == "Provide monthly cash-based transfers" ~ "Hygiene kits", 
-                              activity == "Provide technical training" ~ "Education kits",
-                              activity == "Provide crops & vegetable kits" ~ "Multi-purpose cash",
-                              TRUE ~ NA_character_)) %>% 
-  filter(!is.na(partner_code) & !is.na(activity2)) %>% 
-  filter(unique_beneficiaries == "Yes") %>% 
-  ggplot(aes(x = partner_code, y = beneficiaries, fill = activity2)) + 
-  geom_col() +
-  scale_fill_brewer(palette = "Accent") +
-  scale_y_continuous(labels = comma) +
-  labs(fill = "activity", 
-       title = "Beneficiaries reached by partner")
-
-ggsave(filename = "./example_partner_tokens.png", dpi = 300, height = 4, width = 7, units = "in")
-  
-  
-```
 
 ```{r}
 fsc %>% filter(str_detect(township, "ggyi")) %>% distinct(township)

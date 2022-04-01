@@ -1,6 +1,6 @@
 ---
 title: "An Analysis of ACLED Data"
-subtitle: "Understanding the Conflict Dynamics in Myanmar through Conflict and Incident Data: A Food Security Perspctive"
+subtitle: "Understanding Conflict Dynamics in Myanmar through Conflict and Incident Data: A Food Security Perspctive"
 author: "Myanmar Food Security Cluster"
 date: "11/02/2022"
 output: 
@@ -957,7 +957,7 @@ acled %>%
 
 <br>
 
-Kale in Sagaing saw the highest proportions of fatalities involving non-combatants in 2021 -- 7% of non-combatant-related fatalities occurred there, or `r filter(acled, year == 2021 & admin3_pcode == "MMR005027" & non_combatant == TRUE) %>% {sum(.$fatalities)}` persons. `r filter(acled, year == 2021 & fatalities > 0 & non_combatant == TRUE) %>% distinct(admin3_pcode) %>% nrow()` townships reported fatalities involving non-combatants in 20201. Of the top 20 townships in terms of fatalities involving non-combatants, 11 of them were in Sagaing: 
+Kale in Sagaing saw the highest proportions of fatalities involving non-combatants in 2021 -- 7% of non-combatant-related fatalities occurred there, or `r filter(acled, year == 2021 & admin3_pcode == "MMR005027" & non_combatant == TRUE) %>% {sum(.$fatalities)}` persons. `r filter(acled, year == 2021 & fatalities > 0 & non_combatant == TRUE) %>% distinct(admin3_pcode) %>% nrow()` townships reported fatalities involving non-combatants in 2021. Of the top 20 townships in terms of fatalities involving non-combatants, 11 of them were in Sagaing: 
 
 <br>
 
@@ -1656,11 +1656,30 @@ conflict_score %>%
 
 ### 8.1 Network graph of conflict descriptions
 
-This chapter focuses on data mining the text within the column **`notes`** of the ACLED dataset, which contains a descriptions of each conflict event. For this first section, the relationships between individual words in the conflict descriptions have been presented in a network graph. Each word is a node and the opacity of the line denotes the strength of its correlation to other words (that is, the probability that they have been used to describe the same conflict event). Only words that have appeared more than 70 times in the dataset are shown: 
+This chapter focuses on data mining the text within the column **`notes`** of the ACLED dataset, which contains a descriptions of each conflict event. Please find below a sample of conflict event descriptions from the ACLED dataset: 
+
+
+```{r event-descriptions}
+acled %>%  
+  filter(data_id %in% c("7695728", "7761223", "8655424")) %>% 
+  select(data_id, notes) %>% 
+  kable(caption = "Examples of conflict descriptions from the ACLED dataset") %>% 
+  kable_paper("striped") %>% 
+  footnote("Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com", general_title = "") 
+# %>% 
+#  save_kable(file = "conflict_descriptions.png", zoom = 2)
+  
+```
 
 <br>
 
-[![conflict network graph](conflict_network_graph.png)](https://raw.githubusercontent.com/food-security-cluster-myanmar/exploratory-data-analysis-acled-fsc/master/conflict_network_map.png){target="_blank"}
+The descriptions of all 16,263 conflict events in 2021 were then broken down from paragraphs into individual words so that the relationships between key words may be studied. An initial overview of these relationships have been presented in the network graph below. 
+
+Each word is a node and the opacity of the line denotes the strength of its correlation to other words (that is, the probability that they have been used to describe the same conflict event). Only words that have appeared in at least 70 times in the dataset and have a correlation of above 0.2 with at least one other word are shown: 
+
+<br>
+
+[![conflict network graph](conflict_network_graph.png)](https://raw.githubusercontent.com/food-security-cluster-myanmar/exploratory-data-analysis-acled-fsc/master/conflict_network_graph.png){target="_blank"}
 click **[here](https://raw.githubusercontent.com/food-security-cluster-myanmar/exploratory-data-analysis-acled-fsc/master/conflict_network_graph.png){target="_blank"}** to see the full-sized graph. 
 
 <br>
