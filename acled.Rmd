@@ -1,6 +1,5 @@
 ---
-title: "An Analysis of ACLED Data"
-subtitle: "Understanding Conflict Dynamics in Myanmar through Conflict and Incident Data: A Food Security Perspctive"
+title: "Understanding Conflict Dynamics in Myanmar through Conflict and Incident Data: A Food Security Perspctive"
 author: "Myanmar Food Security Cluster"
 date: "11/02/2022"
 output: 
@@ -483,13 +482,14 @@ vulmmr <- read_excel("C:/Users/seany/Downloads/R/mmr_5w_initial_observations/Dat
 ```
 
 
-## 1. Progression of conflict events by interaction type in 2021
+## 1. Progressoin of conflict events in Myanmar in 2021, by interaction type
 
 Myanmar experienced 16,263 separate conflict events in 2021, which led to 11,506 fatalities. Conflict fatalities in 2021 were more than for the previous 10 years combined.
 
 Most conflicts in Myanmar are interactions between two groups of actors, and most of these interactions involve the Myanmar Military as one of those actors.
 
-The map below shows the six most common conflict interaction types. Of these, four involve the Military.
+The map below shows the progress in of six most common conflict interaction types by **month*. Of these, four involve the Military.
+
 The most fatal interactions in Myanmar in 2021 were those between the Military and political militia groups. Such interactions accounted for 57% of the 11,506 conflict fatalities. In comparison, interactions between the military and rebel groups accounted for 19 percent of fatalities, military versus civilian interactions for 9 percent, and political militia versus civilians for 8 percent.
 
 The map below plots where conflict events took place across the country, by interaction type, with the size of the points indicating the number of fatalities per event.
@@ -502,11 +502,11 @@ The map below plots where conflict events took place across the country, by inte
 <br><br><br>
 
 
-## 2. Distribution of food security partners and conflict events in 2021 
+## 2. Distribution of food security partners in relation to conflict events 
 
 In general, food security partners are not operating in the parts of Myanmar most affected by conflict in 2021. This is evident from the map below which plots Food Security Partners working across Myanmar against 2021 conflict events.
 
-This lack of partners in conflict areas is especially true around Sagaing and Magway. Sagaing region experienced the most conflict in 2021, followed by Magway and Chin. 
+This lack of partners in conflict areas is especially true around Sagaing and Magway. Sagaing region experienced the most conflict in 2021, followed by Magway and Chin.
 
 Humanitarian partners have traditionally focused on Rakhine, Kachin and northern Shan – the areas which had experienced more conflict in the past. However, a shift in the conflict dynamics in Myanmar has not yet led to a reallocation of resources to target new populations most affected by conflict. The allocation of funds away from Sagaing and Magway may also be a result of OCHA’s decision to focus on peri-urban areas under the Interim Emergency Response Plan for Myanmar which was released in June of 2021.
 
@@ -515,7 +515,7 @@ The distribution of Food Security Cluster partners in correlation to conflict ar
 
 <br>
 
-```{r map-events-fsc-parnters, fig.height=10}
+```{r map-events-fsc-parnters, fig.height=12}
 acled %>% 
   filter(year == 2021 & sub_event_type != "Peaceful protest") %>%
   full_join(fsc %>%
@@ -545,7 +545,7 @@ acled %>%
 
 ## 3. Progression and distribution of conflict events and fatalities
 
-### 3.1 Annual distribution of conflict events and fatalities by event type
+### 3.1 Conflict in Myanmar over time
 
 Myanmar experienced a massive spike in conflict events in 2021.  This sudden increase came despite the fact that Myanmar has been embroiled in a 70-year-long civil war. 
 
@@ -580,7 +580,7 @@ acled %>%
 <br>
 
 
-The 2021 breakdown of conflict events in 2021 was:
+The breakdown of conflict events in 2021 was:
 
 ```{r conflict-events-summary-2021}
 acled %>%  
@@ -714,7 +714,7 @@ acled %>%
 
 <br><br>
 
-### 3.4 Conflict fatalities in 2021
+### 3.4 Contributors to conflict fatalities
 
 Battles and explosions and remote violence were the largest contributors to conflict fatalities in 2021. 
 
@@ -796,7 +796,7 @@ acled %>%
 
 <br>
 
-The largest number of fatalities are related to events involving the military, political militias, including the People’s Defense Force, and rebel groups. 
+The largest number of fatalities are related to events involving the military, political militias, including the People’s Defense Force, as well as those involving rebel groups. 
 
 ```{r fatalities-summary-2021-inter-type}
 acled %>%  
@@ -809,7 +809,8 @@ acled %>%
   summarise(fatalities = sum(fatalities)) %>% 
   mutate(percentage = round(fatalities / sum(fatalities) * 100, digits = 2)) %>% 
   rename(Fatalities = fatalities, 
-         Percentage = percentage) %>% 
+         Percentage = percentage,
+         `Interaction type` = inter_type) %>% 
   arrange(desc(Percentage)) %>% 
   kable(caption = "2021 conflict fatalities by interaction type", format.args = list(big.mark = ",")) %>% 
   kable_classic_2("striped", full_width = FALSE, position = "left") %>%  
@@ -884,7 +885,7 @@ acled %>%
 
 <br><br>
 
-### 3.5 Progression of the conflict in 2021 by event type
+### 3.6 Progression of the conflict in 2021 by event type
 
 The map below shows 2021 conflict events by **month**. The color of each point indicates the type of conflict event. The number of fatalities associated with each event is indicated by the size of each point. It is interesting to note that after the protests in February and March 2021, the conflict moves on to a new stage in April and May, visibly increasing in intensity.
 
@@ -907,7 +908,7 @@ However, protest events have been filtered out as these are generally one-sided,
 
 Events involving non-combatants are plotted on the map below, with those events that resulted in fatalities shown in red.
  
-
+<br>
 
 ```{r map-non-combatants, fig.height=10}
 acled %>% 
@@ -1184,7 +1185,7 @@ actors %>%
 <br><br>
 
 
-### 5.3 Actors associated with the mmost fatalities
+### 5.3 Actors associated with the most fatalities
 
 Conflict events between the Myanmar Military and the People’s Defense Force accounted for the greatest number of fatalities in 2021. This is significant given that the People’s Defense Force (PDF) was only created in May of last year. In total, 3,143 fatalities resulted from conflict events involving the Military and the PDF.
 
@@ -1414,8 +1415,6 @@ The histograms show the distribution of each variable. For the conflict variable
 This is borne out in an examination of the lower triangle, where each point is a township and the red line shows the linear fit between each pair of variables. Most townships tend to be concentrated around the bottom-left quadrant of the chart, with many outliers. The steeper the gradient of red line, the stronger the correlation.
 
 For instance, the two variables most highly-correlated with each other are violence against civilians and strategic developments: they share a correlation coefficient of 0.79, meaning that in 79% of the townships in which violence against civilians occurred, strategic developments also took place (the most common strategic developments were arrests and property damage). This relationship is statistically significant, that is to say, it was not by chance that these two types of conflict events tended to occur in the same places.
- 
-
 
 <br>
 
@@ -1604,7 +1603,7 @@ vulmmr %>%
               by = "crop_type") %>% 
   mutate(crop_type = str_trim(str_replace_all(crop_type, "_", " ")),
          crop_type = str_to_title(crop_type)) %>% 
-  mutate(`Harvested area %` = round(harvested_area / sum(harvested_area) * 100, digits = 2),
+  mutate(`Harvested area %` = round(harvested_area / sum(harvested_area, na.rm = TRUE) * 100, digits = 2),
          margin_per_acre = round(net_margin / harvested_area)) %>% 
   arrange(desc(margin_per_acre)) %>% 
   filter(harvested_area > 600000) %>% 
@@ -1624,7 +1623,7 @@ vulmmr %>%
 
 <br><br>
 
-### 7.2 Conflict index and agriculture
+### 7.2 Conflict score and agriculture
 
 Conflict has a real effect on food prices, as demonstrated by the International Food Policy Research Institute (IFPRI) in their working paper [Agricultural value chains in a fragile state: the case of rice in Myanmar](https://www.ifpri.org/publication/agricultural-value-chains-fragile-state-case-rice-myanmar). 
 
@@ -1759,7 +1758,7 @@ conflict_score %>%
 
 <br><br><br>
 
-## 8. Text mining the ACLED dataset
+## 8. Text mining conflict event descriptions
 
 ### 8.1 Network graph of conflict descriptions
 
@@ -1958,7 +1957,7 @@ acled_source %>%
 
 <br>
 
-As a point of comparison, ACLED’s methodology and dataset was discussed with the Nexus Response Mechanism’s (NRM) Conflict Analysis and Research Facility. It was noted that the two datasets are very similar, both relying largely on media sources, with the only exception being the inclusion of social media posts in the NRM dataset. The FSC will continue to use ACLED data for analysis going forward as it is free and publicly available. 
+As a point of comparison, ACLED’s methodology and dataset was discussed with the Nexus Response Mechanism’s (NRM) Conflict Analysis and Research Facility, which also maintains its own dataset of conflict events. It was noted that the two datasets are very similar, both relying largely on media sources, with the only exception being the inclusion of social media posts in the NRM dataset. The FSC will continue to use ACLED data for analysis going forward as it is free and publicly available. 
 
 <br><br><br>
 
