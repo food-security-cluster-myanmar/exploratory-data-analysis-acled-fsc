@@ -1057,3 +1057,17 @@ all_acled %>%
 ggsave("all_acled_2010_2021.png", height = 5.5, width = 9, units = "in", dpi = 300, device = "png")
 ```
 
+```{r}
+acled %>% 
+  group_by(year) %>% 
+  summarise(fatalities = sum(fatalities))
+
+acled %>% filter(year == 2020) %>% 
+  arrange(desc(fatalities)) %>% select(fatalities)
+```
+
+```{r}
+acled %>% write_csv("acled.csv")
+
+```
+
