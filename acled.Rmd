@@ -1,5 +1,5 @@
 ---
-title: "Understanding Conflict Dynamics in Myanmar through Conflict and Incident Data: A Food Security Perspctive"
+title: "Understanding Conflict Dynamics in Myanmar through Conflict and Incident Data: A Food Security Perspective"
 author: "Myanmar Food Security Cluster"
 date: "11/02/2022"
 output: 
@@ -1323,6 +1323,7 @@ actors %>%
 
 ### 6.1 Correlation plot
 
+
 ```{r conflict-score-df, warning=FALSE}
 conflict_df <- acled %>% 
   # do you really need this step since you're using Betti-Verma
@@ -1377,7 +1378,6 @@ conflict_score <- conflict_df %>%
 
 # conflict_score %>% do.call(data.frame, .) %>% as_tibble() %>% write_csv("conflict_score.csv")
 ```
-
 
 
 Food security partners are not operating in the parts of Myanmar most affected by conflict in 2021, as shown previously in Section 2. Sagaing region experienced the most conflict in 2021, followed by Kachin and northern Shan, however humanitarian partners continue to work in Rakhine, Kachin and southern Shan, with some shift towards working in peri-urban Yangon and Mandalay.
