@@ -1,5 +1,5 @@
 ---
-title: "**Understanding Conflict Dynamics in Myanmar through Conflict and Incident Data: A Food Security Perspctive**"
+title: "**Understanding Conflict Dynamics in Myanmar through Conflict and Incident Data: A Food Security Perspective**"
 author: "Myanmar Food Security Cluster"
 date: "11/02/2022"
 output:

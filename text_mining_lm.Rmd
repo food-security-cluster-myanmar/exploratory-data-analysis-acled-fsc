@@ -1066,8 +1066,4 @@ acled %>% filter(year == 2020) %>%
   arrange(desc(fatalities)) %>% select(fatalities)
 ```
 
-```{r}
-acled %>% write_csv("acled.csv")
-
-```
 
