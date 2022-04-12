@@ -82,6 +82,7 @@ static <- acled %>%
        colour = "interaction type")
 
 ggsave(filename = "./static_version_interaction_type.png", dpi = 300, height = 16.5, width = 11.7, units = "in") 
+ggsave(filename = "./static_version_interaction_type_small.png", dpi = 300, height = 11.7, width = 8.3, units = "in")
 
 # new gif for event types
 
@@ -135,3 +136,4 @@ acled %>%
        colour = "event type")
 
 ggsave(filename = "./static_version_event_type.png", dpi = 300, height = 16.5, width = 11.7, units = "in")
+ggsave(filename = "./static_version_event_type_small.png", dpi = 300, height = 11.7, width = 8.3, units = "in")
