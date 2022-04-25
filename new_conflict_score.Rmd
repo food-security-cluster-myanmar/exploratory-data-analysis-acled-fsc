@@ -1,0 +1,113 @@
+---
+title: "Untitled"
+output: html_document
+date: '2022-04-25'
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(readxl)
+library(lubridate)
+library(stringi)
+library(pander)
+library(janitor)
+library(fuzzyjoin)
+library(scales)
+library(mdepriv)
+library(broom)
+```
+
+```{r}
+idps <- read_excel("C:/Users/seany/Downloads/R/not_for_sharing/220407-IDPs Population by Township_external request.xlsx", 
+           sheet = "Pre & Post IDPs by Township",
+           skip = 2) %>% 
+  clean_names() %>% 
+  slice(-(111:118)) %>% 
+  mutate(township = recode(township, "Ponagyun" = "Ponnagyun")) %>% 
+  left_join(pcodes %>% select(admin1_pcode, admin3_pcode, township), by = "township") %>% 
+  select(-total_id_ps_per_state_region_pre_post_1_feb_rounded_to_the_nearest_100) %>% 
+  rename(total_idps = total_id_ps_per_township_pre_post_1_feb, 
+         pre_coup_idp = pre_1_feb_id_ps,
+         post_coup_idps = post_1_feb_id_ps_weekly_displ_map_as_of_21_march_2022)
+
+pcodes <- read_excel("C:/Users/seany/Downloads/R/fsc_mmr_prioritisation/Myanmar PCodes Release_9.3_Jan2021_(StRgn_Dist_Tsp_Town_Ward_VT).xlsx",
+                     sheet = "03_Township") %>% 
+  rename(admin1_pcode = SR_Pcode,
+         state = SR_Name_Eng,
+         admin3_pcode = Tsp_Pcode,
+         township = Township_Name_Eng)
+
+glimpse(idps)
+```
+
+
+```{r conflict-score-df, warning=FALSE}
+conflict_df2 <- acled %>% 
+  # do you really need this step since you're using Betti-Verma
+  mutate(event_type = case_when(event_type == "Protests" ~ "Protests_and_Riots",
+                                event_type == "Riots" ~ "Protests_and_Riots", 
+                                TRUE ~ event_type)) %>% 
+  filter(year == 2021 & sub_event_type != "Peaceful protest") %>%
+  group_by(admin3_pcode, event_type) %>% 
+  summarise(count = n(), .groups = "drop") %>%  
+  pivot_wider(names_from = event_type, values_from = count) %>% 
+  clean_names() %>% 
+  left_join(idps %>% select(total_idps, admin3_pcode), by = "admin3_pcode") %>% 
+  replace_na(list(battles = 0, explosions_remote_violence = 0, violence_against_civilians = 0,
+                  strategic_developments = 0, protests_and_riots = 0, total_idps = 0)) %>% 
+  # mutate(total_events = rowSums(across(where(is.numeric)), na.rm = TRUE)) %>% 
+  left_join(acled %>% 
+              filter(year == 2021) %>% 
+              group_by(admin3_pcode) %>% 
+              summarise(fatalities = sum(fatalities)), by = "admin3_pcode") %>% 
+  ungroup()
+  
+index_shares2 <- conflict_df2 %>%   
+  mutate_at(vars(c(battles, explosions_remote_violence, violence_against_civilians, fatalities,
+                   strategic_developments, protests_and_riots, total_idps)), 
+           scale) %>%  
+  mutate_at(vars(c(battles, explosions_remote_violence, violence_against_civilians, fatalities,
+                   strategic_developments, protests_and_riots, total_idps)), 
+           funs((. - min(., na.rm = T))/(max(., na.rm = T) - min(., na.rm = T)))) %>% 
+  mdepriv(c("battles", "explosions_remote_violence", "violence_against_civilians", "fatalities", "strategic_developments", "protests_and_riots", "total_idps"),
+          method = "bv", output = "all")
+
+conflict_score2 <- conflict_df2 %>% 
+  left_join(index_shares2$data %>% 
+              select(admin3_pcode, 
+                     score_i,
+                     index_battles = battles, 
+                     index_explosions_remote_violence = explosions_remote_violence,
+                     index_violence_against_civilians = violence_against_civilians, 
+                     index_fatalities = fatalities, 
+                     index_strategic_developments = strategic_developments, 
+                     index_protests_and_riots = protests_and_riots), by = "admin3_pcode") %>% 
+  mutate(env_battles = battles / max(battles), 
+         env_explosions_remote_violence = explosions_remote_violence / max(explosions_remote_violence),
+         env_violence_against_civilians = violence_against_civilians / max(violence_against_civilians), 
+         env_fatalities = fatalities / max(fatalities), 
+         score_env = (env_battles + env_explosions_remote_violence + env_violence_against_civilians + env_fatalities) / 4) %>% 
+  left_join(acled %>% 
+              distinct(admin1, admin3, admin3_pcode), by = "admin3_pcode") %>% 
+  left_join(fsc %>%  
+              group_by(admin3_pcode) %>% 
+              summarise(partners = n_distinct(implementing_partners),
+                        beneficiaries = sum(beneficiaries[unique_beneficiaries == "Yes"])), by = "admin3_pcode") %>% 
+  left_join(conflict_score %>% select(old_conflict_score = score_i, admin3_pcode), by = "admin3_pcode")
+
+conflict_score2 %>% do.call(data.frame, .) %>% as_tibble() %>% write_csv("conflict_score2.csv")
+```
+
+```{r}
+conflict_compare <- conflict_score2 %>% 
+  mutate(total_events = battles + explosions_remote_violence + protests_and_riots + strategic_developments +
+           violence_against_civilians) %>% 
+  ggplot(aes(x = score_i, y = new_score, colour = total_events, size = fatalities,
+             text = paste0(admin3, ",", admin1))) +
+  geom_point() + 
+  scale_colour_viridis(option = "magma", direction = -1)
+
+ggplotly(conflict_compare, tooltip = c("text"))
+```
+
