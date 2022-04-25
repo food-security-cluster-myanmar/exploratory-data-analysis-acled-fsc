@@ -1482,13 +1482,19 @@ Further detail is provided about these townships in section 9.1.
 <br>
 
 ```{r scatterplot-events-fatalities-tsp}
-acled %>%
+conflict_scatter <- acled %>%
   filter(year == 2021 & sub_event_type != "Peaceful protests") %>% 
   group_by(admin3_pcode) %>% 
   summarise(events = n(),
             fatalities = sum(fatalities)) %>% 
-  ggplot(aes(x = events, y = fatalities)) +
-  geom_point(aes(size = fatalities, colour = events)) +
+  left_join(conflict_score %>% select(partners, admin3_pcode, admin1, admin3), by = "admin3_pcode") %>% 
+  ggplot(aes(x = events, y = fatalities, colour = events,
+             text = paste0("township: ", admin3, ",", "\n",
+                           "state: ", admin1, ",", "\n",
+                           "events: ", events, ",", "\n",
+                           "fatalities: ", fatalities, ",", "\n",
+                           "fsc_partners: ", partners))) +
+  geom_point(aes(size = fatalities)) +
   scale_colour_viridis(option = "magma", direction = -1) +
   scale_y_continuous(trans = "log10", breaks = c(0, 1, 10, 30, 100, 300, 1000)) +
   scale_x_continuous(trans = "log10", breaks = c(0, 1, 10, 30, 100, 300)) +
@@ -1498,8 +1504,14 @@ acled %>%
        y = "Fatalities",
        title = "Conflict events and fatalities by township", 
        subtitle = "Means of both axes are marked by the dotted red line")
-  
-  
+
+ggplotly(conflict_scatter, tooltip = c("text")) %>% 
+  # layout(showlegend = FALSE, legend = list(font = list(size = 6))) %>% 
+  config(displayModeBar = FALSE) %>% 
+  layout(title = list(text = paste0("Conflict events and fatalities by township",
+                                    "<br>",
+                                    "<sup>",
+                                    "mouse over for details; means marked by red lines; fatalities marked by size","</sup>")))  
 ```
 
 
