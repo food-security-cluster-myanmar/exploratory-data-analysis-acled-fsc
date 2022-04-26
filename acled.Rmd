@@ -482,7 +482,7 @@ vulmmr <- read_excel("C:/Users/seany/Downloads/R/mmr_5w_initial_observations/Dat
 ```
 
 
-## 1. Progressoin of conflict events in Myanmar in 2021, by interaction type
+## 1. Progression of conflict events in Myanmar in 2021, by interaction type
 
 Myanmar experienced 16,263 separate conflict events in 2021, which led to 11,506 fatalities. Conflict fatalities in 2021 were more than for the previous 10 years combined.
 
@@ -1488,6 +1488,7 @@ conflict_scatter <- acled %>%
   summarise(events = n(),
             fatalities = sum(fatalities)) %>% 
   left_join(conflict_score %>% select(partners, admin3_pcode, admin1, admin3), by = "admin3_pcode") %>% 
+  replace_na(list(partners = 0)) %>% 
   ggplot(aes(x = events, y = fatalities, colour = events,
              text = paste0("township: ", admin3, ",", "\n",
                            "state: ", admin1, ",", "\n",

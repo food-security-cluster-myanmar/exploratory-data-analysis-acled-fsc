@@ -100,6 +100,12 @@ conflict_score2 %>% do.call(data.frame, .) %>% as_tibble() %>% write_csv("confli
 ```
 
 ```{r}
+acled %>% 
+  count(event_type)
+```
+
+
+```{r}
 conflict_compare <- conflict_score2 %>% 
   mutate(total_events = battles + explosions_remote_violence + protests_and_riots + strategic_developments +
            violence_against_civilians) %>% 
