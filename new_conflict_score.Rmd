@@ -19,6 +19,13 @@ library(broom)
 ```
 
 ```{r}
+pcodes <- read_excel("C:/Users/seany/Downloads/R/fsc_mmr_prioritisation/Myanmar PCodes Release_9.3_Jan2021_(StRgn_Dist_Tsp_Town_Ward_VT).xlsx",
+                     sheet = "03_Township") %>% 
+  rename(admin1_pcode = SR_Pcode,
+         state = SR_Name_Eng,
+         admin3_pcode = Tsp_Pcode,
+         township = Township_Name_Eng)
+
 idps <- read_excel("C:/Users/seany/Downloads/R/not_for_sharing/220407-IDPs Population by Township_external request.xlsx", 
            sheet = "Pre & Post IDPs by Township",
            skip = 2) %>% 
@@ -31,14 +38,6 @@ idps <- read_excel("C:/Users/seany/Downloads/R/not_for_sharing/220407-IDPs Popul
          pre_coup_idp = pre_1_feb_id_ps,
          post_coup_idps = post_1_feb_id_ps_weekly_displ_map_as_of_21_march_2022)
 
-pcodes <- read_excel("C:/Users/seany/Downloads/R/fsc_mmr_prioritisation/Myanmar PCodes Release_9.3_Jan2021_(StRgn_Dist_Tsp_Town_Ward_VT).xlsx",
-                     sheet = "03_Township") %>% 
-  rename(admin1_pcode = SR_Pcode,
-         state = SR_Name_Eng,
-         admin3_pcode = Tsp_Pcode,
-         township = Township_Name_Eng)
-
-glimpse(idps)
 ```
 
 
@@ -96,7 +95,7 @@ conflict_score2 <- conflict_df2 %>%
                         beneficiaries = sum(beneficiaries[unique_beneficiaries == "Yes"])), by = "admin3_pcode") %>% 
   left_join(conflict_score %>% select(old_conflict_score = score_i, admin3_pcode), by = "admin3_pcode")
 
-conflict_score2 %>% do.call(data.frame, .) %>% as_tibble() %>% write_csv("conflict_score2.csv")
+# conflict_score2 %>% do.call(data.frame, .) %>% as_tibble() %>% write_csv("conflict_score2.csv")
 ```
 
 ```{r}
@@ -115,5 +114,62 @@ conflict_compare <- conflict_score2 %>%
   scale_colour_viridis(option = "magma", direction = -1)
 
 ggplotly(conflict_compare, tooltip = c("text"))
+```
+
+```{r fig.height = 10}
+actors %>% glimpse()
+
+a <- actors %>% filter(year == 2021) %>% 
+  group_by(admin3_pcode) %>% 
+  filter(event_type != "Protests") %>%
+  filter(inter1 %out% c("state_forces", "civilians", "protesters")) %>% 
+  count(actor_simple, inter1) %>% 
+  filter(n == max(n)) %>% 
+  right_join(pcode3_shape) %>% 
+  st_as_sf() %>% 
+  ggplot(aes(text = str_sub(actor_simple, 0, 45))) +
+  geom_sf(size = 0.1, aes(fill = actor_simple)) + 
+  theme_void() +
+  theme(legend.position = "none") +
+  labs(title = "Most active non-state armed group by township")
+
+ggplotly(a, tooltip = c("text")) %>% 
+  plotly::style(hoveron = "fill") %>% 
+  layout(title = list(text = paste0("Most active non-state armed group by township")))
+
+
+```
+
+```{r fig.height = 10}
+actors %>% 
+  filter(year == 2021 & event_type != "Protests") %>% 
+  group_by(admin3_pcode) %>%
+  count(inter1) %>% 
+  filter(inter1 %in% c("rebel_groups", "political_militias", "state_forces")) %>% 
+  pivot_wider(names_from = inter1, values_from = n) %>% 
+  replace_na(list(rebel_groups = 0, political_militias = 0, state_forces = 0)) %>% 
+  mutate(nsag = political_militias + rebel_groups, 
+         govt_control = nsag / state_forces) %>% 
+  mutate(govt_control = ifelse(govt_control > 2, 2, govt_control)) %>%
+  left_join(conflict_score2 %>% select(score_i, admin3_pcode), by = "admin3_pcode") %>% 
+  ggplot(aes(x = govt_control, y = score_i)) +
+  geom_col() 
+  lm(score_i ~ govt_control, data = .) %>% 
+  summary()
+  
+   
+  filter(!is.na(admin3_pcode)) %>% 
+  right_join(pcode3_shape , by = "admin3_pcode") %>% 
+  st_as_sf() %>% 
+  ggplot() +
+  geom_sf(aes(fill = govt_control), size = 0.1) + 
+  scale_fill_viridis(option = "plasma") + 
+  theme_void() +
+  labs(title = "Most contested areas", 
+       subtitle = "Ratio of NSAG activity vs state forces activity", 
+       fill = "Ratio\nNSAG vs\nGovt", 
+       caption = "Data source: ACLED; acleddata.com")
+
+glimpse(conflict_score2)
 ```
 
