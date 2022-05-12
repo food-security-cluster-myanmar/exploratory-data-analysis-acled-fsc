@@ -520,7 +520,7 @@ acled %>%
   filter(year == 2021 & sub_event_type != "Peaceful protest") %>%
   full_join(fsc %>%
               group_by(admin3_pcode) %>% 
-              summarise(partners = n_distinct(implementing_partners)), by = "admin3_pcode") %>% 
+              summarise(partners = n_distinct(org_code)), by = "admin3_pcode") %>% 
   left_join(townships %>%  
               select(admin1_pcode, admin3_pcode), by = "admin3_pcode") %>% 
   right_join(pcode3_shape, by = "admin3_pcode") %>% 
@@ -1373,7 +1373,7 @@ conflict_score <- conflict_df %>%
               distinct(admin1, admin3, admin3_pcode), by = "admin3_pcode") %>% 
   left_join(fsc %>%  
               group_by(admin3_pcode) %>% 
-              summarise(partners = n_distinct(implementing_partners),
+              summarise(partners = n_distinct(org_code),
                         beneficiaries = sum(beneficiaries[unique_beneficiaries == "Yes"])), by = "admin3_pcode")
 
 # conflict_score %>% do.call(data.frame, .) %>% as_tibble() %>% write_csv("conflict_score.csv")
@@ -2015,7 +2015,7 @@ acled %>%
               summarise(fatalities = sum(fatalities)), by = "admin3_pcode") %>%
   left_join(fsc %>%  
               group_by(admin3_pcode) %>% 
-              summarise(partners = n_distinct(implementing_partners),
+              summarise(partners = n_distinct(org_code),
                         beneficiaries = sum(u_ben)), by = "admin3_pcode") %>% 
   replace_na(list(partners = 0, beneficiaries = 0)) %>% 
   select(state = admin1, township = admin3, total_events, fatalities, battles, explosions_remote = explosions_remote_violence, protests,
@@ -2101,7 +2101,7 @@ acled %>%
   
 fsc %>%
   group_by(admin3_pcode) %>%
-  summarise(partners = n_distinct(implementing_partners), by = "admin3_pcode") %>%
+  summarise(partners = n_distinct(org_code), by = "admin3_pcode") %>%
   right_join(pcode3_shape, by = "admin3_pcode") %>% 
   st_as_sf() %>% 
   ggplot() +

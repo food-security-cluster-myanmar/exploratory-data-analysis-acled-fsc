@@ -152,12 +152,6 @@ actors %>%
          govt_control = nsag / state_forces) %>% 
   mutate(govt_control = ifelse(govt_control > 2, 2, govt_control)) %>%
   left_join(conflict_score2 %>% select(score_i, admin3_pcode), by = "admin3_pcode") %>% 
-  ggplot(aes(x = govt_control, y = score_i)) +
-  geom_col() 
-  lm(score_i ~ govt_control, data = .) %>% 
-  summary()
-  
-   
   filter(!is.na(admin3_pcode)) %>% 
   right_join(pcode3_shape , by = "admin3_pcode") %>% 
   st_as_sf() %>% 
