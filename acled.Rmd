@@ -120,10 +120,8 @@ library(fuzzyjoin)
 library(scales)
 library(magrittr)
 library(sf)
-library(s2)
 library(bookdown)
 library(data.table)
-library(ggsflabel)
 library(patchwork)
 library(plotly)
 library(kableExtra)
@@ -131,17 +129,12 @@ library(DT)
 library(viridis)
 library(widyr)
 library(gganimate)
-library(gifski)
-library(png)
-library(transformr)
 library(mdepriv)
 library(broom)
-library(xtable)
 library(psych)
 library(tidytext)
 library(corrplot)
 library(RColorBrewer)
-library(treemap)
 library(treemapify)
 library(tidylo)
 
@@ -466,7 +459,7 @@ acled_words <- acled %>%
 
 
 # reading in vulnerability dataset
-vulmmr <- read_excel("C:/Users/seany/Downloads/R/mmr_5w_initial_observations/Datasets_Vulnerability_Analysis_in_Myanmar_09Jul2018 (1).xlsx",
+vulmmr <- read_excel("Datasets_Vulnerability_Analysis_in_Myanmar_09Jul2018 (1).xlsx",
            skip = 1) %>% 
   slice(-c(1:3)) %>% 
   clean_names() %>% 
@@ -488,7 +481,7 @@ Myanmar experienced 16,263 separate conflict events in 2021, which led to 11,506
 
 Most conflicts in Myanmar are interactions between two groups of actors, and most of these interactions involve the Myanmar Military as one of those actors.
 
-The map below shows the progress in of six most common conflict interaction types by **month*. Of these, four involve the Military.
+The map below shows the progress in of six most common conflict interaction types by **month**. Of these, four involve the Military.
 
 The most fatal interactions in Myanmar in 2021 were those between the Military and political militia groups. Such interactions accounted for 57% of the 11,506 conflict fatalities. In comparison, interactions between the military and rebel groups accounted for 19 percent of fatalities, military versus civilian interactions for 9 percent, and political militia versus civilians for 8 percent.
 
