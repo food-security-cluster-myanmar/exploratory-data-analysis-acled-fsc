@@ -116,6 +116,21 @@ conflict_compare <- conflict_score2 %>%
 ggplotly(conflict_compare, tooltip = c("text"))
 ```
 
+# Figuring out where the KNU is most active 
+
+```{r}
+actors %>% glimpse()
+
+actors %>% filter(year == 2021) %>% 
+  filter(admin1 %in% c("Kayah", "Kayin", "Mon", "Tanintharyi")) %>% 
+  
+  # Doesn't work, learn how to do rege better
+  # mutate(actor_simple = str_extract(actor_simple, "(.*?)\\:"))
+  count(actor1, actor_simple, sort = TRUE)
+  filter(str_detect(actor1, "KNU|Karen")) %>%  count(actor1, sort = TRUE)
+```
+
+
 ```{r fig.height = 10}
 actors %>% glimpse()
 
