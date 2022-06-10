@@ -38,16 +38,21 @@ idps <- read_excel("C:/Users/seany/Downloads/R/not_for_sharing/220407-IDPs Popul
          pre_coup_idp = pre_1_feb_id_ps,
          post_coup_idps = post_1_feb_id_ps_weekly_displ_map_as_of_21_march_2022)
 
+acled_new <- read_csv("acled_new.csv")
+
+
+
 ```
 
+### Updating the conflict score to May 31 2022 
 
 ```{r conflict-score-df, warning=FALSE}
-conflict_df2 <- acled %>% 
+conflict_df2 <- acled_new %>% 
   # do you really need this step since you're using Betti-Verma
   mutate(event_type = case_when(event_type == "Protests" ~ "Protests_and_Riots",
                                 event_type == "Riots" ~ "Protests_and_Riots", 
                                 TRUE ~ event_type)) %>% 
-  filter(year == 2021 & sub_event_type != "Peaceful protest") %>%
+  filter(year >= 2021 & sub_event_type != "Peaceful protest") %>%
   group_by(admin3_pcode, event_type) %>% 
   summarise(count = n(), .groups = "drop") %>%  
   pivot_wider(names_from = event_type, values_from = count) %>% 
@@ -56,8 +61,8 @@ conflict_df2 <- acled %>%
   replace_na(list(battles = 0, explosions_remote_violence = 0, violence_against_civilians = 0,
                   strategic_developments = 0, protests_and_riots = 0, total_idps = 0)) %>% 
   # mutate(total_events = rowSums(across(where(is.numeric)), na.rm = TRUE)) %>% 
-  left_join(acled %>% 
-              filter(year == 2021) %>% 
+  left_join(acled_new %>% 
+              filter(year >= 2021) %>% 
               group_by(admin3_pcode) %>% 
               summarise(fatalities = sum(fatalities)), by = "admin3_pcode") %>% 
   ungroup()
@@ -89,18 +94,15 @@ conflict_score2 <- conflict_df2 %>%
          score_env = (env_battles + env_explosions_remote_violence + env_violence_against_civilians + env_fatalities) / 4) %>% 
   left_join(acled %>% 
               distinct(admin1, admin3, admin3_pcode), by = "admin3_pcode") %>% 
-  left_join(fsc %>%  
-              group_by(admin3_pcode) %>% 
-              summarise(partners = n_distinct(implementing_partners),
-                        beneficiaries = sum(beneficiaries[unique_beneficiaries == "Yes"])), by = "admin3_pcode") %>% 
-  left_join(conflict_score %>% select(old_conflict_score = score_i, admin3_pcode), by = "admin3_pcode")
+  left_join(conflict_score %>% select(old_conflict_score = score_i, admin3_pcode), by = "admin3_pcode") %>% 
+  rename(conflict_score = score_i)
 
-# conflict_score2 %>% do.call(data.frame, .) %>% as_tibble() %>% write_csv("conflict_score2.csv")
+conflict_score2 %>% do.call(data.frame, .) %>% as_tibble() %>% 
+  select(-total_idps) %>% write_csv("conflict_score2.csv")
 ```
 
 ```{r}
-acled %>% 
-  count(event_type)
+
 ```
 
 
@@ -108,12 +110,18 @@ acled %>%
 conflict_compare <- conflict_score2 %>% 
   mutate(total_events = battles + explosions_remote_violence + protests_and_riots + strategic_developments +
            violence_against_civilians) %>% 
-  ggplot(aes(x = score_i, y = new_score, colour = total_events, size = fatalities,
+  ggplot(aes(x = old_conflict_score, y = conflict_score, colour = total_events, size = fatalities,
              text = paste0(admin3, ",", admin1))) +
   geom_point() + 
   scale_colour_viridis(option = "magma", direction = -1)
 
 ggplotly(conflict_compare, tooltip = c("text"))
+
+glimpse(conflict_score2)
+
+conflict_score2 %>% 
+  filter(admin3 == "Sittwe")
+conflict_score2 %>%  arrange(desc(total_idps))
 ```
 
 # Figuring out where the KNU is most active 
