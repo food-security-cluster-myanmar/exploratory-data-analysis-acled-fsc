@@ -8,15 +8,11 @@ From 2021 version of the 5Ws. Administrative level 3 place codes. Public. [Link]
 
 Extracted 2022-01-25. Conflict reference table, at incident level. Provided by MIMU. Read into .csv for public sharing. [Link](https://raw.githubusercontent.com/food-security-cluster-myanmar/exploratory-data-analysis-acled-fsc/master/data/acled_20220125.csv); only used for this report.  
 
-Find updated dataset at [Link](). 
+Find updated dataset at Link. 
 
 ## Shapefiles 
 
 MIMU shapefiles. Administrative levels 1 and 3 shapefiles. Public. Links for [Admin level 1](https://geonode.themimu.info/layers/geonode%3Ammr_polbnda2_adm1_mimu_250k) [Admin level 3](https://geonode.themimu.info/layers/geonode%3Ammr_polbnda_adm3_mimu_250k). 
-
-Extracted 2022-01-25. Conflict reference table, at incident level. Provided by MIMU. Read into .csv for public sharing. [Link](https://raw.githubusercontent.com/food-security-cluster-myanmar/exploratory-data-analysis-acled-fsc/master/data/acled_20220125.csv); only used for this report.  
-
-Find updated dataset at [Link](). 
 
 ## Actors 
 

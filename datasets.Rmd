@@ -53,7 +53,7 @@ townships %>%
 
 ## Shapefiles 
 
-MIMU shapefiles. Administrative levels 1 and 3 shapefiles. Public. Link
+MIMU shapefiles. Administrative levels 1 and 3 shapefiles. Public. Links for [Admin level 1](https://geonode.themimu.info/layers/geonode%3Ammr_polbnda2_adm1_mimu_250k) [Admin level 3](https://geonode.themimu.info/layers/geonode%3Ammr_polbnda_adm3_mimu_250k).  
 
 ```{r}
 # shapefiles
@@ -321,7 +321,7 @@ acled_words %>%
 
 ## Vulnerability in Myanmar
 
-Census reference dataset. Dataset used for the creation of the MIMU-HARP Vulnerability Index bassed on 2015 Census data. Public. [Link](https://raw.githubusercontent.com/food-security-cluster-myanmar/exploratory-data-analysis-acled-fsc/master/data/vulmmr.csv). 
+Census reference dataset. Dataset used for the creation of the MIMU-HARP Vulnerability Index based on 2015 Census data. Public. [Link](https://raw.githubusercontent.com/food-security-cluster-myanmar/exploratory-data-analysis-acled-fsc/master/data/vulmmr.csv). 
 
 ```{r vulnerability in Myanmar}
 # vulnerability in Myanmar 
