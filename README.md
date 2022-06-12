@@ -12,7 +12,7 @@ Find updated dataset at Link.
 
 ## Shapefiles 
 
-MIMU shapefiles. Administrative levels 1 and 3 shapefiles. Public. Links for [Admin level 1](https://geonode.themimu.info/layers/geonode%3Ammr_polbnda2_adm1_mimu_250k) [Admin level 3](https://geonode.themimu.info/layers/geonode%3Ammr_polbnda_adm3_mimu_250k). 
+MIMU shapefiles. Administrative levels 1 and 3 shapefiles. Public. Links for [Admin level 1](https://geonode.themimu.info/layers/geonode%3Ammr_polbnda2_adm1_mimu_250k) and [Admin level 3](https://geonode.themimu.info/layers/geonode%3Ammr_polbnda_adm3_mimu_250k). 
 
 ## Actors 
 
