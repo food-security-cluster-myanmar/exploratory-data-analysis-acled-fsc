@@ -202,222 +202,17 @@ cumcount <- function(x){
   return(cumcount)
 }
 
-# reading in townships from geoadmins 
-townships <- read_excel("FSC 5W 2021 - GEOADMINS_final 19.xlsx",
-           sheet = "GEOADMINS") %>% 
-  clean_names() %>% 
-  select(admin1pcode_4:admin3pcode) %>% 
-  rename(admin1_pcode = admin1pcode_4,
-         admin3_pcode = admin3pcode,
-         state_name   = state_5,
-         township_name  = county) %>% 
-  remove_empty() %>% 
-  mutate(admin3_pcode = ifelse(state_name == "Magway" & township_name == "Minhla", "MMR009013", admin3_pcode),
-         admin3_pcode = ifelse(state_name == "Yangon" & township_name == "Htantabin", "MMR013006", admin3_pcode))
+```
 
-# reading in acled
-acled <- read_excel("2010-01-01-2022-01-25-Myanmar.xlsx", 
-         sheet = "2010-2021-Cleaned") %>% 
-  mutate(admin3 = recode(admin3,
-                        "Dagon Myothit-South" = "Dagon Myothit (South)",
-                        "Dagon Myothit-North" = "Dagon Myothit (North)",
-                        "Dagon Myothit-Seikkan" = "Dagon Myothit (Seikkan)",
-                        "Dagon Myothit-East" = "Dagon Myothit (East)",
-                        "Hlaingtharya-East" = "Hlaingtharya",
-                        "Hlaingtharya-West" = "Hlaingtharya",
-                        "Pangsang" = "Pangsang (Panghkam)")) %>% 
-  # locations in yangon with longlat, but no admin3 have been coded as Kyauktada, where city hall is;
-  # similarly, in mandalay, they have been placed in Chanayethazan and Zay yar thi ri in NPT
-  mutate(admin3 = case_when(is.na(admin3) & latitude == 16.8052 ~ "Kyauktada",
-                           is.na(admin3) & latitude == 19.7450 ~ "Zay Yar Thi Ri",
-                           is.na(admin3) & latitude == 21.9747 ~ "Chanayethazan",
-                           TRUE ~ admin3)) %>% 
-  left_join(townships %>%  
-              select(township_name, admin3_pcode), by = c("admin3" = "township_name")) %>% 
-  group_by(data_id) %>% 
-  slice(which.min(event_id_no_cnty)) %>%
-  ungroup() %>% 
-  mutate(inter_type = interaction,
-         inter_type = recode_factor(inter_type,
-                             `10` = "SOLE	MILITARY ACTION",
-                             `11` = "MILITARY VERSUS MILITARY",
-                             `12` = "MILITARY VERSUS REBELS",
-                             `13` = "MILITARY VERSUS POLITICAL MILITIA",
-                             `14` = "MILITARY VERSUS COMMUNAL MILITIA",
-                             `15` = "MILITARY VERSUS RIOTERS",
-                             `16` = "MILITARY VERSUS PROTESTERS",
-                             `17` = "MILITARY VERSUS CIVILIANS",
-                             `18` = "MILITARY VERSUS OTHER",
-                             `20` = "SOLE REBEL ACTION",
-                             `22` = "REBELS VERSUS REBELS",
-                             `23` = "REBELS	VERSUS POLITICAL MILIITA ",
-                             `24` = "REBELS VERSUS COMMUNAL MILITIA",
-                             `25` = "REBELS VERSUS RIOTERS",
-                             `26` = "REBELS VERSUS PROTESTERS ",
-                             `27` = "REBELS VERSUS CIVILIANS",
-                             `28` = "REBELS VERSUS OTHERS",
-                             `30` = "SOLE POLITICAL MILITIA ACTION",
-                             `33` = "POLITICAL MILITIA VERSUS POLITICAL	MILITIA",
-                             `34` = "POLITICAL MILITIA VERSUS COMMUNAL	MILITIA",
-                             `35` = "POLITICAL MILITIA VERSUS RIOTERS",
-                             `36` = "POLITICAL MILITIA VERSUS PROTESTERS",
-                             `37` = "POLITICAL MILITIA VERSUS CIVILIANS",
-                             `38` = "POLITICAL MILITIA VERSUS OTHERS",
-                             `40` = "SOLE COMMUNAL MILITIA ACTION",
-                             `44` = "COMMUNAL MILITIA VERSUS COMMUNAL MILITIA",
-                             `45` = "COMMUNAL MILITIA VERSUS RIOTERS",
-                             `46` = "COMMUNAL	MILITIA	VERSUS PROTESTERS ",
-                             `47` = "COMMUNAL MILITIA VERSUS CIVILIANS",
-                             `48` = "COMMUNAL MILITIA VERSUS OTHER",
-                             `50` = "SOLE RIOTER ACTION",
-                             `55` = "RIOTERS VERSUS RIOTERS",
-                             `56` = "RIOTERS VERSUS PROTESTERS",
-                             `57` = "RIOTERS VERSUS CIVILIANS",
-                             `58` = "RIOTERS VERSUS OTHERS",
-                             `60` = "SOLE PROTESTER ACTION",
-                             `66` = "PROTESTERS VERSUS PROTESTERS",
-                             `67` = "PROTESTERS VERSUS CIVILIANS",
-                             `68` = "PROTESTERS VERSUS OTHER",
-                             `78` = "OTHER ACTOR VERSUS CIVILIANS",
-                             `80` = "SOLE OTHER ACTION"), 
-         inter_type = tolower(str_trim(str_replace_all(inter_type, "[\\r\\n\\t]+", " ")))) %>% 
-  mutate(admin3_pcode = ifelse(admin3_pcode == "MMR007014" & admin1 == "Yangon", "MMR013006", admin3_pcode),
-         admin3_pcode = ifelse(admin1 == "Magway" & admin3 == "Minhla", "MMR009013", admin3_pcode)) %>% 
-  mutate(has_fatalities = ifelse(fatalities > 0, TRUE, FALSE)) %>%
-  mutate(month = lubridate::month(event_date, label = TRUE)) %>%
-  mutate(non_combatant = case_when(event_type == "Violence against civilians" ~ TRUE, 
-                                   str_detect(inter_type, "civilian|protester") ~ TRUE, 
-                                   str_detect(notes, "civilian|protester|villager") ~ TRUE, 
-                                   TRUE ~ FALSE))
+```{r datasets}
+# datasets 
 
-# actor-level dataset
-actors <- read_csv("1900-01-01-2022-02-09-Myanmar.csv") %>% 
-  mutate(admin3 = recode(admin3,
-                        "Dagon Myothit-South" = "Dagon Myothit (South)",
-                        "Dagon Myothit-North" = "Dagon Myothit (North)",
-                        "Dagon Myothit-Seikkan" = "Dagon Myothit (Seikkan)",
-                        "Dagon Myothit-East" = "Dagon Myothit (East)",
-                        "Hlaingtharya-East" = "Hlaingtharya",
-                        "Hlaingtharya-West" = "Hlaingtharya",
-                        "Pangsang" = "Pangsang (Panghkam)")) %>% 
-  # locations in yangon with longlat, but no admin3 have been coded as Kyauktada, where city hall is;
-  # similarly, in mandalay, they have been placed in Chanayethazan and Zay yar thi ri in NPT
-  mutate(admin3 = case_when(is.na(admin3) & latitude == 16.8052 ~ "Kyauktada",
-                           is.na(admin3) & latitude == 19.7450 ~ "Zay Yar Thi Ri",
-                           is.na(admin3) & latitude == 21.9747 ~ "Chanayethazan",
-                           TRUE ~ admin3)) %>% 
-  left_join(townships %>%  
-              select(township_name, admin3_pcode), by = c("admin3" = "township_name")) %>% 
-  left_join(acled %>% 
-              select(interaction, inter_type) %>%  distinct(), by = "interaction") %>% 
-  mutate(actor_simple = actor1) %>% 
-  mutate(actor_simple = 
-           case_when(str_detect(actor_simple, "People's Defense Force") ~ "People's Defense Force",
-                     str_detect(actor_simple, "Rohingya Muslim Group \\(Myanmar\\)") ~ "Rohingya Muslim Group (Myanmar)",
-                     str_detect(actor_simple, "Women \\(Myanmar\\)") ~ "Women (Myanmar)",
-                     str_detect(actor_simple, "21 Guerrilla Force") ~ "21 Guerrilla Force",
-                     str_detect(actor_simple, "27 Revolution Force") ~ "27 Revolution Force",
-                     str_detect(actor_simple, "88 Generation Peace and Open Society") ~ "88 Generation Peace and Open Society",
-                     str_detect(actor_simple, "ABFSU") ~ "ABFSU",
-                     str_detect(actor_simple, "Aid Workers \\(Myanmar\\)") ~ "Aid Workers (Myanmar)",
-                     str_detect(actor_simple, "Ayadaw Bone Naing PDF") ~ "Ayadaw Bone Naing PDF",
-                     str_detect(actor_simple, "Baptist Christian Group") ~ "Baptist Christian Group (Myanmar)",
-                     str_detect(actor_simple, "Buddhist Group") ~ "Buddhist Group (Myanmar)", 
-                     str_detect(actor_simple, "CDF: Chinland Defense Force") ~ "CDF: Chinland Defense Force",
-                     str_detect(actor_simple, "Chin Ethnic Group") ~ "Chin Ethnic Group (Myanmar)",
-                     str_detect(actor_simple, "Chinese Ethnic Group") ~ "Chinese Ethnic Group (Myanmar)",
-                     str_detect(actor_simple, "Christian Group")~ "Christian Group (Myanmar)",
-                     str_detect(actor_simple, "Civilians \\(Myanmar\\)") ~ "Civilians (Myanmar)",
-                     str_detect(actor_simple, "CNO/CNDF") ~ "CNO/CNDF: Chin National Organization/Chin National Defense Force",
-                     str_detect(actor_simple, "DKBA \\(Buddhist\\)") ~ "DKBA (Buddhist): Democratic Karen Buddhist Army",
-                     str_detect(actor_simple, "Farmers \\(Myanmar\\)") ~ "Farmers (Myanmar)",
-                     str_detect(actor_simple, "Democratic Guerrilla Force") ~ "Democratic Guerrilla Force",
-                     str_detect(actor_simple, "DGWCF") ~ "DGWCF: Delta Guerrilla Warfare Collective Forces",
-                     str_detect(actor_simple, "Former Government of Myanmar \\(2016-\\)") ~ "Former Government of Myanmar (2016-)",
-                     str_detect(actor_simple, "Former Government of Myanmar \\(2021-\\)") ~ "Former Government of Myanmar (2021-)",
-                     str_detect(actor_simple, "Former Military Forces of Myanmar \\(2016-2021\\)") ~ 
-                       "Former Military Forces of Myanmar (2016-2021)",
-                     str_detect(actor_simple, "Former Military Forces of Myanmar \\(2021-\\)") ~ 
-                       "Former Military Forces of Myanmar (2021-)",
-                     str_detect(actor_simple, "Government of Myanmar \\(2011-2016\\)") ~ "Government of Myanmar (2011-2016)",
-                     str_detect(actor_simple, "Government of Myanmar \\(2016-\\)") ~ "Government of Myanmar (2016-)",
-                     str_detect(actor_simple, "Government of Myanmar \\(2021-\\)") ~ "Government of Myanmar (2021-)",
-                     str_detect(actor_simple, "Health Workers \\(Myanmar\\)") ~ "Health Workers (Myanmar)",
-                     str_detect(actor_simple, "Journalists \\(Myanmar\\)") ~ "Journalists (Myanmar)",
-                     str_detect(actor_simple, "Kachin Ethnic Group \\(Myanmar\\)") ~ "Kachin Ethnic Group (Myanmar)", 
-                     str_detect(actor_simple, "Kayah Ethnic Group \\(Myanmar\\)")~ "Kayah Ethnic Group (Myanmar)",
-                     str_detect(actor_simple, "Kayin Ethnic Group \\(Myanmar\\)")~ "Kayin Ethnic Group (Myanmar)",
-                     str_detect(actor_simple, "Karenni Democratic Front") ~ "KDF: Karenni Democratic Front",
-                     str_detect(actor_simple, "KIO/KIA") ~ "KIO/KIA: Kachin Independence Organization/Kachin Independence Army",
-                     str_detect(actor_simple, "Karenni Nationalities Defense Force") ~ "KNDF: Karenni Nationalities Defense Force",
-                     str_detect(actor_simple, "Karenni National Progressive Party") ~ "KNPP/KA: Karenni National Progressive Party/Karenni Army",
-                     str_detect(actor_simple, "Karen National Union") ~ "KNU/KNLA: Karen National Union/Karen National Liberation Army",
-                     str_detect(actor_simple, "Knights Of The Red Land") ~ "KORL: Knights Of The Red Land",
-                     str_detect(actor_simple, "KNU/KNLA Peace Council") ~ "KPC: KNU/KNLA Peace Council",
-                     str_detect(actor_simple, "LGBT \\(Myanmar\\)") ~ "LGBT (Myanmar)",
-                     str_detect(actor_simple, "Labour Group \\(Myanmar\\)") ~ "Labour Group (Myanmar)",
-                     str_detect(actor_simple, "Lisu Ethnic Group \\(Myanmar\\)") ~ "Lisu Ethnic Group (Myanmar)",
-                     str_detect(actor_simple, "MG6 Guerrilla Force") ~ "MG6 Guerrilla Force",
-                     str_detect(actor_simple, "MHG: Monywa Heroes Group") ~ "MHG: Monywa Heroes Group",
-                     str_detect(actor_simple, "MHH: Mungshawa Hpyen Hpung") ~ "MHH: Mungshawa Hpyen Hpung",
-                     str_detect(actor_simple, "Border Guard Force") ~ "Military Forces of Myanmar - Border Guard Force",
-                     str_detect(actor_simple, "Police Forces of Myanmar") ~ "Police Forces of Myanmar",
-                     str_detect(actor_simple, "People's Militia Force") ~ "People's Militia Force",
-                     str_detect(actor_simple, "Military Forces of Myanmar") ~ "Military Forces of Myanmar",
-                     str_detect(actor_simple, "MNTJP/MNDAA: Myanmar National Truth and Justice Party/Myanmar National Democratic Alliance Army") ~ 
-                       "MNTJP/MNDAA: Myanmar National Truth and Justice Party/Myanmar National Democratic Alliance Army",
-                     str_detect(actor_simple, "Mon Ethnic Group \\(Myanmar\\)") ~ "Mon Ethnic Group (Myanmar)",
-                     str_detect(actor_simple, "Monywa Nightking") ~ "Monywa Nightking",
-                     str_detect(actor_simple, "Monywa Young People Group") ~ "Monywa Young People Group",
-                     str_detect(actor_simple, "Mro Ethnic Group \\(Myanmar\\)") ~ "Mro Ethnic Group (Myanmar)",
-                     str_detect(actor_simple, "MTHSF: Mon Thaton Special Forces") ~ "MTHSF: Mon Thaton Special Forces",
-                     str_detect(actor_simple, "Muslim Group \\(Myanmar\\)") ~ "Muslim Group (Myanmar)",
-                     str_detect(actor_simple, "MWVA: Myanmar War Veterans' Association") ~ "MWVA: Myanmar War Veterans' Association",
-                     str_detect(actor_simple, "NLD: National League for Democracy") ~ "NLD: National League for Democracy",
-                     str_detect(actor_simple, "Pa-Oh Ethnic Group \\(Myanmar\\)") ~ "Pa-Oh Ethnic Group (Myanmar)",
-                     str_detect(actor_simple, "Palaung/Ta'ang Ethnic Group \\(Myanmar\\)") ~ "Palaung/Ta'ang Ethnic Group (Myanmar)",
-                     str_detect(actor_simple, "Pale Joker PDF") ~ "Pale Jokers PDF",
-                     str_detect(actor_simple, "People's Defense Froce") ~ "People's Defense Force",
-                     str_detect(actor_simple, "People Defense Froce") ~ "People's Defense Force",
-                     str_detect(actor_simple, "People's Guerrillas Commando") ~ "People's Guerrillas Commando",
-                     str_detect(actor_simple, "People's Militia Force") ~ "People's Militia Force",
-                     str_detect(actor_simple, "Phoenix Defense Force") ~ "Phoenix Defense Force", 
-                     str_detect(actor_simple, "Phoenix Special Guerrilla Force") ~ "Phoenix Special Guerrilla Force",
-                     str_detect(actor_simple, "PNO/PNA: Pa-Oh National Organization/Pa-Oh National Army") ~ 
-                       "PNO/PNA: Pa-Oh National Organization/Pa-Oh National Army",
-                     str_detect(actor_simple, "Prisoners \\(Myanmar\\)") ~ "Prisoners (Myanmar)",
-                     str_detect(actor_simple, "PSLF/TNLA: Palaung State Liberation Front/Ta'ang National Liberation Army") ~ 
-                       "PSLF/TNLA: Palaung State Liberation Front/Ta'ang National Liberation Army",
-                     str_detect(actor_simple, "Rakhine Ethnic Group \\(Myanmar\\)") ~ "Rakhine Ethnic Group (Myanmar)",
-                     str_detect(actor_simple, "RCSS/SSA-S: Restoration Council of Shan State/Shan State Army-South") ~ 
-                       "RCSS/SSA-S: Restoration Council of Shan State/Shan State Army-South",
-                     str_detect(actor_simple, "Refugees/IDPs \\(Myanmar\\)") ~ "Refugees/IDPs (Myanmar)",
-                     str_detect(actor_simple, "Shan Ethnic Group \\(Myanmar\\)") ~ "Shan Ethnic Group (Myanmar)",
-                     str_detect(actor_simple, "Students \\(Myanmar\\)") ~ "Students (Myanmar)",
-                     str_detect(actor_simple, "Teachers \\(Myanmar\\)") ~ "Teachers (Myanmar)",
-                     str_detect(actor_simple, "ULA/AA: United League of Arakan/Arakan Army") ~ "ULA/AA: United League of Arakan/Arakan Army",
-                     str_detect(actor_simple, "ULFA-I: United Liberation Front of Asom-Independent") ~ 
-                       "ULFA-I: United Liberation Front of Asom-Independent",
-                     str_detect(actor_simple, "Urban Guerrilla Group") ~ "Urban Guerrilla Group", 
-                     str_detect(actor_simple, "USDP: Union Solidarity and Development Party") ~ "USDP: Union Solidarity and Development Party",
-                     str_detect(actor_simple, "Zero Guerrilla Force") ~ "Zero Guerrilla Force",
-                     str_detect(actor_simple, "DNP: Democratic Party of National Politics") ~ "DNP: Democratic Party of National Politics",
-                     str_detect(actor_simple, "Hlaw Tet In Ahr Su 126: Rowing Force 126") ~ "Hlaw Tet In Ahr Su 126: Rowing Force 126",
-                     TRUE ~ actor_simple)) %>%  
-  mutate(inter1 = recode(inter1, 
-                         `1` = "state_forces",
-                         `2` = "rebel_groups",
-                         `3` = "political_militias",
-                         `4` = "identity_militias",
-                         `5` = "rioters",
-                         `6` = "protesters",
-                         `7` = "civilians", 
-                         `8` = "external_other_force")) %>%  
-  mutate(inter1 = fct_relevel(inter1, c("external_other_force", "identity_militias", "rioters", "rebel_groups", 
-                                        "political_militias", "state_forces", "civilians", "protesters"))) %>% 
-  mutate(event_type = fct_relevel(event_type, c("Battles", "Explosions/Remote violence", "Violence against civilians",
-                                                "Protests", "Riots", "Strategic developments"))) %>% 
-  mutate(has_fatalities = ifelse(fatalities > 0, TRUE, FALSE))
+townships <- read_csv("./data/townships.csv")
+acled <- read_csv("./data/acled_20220125.csv")
+actors <- read_csv("./data/actors.csv") 
+acled_words <- read_csv("./data/acled_words.csv")
+vulmmr <- read_csv("./data/vulmmr.csv")
+fsc <- read_csv("./data/fsc5w_2021.csv")
 
 # shapefiles
 pcode3_shape <- st_read("./mmr_polbnda_adm3_mimu_250k/mmr_polbnda_adm3_mimu_250k.shp", quiet = TRUE) %>% 
@@ -431,49 +226,7 @@ pcode1_shape <- st_read("./mmr_polbnda2_adm1_mimu_250k/mmr_polbnda2_adm1_mimu_25
  rename(state = ST, 
         admin1_pcode = ST_PCODE) %>% st_as_sf()
 
-# reading in townships from geoadmins 
-townships <- read_excel("FSC 5W 2021 - GEOADMINS_final 19.xlsx",
-           sheet = "GEOADMINS") %>% 
-  clean_names() %>% 
-  select(admin1pcode_4:admin3pcode) %>% 
-  rename(admin1_pcode = admin1pcode_4,
-         admin3_pcode = admin3pcode,
-         state_name   = state_5,
-         township_name  = county) %>% 
-  remove_empty() %>%
-  mutate(admin3_pcode = ifelse(state_name == "Magway" & township_name == "Minhla", "MMR009013", admin3_pcode),
-         admin3_pcode = ifelse(state_name == "Yangon" & township_name == "Htantabin", "MMR013006", admin3_pcode))
-
-# reading in 5Ws
-fsc <- read_csv("fsc5w_2021.csv")
-
-# acled_words df
-acled_words <- acled %>% 
-  filter(year == 2021) %>% 
-  select(data_id, notes) %>% 
-  unnest_tokens(word, notes) %>% 
-  anti_join(stop_words, by = "word") %>% 
-  filter(str_detect(word, "[a-z]")) %>% 
-  left_join(acled %>% 
-              select(data_id, admin1, admin3_pcode, event_type, sub_event_type, fatalities, inter_type), by = "data_id")
-
-
-# reading in vulnerability dataset
-vulmmr <- read_excel("Datasets_Vulnerability_Analysis_in_Myanmar_09Jul2018 (1).xlsx",
-           skip = 1) %>% 
-  slice(-c(1:3)) %>% 
-  clean_names() %>% 
-  select(-label) %>% 
-  mutate_at(vars(number_of_village_tracts:wb_wealth_rank), as.numeric) %>% 
-  mutate_at(vars(disasters_impacted_by_nargis_2008:acled_2015_2016_data_exists), as.logical) %>% 
-  mutate_at(vars(conflict_2015_2016_number_of_battles:corrected_conflict_index_garry), as.numeric) %>% 
-  select(-starts_with("x")) %>% 
-  select(-c(private_sector_development_2014_2015, protection_2010_2015, shelter_2010_2015, wash_2010_2015))
-
-# show_col(viridis_pal()(10))
-
 ```
-
 
 ## 1. Progression of conflict events in Myanmar in 2021, by interaction type
 
@@ -1765,6 +1518,15 @@ conflict_score %>%
 <br><br><br>
 
 ## 8. Text mining conflict event descriptions
+
+### In progress -- Update for May 2022. 
+
+Changes between 2021 and 2022 
+
+```{r}
+
+```
+
 
 ### 8.1 Network graph of conflict descriptions
 

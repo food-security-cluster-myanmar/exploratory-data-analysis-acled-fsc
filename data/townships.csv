@@ -1,0 +1,357 @@
+admin1_pcode,state_name,township_name,admin3_pcode
+MMR017,Ayeyarwady,Bogale,MMR017024
+MMR017,Ayeyarwady,Danubyu,MMR017022
+MMR017,Ayeyarwady,Dedaye,MMR017026
+MMR017,Ayeyarwady,Einme,MMR017015
+MMR017,Ayeyarwady,Hinthada,MMR017008
+MMR017,Ayeyarwady,Ingapu,MMR017013
+MMR017,Ayeyarwady,Kangyidaunt,MMR017002
+MMR017,Ayeyarwady,Kyaiklat,MMR017025
+MMR017,Ayeyarwady,Kyangin,MMR017012
+MMR017,Ayeyarwady,Kyaunggon,MMR017007
+MMR017,Ayeyarwady,Kyonpyaw,MMR017005
+MMR017,Ayeyarwady,Labutta,MMR017016
+MMR017,Ayeyarwady,Lemyethna,MMR017010
+MMR017,Ayeyarwady,Maubin,MMR017019
+MMR017,Ayeyarwady,Mawlamyinegyun,MMR017018
+MMR017,Ayeyarwady,Myanaung,MMR017011
+MMR017,Ayeyarwady,Myaungmya,MMR017014
+MMR017,Ayeyarwady,Ngapudaw,MMR017004
+MMR017,Ayeyarwady,Nyaungdon,MMR017021
+MMR017,Ayeyarwady,Pantanaw,MMR017020
+MMR017,Ayeyarwady,Pathein,MMR017001
+MMR017,Ayeyarwady,Pyapon,MMR017023
+MMR017,Ayeyarwady,Thabaung,MMR017003
+MMR017,Ayeyarwady,Wakema,MMR017017
+MMR017,Ayeyarwady,Yegyi,MMR017006
+MMR017,Ayeyarwady,Zalun,MMR017009
+MMR007,Bago (East),Bago,MMR007001
+MMR007,Bago (East),Daik-U,MMR007007
+MMR007,Bago (East),Htantabin,MMR007014
+MMR007,Bago (East),Kawa,MMR007003
+MMR007,Bago (East),Kyaukkyi,MMR007011
+MMR007,Bago (East),Kyauktaga,MMR007006
+MMR007,Bago (East),Nyaunglebin,MMR007005
+MMR007,Bago (East),Oktwin,MMR007013
+MMR007,Bago (East),Phyu,MMR007012
+MMR007,Bago (East),Shwegyin,MMR007008
+MMR007,Bago (East),Taungoo,MMR007009
+MMR007,Bago (East),Thanatpin,MMR007002
+MMR007,Bago (East),Waw,MMR007004
+MMR007,Bago (East),Yedashe,MMR007010
+MMR008,Bago (West),Gyobingauk,MMR008014
+MMR008,Bago (West),Letpadan,MMR008008
+MMR008,Bago (West),Minhla,MMR008009
+MMR008,Bago (West),Monyo,MMR008013
+MMR008,Bago (West),Nattalin,MMR008012
+MMR008,Bago (West),Okpho,MMR008010
+MMR008,Bago (West),Padaung,MMR008003
+MMR008,Bago (West),Paukkhaung,MMR008002
+MMR008,Bago (West),Paungde,MMR008004
+MMR008,Bago (West),Pyay,MMR008001
+MMR008,Bago (West),Shwedaung,MMR008006
+MMR008,Bago (West),Thayarwady,MMR008007
+MMR008,Bago (West),Thegon,MMR008005
+MMR008,Bago (West),Zigon,MMR008011
+MMR004,Chin,Falam,MMR004001
+MMR004,Chin,Hakha,MMR004002
+MMR004,Chin,Kanpetlet,MMR004008
+MMR004,Chin,Matupi,MMR004007
+MMR004,Chin,Mindat,MMR004006
+MMR004,Chin,Paletwa,MMR004009
+MMR004,Chin,Tedim,MMR004004
+MMR004,Chin,Thantlang,MMR004003
+MMR004,Chin,Tonzang,MMR004005
+MMR001,Kachin,Bhamo,MMR001010
+MMR001,Kachin,Chipwi,MMR001005
+MMR001,Kachin,Hpakant,MMR001009
+MMR001,Kachin,Injangyang,MMR001003
+MMR001,Kachin,Khaunglanhpu,MMR001018
+MMR001,Kachin,Machanbaw,MMR001016
+MMR001,Kachin,Mansi,MMR001013
+MMR001,Kachin,Mogaung,MMR001008
+MMR001,Kachin,Mohnyin,MMR001007
+MMR001,Kachin,Momauk,MMR001012
+MMR001,Kachin,Myitkyina,MMR001001
+MMR001,Kachin,Nawngmun,MMR001017
+MMR001,Kachin,Puta-O,MMR001014
+MMR001,Kachin,Shwegu,MMR001011
+MMR001,Kachin,Sumprabum,MMR001015
+MMR001,Kachin,Tanai,MMR001004
+MMR001,Kachin,Tsawlaw,MMR001006
+MMR001,Kachin,Waingmaw,MMR001002
+MMR002,Kayah,Bawlake,MMR002005
+MMR002,Kayah,Demoso,MMR002002
+MMR002,Kayah,Hpasawng,MMR002006
+MMR002,Kayah,Hpruso,MMR002003
+MMR002,Kayah,Loikaw,MMR002001
+MMR002,Kayah,Mese,MMR002007
+MMR002,Kayah,Shadaw,MMR002004
+MMR003,Kayin,Hlaingbwe,MMR003002
+MMR003,Kayin,Hpa-An,MMR003001
+MMR003,Kayin,Hpapun,MMR003003
+MMR003,Kayin,Kawkareik,MMR003006
+MMR003,Kayin,Kyainseikgyi,MMR003007
+MMR003,Kayin,Myawaddy,MMR003005
+MMR003,Kayin,Thandaunggyi,MMR003004
+MMR009,Magway,Aunglan,MMR009016
+MMR009,Magway,Chauk,MMR009003
+MMR009,Magway,Gangaw,MMR009023
+MMR009,Magway,Kamma,MMR009015
+MMR009,Magway,Magway,MMR009001
+MMR009,Magway,Minbu,MMR009007
+MMR009,Magway,Mindon,MMR009014
+MMR009,Magway,Minhla,MMR009013
+MMR009,Magway,Myaing,MMR009020
+MMR009,Magway,Myothit,MMR009005
+MMR009,Magway,Natmauk,MMR009006
+MMR009,Magway,Ngape,MMR009009
+MMR009,Magway,Pakokku,MMR009018
+MMR009,Magway,Pauk,MMR009021
+MMR009,Magway,Pwintbyu,MMR009008
+MMR009,Magway,Salin,MMR009010
+MMR009,Magway,Saw,MMR009025
+MMR009,Magway,Seikphyu,MMR009022
+MMR009,Magway,Sidoktaya,MMR009011
+MMR009,Magway,Sinbaungwe,MMR009017
+MMR009,Magway,Taungdwingyi,MMR009004
+MMR009,Magway,Thayet,MMR009012
+MMR009,Magway,Tilin,MMR009024
+MMR009,Magway,Yenangyaung,MMR009002
+MMR009,Magway,Yesagyo,MMR009019
+MMR010,Mandalay,Amarapura,MMR010006
+MMR010,Mandalay,Aungmyaythazan,MMR010001
+MMR010,Mandalay,Chanayethazan,MMR010002
+MMR010,Mandalay,Chanmyathazi,MMR010004
+MMR010,Mandalay,Kyaukpadaung,MMR010020
+MMR010,Mandalay,Kyaukse,MMR010013
+MMR010,Mandalay,Madaya,MMR010009
+MMR010,Mandalay,Mahaaungmyay,MMR010003
+MMR010,Mandalay,Mahlaing,MMR010029
+MMR010,Mandalay,Meiktila,MMR010028
+MMR010,Mandalay,Mogoke,MMR010011
+MMR010,Mandalay,Myingyan,MMR010017
+MMR010,Mandalay,Myittha,MMR010015
+MMR010,Mandalay,Natogyi,MMR010019
+MMR010,Mandalay,Ngazun,MMR010021
+MMR010,Mandalay,Nyaung-U,MMR010022
+MMR010,Mandalay,Patheingyi,MMR010007
+MMR010,Mandalay,Pyawbwe,MMR010024
+MMR010,Mandalay,Pyigyitagon,MMR010005
+MMR010,Mandalay,Pyinoolwin,MMR010008
+MMR010,Mandalay,Singu,MMR010010
+MMR010,Mandalay,Sintgaing,MMR010014
+MMR010,Mandalay,Tada-U,MMR010016
+MMR010,Mandalay,Taungtha,MMR010018
+MMR010,Mandalay,Thabeikkyin,MMR010012
+MMR010,Mandalay,Thazi,MMR010030
+MMR010,Mandalay,Wundwin,MMR010031
+MMR010,Mandalay,Yamethin,MMR010023
+MMR011,Mon,Bilin,MMR011010
+MMR011,Mon,Chaungzon,MMR011003
+MMR011,Mon,Kyaikmaraw,MMR011002
+MMR011,Mon,Kyaikto,MMR011009
+MMR011,Mon,Mawlamyine,MMR011001
+MMR011,Mon,Mudon,MMR011005
+MMR011,Mon,Paung,MMR011008
+MMR011,Mon,Thanbyuzayat,MMR011004
+MMR011,Mon,Thaton,MMR011007
+MMR011,Mon,Ye,MMR011006
+MMR018,Nay Pyi Taw,Det Khi Na Thi Ri,MMR018004
+MMR018,Nay Pyi Taw,Lewe,MMR018007
+MMR018,Nay Pyi Taw,Oke Ta Ra Thi Ri,MMR018008
+MMR018,Nay Pyi Taw,Poke Ba Thi Ri,MMR018005
+MMR018,Nay Pyi Taw,Pyinmana,MMR018006
+MMR018,Nay Pyi Taw,Tatkon,MMR018003
+MMR018,Nay Pyi Taw,Za Bu Thi Ri,MMR018002
+MMR018,Nay Pyi Taw,Zay Yar Thi Ri,MMR018001
+MMR012,Rakhine,Ann,MMR012014
+MMR012,Rakhine,Buthidaung,MMR012010
+MMR012,Rakhine,Gwa,MMR012017
+MMR012,Rakhine,Kyaukpyu,MMR012011
+MMR012,Rakhine,Kyauktaw,MMR012004
+MMR012,Rakhine,Maungdaw,MMR012009
+MMR012,Rakhine,Minbya,MMR012005
+MMR012,Rakhine,Mrauk-U,MMR012003
+MMR012,Rakhine,Munaung,MMR012012
+MMR012,Rakhine,Myebon,MMR012006
+MMR012,Rakhine,Pauktaw,MMR012007
+MMR012,Rakhine,Ponnagyun,MMR012002
+MMR012,Rakhine,Ramree,MMR012013
+MMR012,Rakhine,Rathedaung,MMR012008
+MMR012,Rakhine,Sittwe,MMR012001
+MMR012,Rakhine,Thandwe,MMR012015
+MMR012,Rakhine,Toungup,MMR012016
+MMR005,Sagaing,Ayadaw,MMR005014
+MMR005,Sagaing,Banmauk,MMR005023
+MMR005,Sagaing,Budalin,MMR005013
+MMR005,Sagaing,Chaung-U,MMR005015
+MMR005,Sagaing,Hkamti,MMR005033
+MMR005,Sagaing,Homalin,MMR005034
+MMR005,Sagaing,Indaw,MMR005021
+MMR005,Sagaing,Kale,MMR005027
+MMR005,Sagaing,Kalewa,MMR005028
+MMR005,Sagaing,Kanbalu,MMR005007
+MMR005,Sagaing,Kani,MMR005017
+MMR005,Sagaing,Katha,MMR005020
+MMR005,Sagaing,Kawlin,MMR005024
+MMR005,Sagaing,Khin-U,MMR005005
+MMR005,Sagaing,Kyunhla,MMR005008
+MMR005,Sagaing,Lahe,MMR005036
+MMR005,Sagaing,Lay Shi,MMR005035
+MMR005,Sagaing,Mawlaik,MMR005031
+MMR005,Sagaing,Mingin,MMR005029
+MMR005,Sagaing,Monywa,MMR005012
+MMR005,Sagaing,Myaung,MMR005003
+MMR005,Sagaing,Myinmu,MMR005002
+MMR005,Sagaing,Nanyun,MMR005037
+MMR005,Sagaing,Pale,MMR005019
+MMR005,Sagaing,Paungbyin,MMR005032
+MMR005,Sagaing,Pinlebu,MMR005026
+MMR005,Sagaing,Sagaing,MMR005001
+MMR005,Sagaing,Salingyi,MMR005018
+MMR005,Sagaing,Shwebo,MMR005004
+MMR005,Sagaing,Tabayin,MMR005010
+MMR005,Sagaing,Tamu,MMR005030
+MMR005,Sagaing,Taze,MMR005011
+MMR005,Sagaing,Tigyaing,MMR005022
+MMR005,Sagaing,Wetlet,MMR005006
+MMR005,Sagaing,Wuntho,MMR005025
+MMR005,Sagaing,Ye-U,MMR005009
+MMR005,Sagaing,Yinmarbin,MMR005016
+MMR016,Shan (East),Ho Tawng (Ho Tao),MMR016320
+MMR016,Shan (East),Kengtung,MMR016001
+MMR016,Shan (East),Mong Hpen,MMR016319
+MMR016,Shan (East),Mong Kar,MMR016322
+MMR016,Shan (East),Mong Pawk,MMR016321
+MMR016,Shan (East),Monghpyak,MMR016010
+MMR016,Shan (East),Monghsat,MMR016006
+MMR016,Shan (East),Mongkhet,MMR016002
+MMR016,Shan (East),Mongla,MMR016005
+MMR016,Shan (East),Mongping,MMR016007
+MMR016,Shan (East),Mongton,MMR016008
+MMR016,Shan (East),Mongyang,MMR016003
+MMR016,Shan (East),Mongyawng,MMR016011
+MMR016,Shan (East),Nam Hpai,MMR016323
+MMR016,Shan (East),Tachileik,MMR016009
+MMR015,Shan (North),Aik Chan (Ai' Chun),MMR015311
+MMR015,Shan (North),Chinshwehaw Sub-township (Kokang SAZ),MMR015203
+MMR015,Shan (North),Hkun Mar (Hkwin Ma),MMR015306
+MMR015,Shan (North),Hopang,MMR015021
+MMR015,Shan (North),Hsawng Hpa (Saun Pha),MMR015305
+MMR015,Shan (North),Hseni,MMR015002
+MMR015,Shan (North),Hsipaw,MMR015014
+MMR015,Shan (North),Ka Lawng Hpar,MMR015310
+MMR015,Shan (North),Kawng Min Hsang,MMR015304
+MMR015,Shan (North),Konkyan,MMR015023
+MMR015,Shan (North),Konkyan (Kokang SAZ),MMR015201
+MMR015,Shan (North),Kunlong,MMR015020
+MMR015,Shan (North),Kutkai,MMR015011
+MMR015,Shan (North),Kyaukme,MMR015012
+MMR015,Shan (North),Lashio,MMR015001
+MMR015,Shan (North),Laukkaing,MMR015022
+MMR015,Shan (North),Laukkaing (Kokang SAZ),MMR015202
+MMR015,Shan (North),Lin Haw,MMR015309
+MMR015,Shan (North),Long Htan,MMR015307
+MMR015,Shan (North),Mabein,MMR015018
+MMR015,Shan (North),Man Man Hseng,MMR015313
+MMR015,Shan (North),Man Tun,MMR015303
+MMR015,Shan (North),Manton,MMR015019
+MMR015,Shan (North),Matman,MMR015024
+MMR015,Shan (North),Mongmao,MMR015008
+MMR015,Shan (North),Mongmit,MMR015017
+MMR015,Shan (North),Mongyai,MMR015003
+MMR015,Shan (North),Muse,MMR015009
+MMR015,Shan (North),Nam Hkam Wu,MMR015315
+MMR015,Shan (North),Nam Tit,MMR015301
+MMR015,Shan (North),Namhkan,MMR015010
+MMR015,Shan (North),Namhsan,MMR015016
+MMR015,Shan (North),Namtu,MMR015015
+MMR015,Shan (North),Nar Kawng,MMR015316
+MMR015,Shan (North),Nar Wee (Na Wi),MMR015302
+MMR015,Shan (North),Narphan,MMR015006
+MMR015,Shan (North),Nawng Hkit,MMR015314
+MMR015,Shan (North),Nawnghkio,MMR015013
+MMR015,Shan (North),Pang Hkam,MMR015317
+MMR015,Shan (North),Pang Yang,MMR015318
+MMR015,Shan (North),Pangsang (Panghkam),MMR015005
+MMR015,Shan (North),Pangwaun,MMR015007
+MMR015,Shan (North),Tangyan,MMR015004
+MMR015,Shan (North),Yawng Lin,MMR015308
+MMR015,Shan (North),Yin Pang,MMR015312
+MMR014,Shan (South),Hopong,MMR014003
+MMR014,Shan (South),Hsihseng,MMR014004
+MMR014,Shan (South),Kalaw,MMR014005
+MMR014,Shan (South),Kunhing,MMR014014
+MMR014,Shan (South),Kyethi,MMR014015
+MMR014,Shan (South),Laihka,MMR014012
+MMR014,Shan (South),Langkho,MMR014018
+MMR014,Shan (South),Lawksawk,MMR014008
+MMR014,Shan (South),Loilen,MMR014011
+MMR014,Shan (South),Mawkmai,MMR014020
+MMR014,Shan (South),Monghsu,MMR014017
+MMR014,Shan (South),Mongkaing,MMR014016
+MMR014,Shan (South),Mongnai,MMR014019
+MMR014,Shan (South),Mongpan,MMR014021
+MMR014,Shan (South),Nansang,MMR014013
+MMR014,Shan (South),Nyaungshwe,MMR014002
+MMR014,Shan (South),Pekon,MMR014010
+MMR014,Shan (South),Pindaya,MMR014006
+MMR014,Shan (South),Pinlaung,MMR014009
+MMR014,Shan (South),Taunggyi,MMR014001
+MMR014,Shan (South),Ywangan,MMR014007
+MMR006,Tanintharyi,Bokpyin,MMR006010
+MMR006,Tanintharyi,Dawei,MMR006001
+MMR006,Tanintharyi,Kawthoung,MMR006009
+MMR006,Tanintharyi,Kyunsu,MMR006006
+MMR006,Tanintharyi,Launglon,MMR006002
+MMR006,Tanintharyi,Myeik,MMR006005
+MMR006,Tanintharyi,Palaw,MMR006007
+MMR006,Tanintharyi,Tanintharyi,MMR006008
+MMR006,Tanintharyi,Thayetchaung,MMR006003
+MMR006,Tanintharyi,Yebyu,MMR006004
+MMR013,Yangon,Ahlone,MMR013037
+MMR013,Yangon,Bahan,MMR013044
+MMR013,Yangon,Botahtaung,MMR013017
+MMR013,Yangon,Cocokyun,MMR013032
+MMR013,Yangon,Dagon,MMR013043
+MMR013,Yangon,Dagon Myothit (East),MMR013020
+MMR013,Yangon,Dagon Myothit (North),MMR013019
+MMR013,Yangon,Dagon Myothit (Seikkan),MMR013021
+MMR013,Yangon,Dagon Myothit (South),MMR013018
+MMR013,Yangon,Dala,MMR013030
+MMR013,Yangon,Dawbon,MMR013014
+MMR013,Yangon,Hlaing,MMR013040
+MMR013,Yangon,Hlaingtharya,MMR013008
+MMR013,Yangon,Hlegu,MMR013004
+MMR013,Yangon,Hmawbi,MMR013003
+MMR013,Yangon,Htantabin,MMR013006
+MMR013,Yangon,Insein,MMR013001
+MMR013,Yangon,Kamaryut,MMR013041
+MMR013,Yangon,Kawhmu,MMR013028
+MMR013,Yangon,Kayan,MMR013026
+MMR013,Yangon,Kungyangon,MMR013029
+MMR013,Yangon,Kyauktada,MMR013033
+MMR013,Yangon,Kyauktan,MMR013024
+MMR013,Yangon,Kyeemyindaing,MMR013038
+MMR013,Yangon,Lanmadaw,MMR013035
+MMR013,Yangon,Latha,MMR013036
+MMR013,Yangon,Mayangone,MMR013042
+MMR013,Yangon,Mingaladon,MMR013002
+MMR013,Yangon,Mingalartaungnyunt,MMR013022
+MMR013,Yangon,North Okkalapa,MMR013012
+MMR013,Yangon,Pabedan,MMR013034
+MMR013,Yangon,Pazundaung,MMR013016
+MMR013,Yangon,Sanchaung,MMR013039
+MMR013,Yangon,Seikgyikanaungto,MMR013031
+MMR013,Yangon,Seikkan,MMR013045
+MMR013,Yangon,Shwepyithar,MMR013007
+MMR013,Yangon,South Okkalapa,MMR013011
+MMR013,Yangon,Taikkyi,MMR013005
+MMR013,Yangon,Tamwe,MMR013015
+MMR013,Yangon,Thaketa,MMR013013
+MMR013,Yangon,Thanlyin,MMR013023
+MMR013,Yangon,Thingangyun,MMR013009
+MMR013,Yangon,Thongwa,MMR013025
+MMR013,Yangon,Twantay,MMR013027
+MMR013,Yangon,Yankin,MMR013010
