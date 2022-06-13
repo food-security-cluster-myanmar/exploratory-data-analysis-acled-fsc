@@ -21,7 +21,7 @@ always_allow_html: true
   display: block;
   height: 70px;
   margin: 2em 20px 40px 20px;
-  background-image: url("Myanmar_cluster_blue.png");
+  background-image: url("./misc/Myanmar_cluster_blue.png");
   background-size: contain;
   background-position: center center;
   background-repeat: no-repeat;
@@ -79,7 +79,7 @@ The following report uses data from the Armed Conflict Location and Event Data P
 
 <br>
 
-![](all_acled_2010_2021.png)
+![](./misc/all_acled_2010_2021.png)
 
 <br><br>
 
@@ -213,6 +213,7 @@ actors <- read_csv("./data/actors.csv")
 acled_words <- read_csv("./data/acled_words.csv")
 vulmmr <- read_csv("./data/vulmmr.csv")
 fsc <- read_csv("./data/fsc5w_2021.csv")
+acled_new <- read_csv("./data/acled_20220606.csv")
 
 # shapefiles
 pcode3_shape <- st_read("./mmr_polbnda_adm3_mimu_250k/mmr_polbnda_adm3_mimu_250k.shp", quiet = TRUE) %>% 
@@ -242,7 +243,7 @@ The map below plots where conflict events took place across the country, by inte
 
 
 <br>
-![](acled4.gif)
+![](./gif/acled4.gif)
 
 
 <br><br><br>
@@ -439,22 +440,32 @@ The table below provides a more detailed snapshot of conflicts, broken down by s
 
 <br>
 
-```{r line-plot-sub-event-type-2021, fig.height=5}
-acled %>% 
-  filter(year == 2021) %>% 
-  filter(sub_event_type != "Peaceful protest") %>% 
-  mutate(sub_event_type = fct_lump(sub_event_type, 8)) %>% 
+```{r line-plot-sub-event-type-2021, fig.height=6}
+
+acled_new %>%
+  filter(year >= 2021) %>% 
+  mutate(sub_event_type = fct_lump(sub_event_type, 9)) %>%
+  mutate(month = floor_date(event_date, "month")) %>% 
+  mutate(month = map(month, ~ seq.Date(as.Date(.), as.Date("2022/05/01"), by = "month"))) %>% 
+  unnest(month) %>% 
+  group_by(event_date, sub_event_type) %>%
   group_by(month, sub_event_type) %>%
-  summarise(count = n()) %>% 
-  ggplot(aes(x = month, y = count, colour = sub_event_type, group = sub_event_type)) +
-  geom_line(size = 0.7) + 
-  scale_colour_viridis_d(direction = -1, option = "turbo") + 
-  labs(x = "Month", 
-       y = "Number of conflict events", 
-       title = "2021 conflict events by sub-event type (peaceful protests excluded)", 
-       subtitle = "Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com",
-       colour = "") +
-  theme(legend.position = "top")
+  summarise(events = n(), .groups = "drop") %>% 
+  ggplot(aes(x = month, y = events, fill = sub_event_type, group = sub_event_type)) + 
+  geom_area()  +
+  scale_x_date(date_breaks = "1 month", labels = date_format(format = "%Y-%b")) +
+  scale_y_continuous(labels = comma, breaks = seq(0, 22000, by = 2000)) + 
+  theme(legend.position = "top", 
+        axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1)) +
+  labs(x = "",
+       y = "Cumulative conflict events", 
+       title = "Cumulative 2021-2022 conflict events per month, by event type",
+       subtitle = "Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com", 
+       fill = "")
+  
+
+
+
 ```
 
 
@@ -468,22 +479,22 @@ Battles and explosions and remote violence were the largest contributors to conf
 
 ```{r line-plot-fatalities, fig.height=6}
  
-acled %>%
-  filter(year == 2021) %>% 
+acled_new %>%
+  filter(year >= 2021) %>% 
   mutate(month = floor_date(event_date, "month")) %>% 
-  mutate(month = map(month, ~ seq.Date(as.Date(.), as.Date("2021/12/01"), by = "month"))) %>% 
+  mutate(month = map(month, ~ seq.Date(as.Date(.), as.Date("2022/05/01"), by = "month"))) %>% 
   unnest(month) %>% 
-  mutate(month = lubridate::month(month, label = TRUE)) %>% 
-  # mutate(month = format_ISO8601(month, precision = "ym")) %>%
   group_by(month, event_type) %>%
-  summarise(fatalities = sum(fatalities), .groups = "drop") %>%
+  summarise(fatalities = sum(fatalities), .groups = "drop") %>% 
   ggplot(aes(x = month, y = fatalities, group = event_type, fill = event_type)) + 
   geom_area() +
-  scale_y_continuous(breaks = seq(0, 12000, by = 1000), labels = comma) +
-  theme(legend.position = "top") +
+  scale_x_date(date_breaks = "1 month", labels = date_format(format = "%Y-%b")) +
+  scale_y_continuous(breaks = seq(0, 22000, by = 2000), labels = comma) +
+  theme(legend.position = "top", 
+        axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1)) +
   labs(x = "",
        y = "Cumulative fatalities", 
-       title = "Cumulative 2021 conflict-related fatalities per month, by event type",
+       title = "Cumulative 2021-2022 conflict-related fatalities per month, by event type",
        subtitle = "Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com", 
        fill = "")
 
@@ -495,8 +506,8 @@ acled %>%
 Of concern, violence against civilians accounted for 15% of all conflict fatalities.
 
 ```{r fatalities-summary-2021}
-acled %>%  
-  filter(year == 2021) %>% 
+acled_new %>%
+  filter(year >= 2021) %>% 
   group_by(event_type) %>% 
   summarise(fatalities = sum(fatalities)) %>% 
   mutate(percentage = round(fatalities / sum(fatalities) * 100, digits = 2)) %>% 
@@ -504,7 +515,7 @@ acled %>%
          Fatalities = fatalities, 
          Percentage = percentage) %>% 
   arrange(desc(Percentage)) %>% 
-  kable(caption = "2021 conflict fatalities by event type", format.args = list(big.mark = ",")) %>% 
+  kable(caption = "2021-2022 conflict fatalities by event type", format.args = list(big.mark = ",")) %>% 
   kable_classic_2("striped", full_width = FALSE, position = "left") %>%  
   footnote(general = "Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com", general_title = "")
 ```
@@ -517,24 +528,27 @@ However, the event type *Violence against civilians* does not encompass all fata
 
 ```{r line-plot-inter-type-2021, fig.height=6}
 
-acled %>%
-  filter(year == 2021) %>% 
-  mutate(month = floor_date(event_date, "month")) %>% 
-  mutate(month = map(month, ~ seq.Date(as.Date(.), as.Date("2021/12/01"), by = "month"))) %>% 
-  unnest(month) %>% 
-  mutate(month = lubridate::month(month, label = TRUE)) %>% 
+
+acled_new %>%
   filter(inter_type != "sole protester action") %>% 
   mutate(inter_type = fct_lump(inter_type, 6)) %>% 
+  filter(year >= 2021) %>% 
+  mutate(month = floor_date(event_date, "month")) %>% 
+  mutate(month = map(month, ~ seq.Date(as.Date(.), as.Date("2022/05/01"), by = "month"))) %>% 
+  unnest(month) %>% 
   group_by(month, inter_type) %>% 
   summarise(fatalities = sum(fatalities)) %>% 
   ggplot(aes(x = month, y = fatalities, group = inter_type, fill = inter_type)) + 
   geom_area() +
-  scale_y_continuous(breaks = seq(0, 12000, by = 1000), labels = comma) +
+  scale_x_date(date_breaks = "1 month", labels = date_format(format = "%Y-%b")) +
+  scale_y_continuous(breaks = seq(0, 22000, by = 2000), labels = comma) +
+  theme(legend.position = "top", 
+        axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1)) +
   scale_fill_manual(values = c("#D95F02", "#7570B3", "#1B9E77", "#E7298A", "#66A61E", "#E6AB02", "#666666", "#A6761D")) +
   theme(legend.position = "top") +
   labs(x = "Month", 
        y = "Cumulative fatalities", 
-       title = "Cumulative fatalities in 2021 by interaction type, excluding sole protester action",
+       title = "Cumulative fatalities in 2021-2022 by interaction type, excluding sole protester action",
        subtitle = "Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com", 
        fill = "")   
 
@@ -636,7 +650,7 @@ acled %>%
 The map below shows 2021 conflict events by **month**. The color of each point indicates the type of conflict event. The number of fatalities associated with each event is indicated by the size of each point. It is interesting to note that after the protests in February and March 2021, the conflict moves on to a new stage in April and May, visibly increasing in intensity.
 
 <br>
-![](event_type.gif)
+![](./gif/event_type.gif)
 
 <br><br><br>
 
@@ -1553,7 +1567,7 @@ There are fours clusters of words of note. The first centers around the word pro
 
 <br>
 
-[![conflict network graph](conflict_network_graph.png)](https://raw.githubusercontent.com/food-security-cluster-myanmar/exploratory-data-analysis-acled-fsc/master/conflict_network_graph.png){target="_blank"}
+[![conflict network graph](./text_mining/conflict_network_graph.png)](https://raw.githubusercontent.com/food-security-cluster-myanmar/exploratory-data-analysis-acled-fsc/master/conflict_network_graph.png){target="_blank"}
 Click **[here](https://raw.githubusercontent.com/food-security-cluster-myanmar/exploratory-data-analysis-acled-fsc/master/conflict_network_graph.png){target="_blank"}** to see the full-sized graph. 
 
 <br>
