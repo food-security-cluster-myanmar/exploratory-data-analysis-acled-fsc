@@ -21,7 +21,7 @@ always_allow_html: true
   display: block;
   height: 70px;
   margin: 2em 20px 40px 20px;
-  background-image: url("./misc/Myanmar_cluster_blue.png");
+  background-image: url("Myanmar_cluster_blue.png");
   background-size: contain;
   background-position: center center;
   background-repeat: no-repeat;
