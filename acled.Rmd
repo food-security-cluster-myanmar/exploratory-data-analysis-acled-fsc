@@ -1,7 +1,7 @@
 ---
 title: "Understanding Conflict Dynamics in Myanmar through Conflict and Incident Data: A Food Security Perspective"
 author: "Myanmar Food Security Cluster"
-date: "11/02/2022"
+date: "11/02/2022, Updated 01/06/2022"
 output: 
   html_document:
     code_download: true
@@ -35,78 +35,6 @@ always_allow_html: true
     }
 </style>
 ```
-
-```{r table-acronyms, echo = FALSE, message=FALSE, warning=FALSE}
-library(tidyverse)
-library(kableExtra)
-
-tribble(
-  ~acronym, ~name, 
-  "ACLED", "Armed Conflict Location and Event Data Project",
-  "CCCM", "Camp Management and Camp Coordination",
-  "CSO", "Civil Society Organization",
-  "FAO", "Food and Agriculture Organization",
-  "FSC", "Food Security Cluster",
-  "HARP", "Humanitarian Assistance and Resilience Programme (DfID)",
-  "HNO", "Humanitarian Needs Overview",
-  "HRP", "Humanitarian Response Plan",
-  "IDP", "Internally Displaced Person", 
-  "IERP", "Interim Emergency Response Plan",
-  "IFPRI", "International Food Policy Research Institute",
-  "MIMU", "Myanmar Information Management Unit",
-  "NNGO", "National Non-governmental Organization", 
-  "OCHA", "UN Office for the Coordination of Humanitarian Affairs",
-  "UXO", "Unexploded Ordnance",
-  "WFP", "World Food Programme"
-) %>% 
-  kable(caption = "**Acronyms**", col.names = NULL) %>% 
-  kable_classic_2(position = "left", full_width = FALSE)
-```
-
-<br>
-
-## Introduction
-
-In 2021, Myanmar experienced more conflict events than any other country.
-
-Despite existing in a state of civil war for the past 70 years, conflict in Myanmar had remained at a relatively low level when compared with the other high conflict countries, such as Syria, Yemen and Afghanistan.
-
-However, following the military takeover on 1 February 2021, conflict in Myanmar quickly increased, and by the end of the year it had overtaken Syria as the most conflict-affected country.
-
-While the Russia-Ukraine war in 2022 might shift Myanmar from being the most conflict-affected country, it is likely to remain a conflict hotspot. As such, a deeper exploration of conflict in Myanmar is warranted, especially as it relates to food security and food security programming.
-
-The following report uses data from the Armed Conflict Location and Event Data Project, or ACLED, to analyse and provide an overview of the conflict situation in Myanmar and what that means for food security into the future.
-
-<br>
-
-![](./misc/all_acled_2010_2021.png)
-
-<br><br>
-
-### About the data
-
-The Armed Conflict Location and Event Data Project, or ACLED, captures real-time data on the locations, dates, actors, fatalities, and types of all reported political violence and protest events around the world. As of early 2022, ACLED has recorded a total of more than 1.3 million individual events globally.
-
-ACLED has been collecting data in Myanmar since 2010. Data is updated monthly, and is collected through a review of English and Myanmar sources to code political violence and demonstration events. The majority of the information, about 85 percent, comes from subnational, national and international media sources. The remainder comes from ACLED’s partner, the Myanmar Peace Monitor, and reports from UN agencies, international monitoring groups, and local human rights organizations. 
-
-With some exceptions, this report uses 2021 data. The data is presented using terms consistent with the ACLED codebook, the foremost resource on their methodology and a useful reference for those seeking to understand more. 
- 
-The excellent scholarship of the Armed Conflict Location and Event Data Project, and their dedication to making a wealth of conflict data available for free to the public must be commended. Their calls for increased protections for journalists and independent reporting should also be supported.
-
-
-<br>
-
-### References for this report
-* ACLED, (2019). Armed Conflict Location & Event Data Project (ACLED) Codebook. https://www.acleddata.com/wp-content/uploads/dlm_uploads/2017/10/ACLED_Codebook_2019FINAL_pbl.pdf.
-* ACLED, (2022). ACLED data for Myanmar (2010-2022). https://acleddata.com.
-* ACLED, (2020). ACLED Methodology and Coding Decisions around Political Violence in Myanmar. https://acleddata.com/acleddatanew/wp-content/uploads/2021/11/ACLED_Political-Violence-in-Myanmar_February-2020.pdf.
-* Atillio Benini, Aldo Benini (2021). mdepriv: Synthetic scores of multiple deprivation. R package version 0.0.3.  https://github.com/a-benini/mdepriv/.
-* Food Security Cluster, Myanmar (2021). 5Ws reporting tool.
-* HARP-F and MIMU (2018). Vulnerability in Myanmar: A Secondary Data Review of Needs, Coverage and Gaps. http://themimu.info/vulnerability-in-myanmar.
-* IFPRI (2022). Agricultural value chains in a fragile state: the case of rice in Myanmar. https://www.ifpri.org/publication/agricultural-value-chains-fragile-state-case-rice-myanmar.
-* Silge J, Robinson D (2016). tidytext: Text Mining and Analysis Using Tidy Data Principles in R. JOSS, 1(3). doi: 10.21105/joss.00037, http://dx.doi.org/10.21105/joss.00037.
-<br><br><br>
-
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, fig.width=9, message = FALSE, warning=FALSE)
@@ -204,6 +132,53 @@ cumcount <- function(x){
 
 ```
 
+
+```{r table-acronyms, echo = FALSE, message=FALSE, warning=FALSE}
+tribble(
+  ~acronym, ~name, 
+  "ACLED", "Armed Conflict Location and Event Data Project",
+  "CCCM", "Camp Management and Camp Coordination",
+  "CSO", "Civil Society Organization",
+  "FAO", "Food and Agriculture Organization",
+  "FSC", "Food Security Cluster",
+  "HARP", "Humanitarian Assistance and Resilience Programme (DfID)",
+  "HNO", "Humanitarian Needs Overview",
+  "HRP", "Humanitarian Response Plan",
+  "IDP", "Internally Displaced Person", 
+  "IERP", "Interim Emergency Response Plan",
+  "IFPRI", "International Food Policy Research Institute",
+  "MIMU", "Myanmar Information Management Unit",
+  "NNGO", "National Non-governmental Organization", 
+  "OCHA", "UN Office for the Coordination of Humanitarian Affairs",
+  "UXO", "Unexploded Ordnance",
+  "WFP", "World Food Programme"
+) %>% 
+  kable(caption = "**Acronyms**", col.names = NULL) %>% 
+  kable_classic_2(position = "left", full_width = FALSE)
+```
+
+<br>
+
+## Introduction
+
+In 2021, Myanmar experienced more conflict events than any other country.
+
+Despite existing in a state of civil war for the past 70 years, conflict in Myanmar had remained at a relatively low level when compared with the other high conflict countries, such as Syria, Yemen and Afghanistan.
+
+However, following the military takeover on 1 February 2021, conflict in Myanmar quickly increased, and by the end of the year it had overtaken Syria as the most conflict-affected country.
+
+While the Russia-Ukraine war in 2022 might shift Myanmar from being the most conflict-affected country, it is likely to remain a conflict hotspot. As such, a deeper exploration of conflict in Myanmar is warranted, especially as it relates to food security and food security programming.
+
+The following report uses data from the Armed Conflict Location and Event Data Project, or ACLED, to analyse and provide an overview of the conflict situation in Myanmar and what that means for food security into the future.
+
+<br>
+
+![](./misc/all_acled_2010_2021.png)
+
+<br><br>
+
+### About the data
+
 ```{r datasets}
 # datasets 
 
@@ -216,18 +191,43 @@ fsc <- read_csv("./data/fsc5w_2021.csv")
 acled_new <- read_csv("./data/acled_20220606.csv")
 
 # shapefiles
-pcode3_shape <- st_read("./mmr_polbnda_adm3_mimu_250k/mmr_polbnda_adm3_mimu_250k.shp", quiet = TRUE) %>% 
- rename(state = ST, 
+pcode3_shape <- 
+  st_read("./mmr_polbnda_adm3_mimu_250k/mmr_polbnda_adm3_mimu_250k.shp", quiet = TRUE) %>%
+  rename(state = ST, 
         admin1_pcode = ST_PCODE,
         township = TS,
         admin3_pcode = TS_PCODE) %>% 
  mutate(admin3_pcode = ifelse(str_detect(township, "Hlaingtharya"), "MMR013008", admin3_pcode))
 
-pcode1_shape <- st_read("./mmr_polbnda2_adm1_mimu_250k/mmr_polbnda2_adm1_mimu_250k.shp", quiet = TRUE) %>% 
- rename(state = ST, 
+pcode1_shape <- 
+  st_read("./mmr_polbnda2_adm1_mimu_250k/mmr_polbnda2_adm1_mimu_250k.shp", quiet = TRUE) %>%
+  rename(state = ST, 
         admin1_pcode = ST_PCODE) %>% st_as_sf()
 
 ```
+
+The Armed Conflict Location and Event Data Project, or ACLED, captures real-time data on the locations, dates, actors, fatalities, and types of all reported political violence and protest events around the world. As of early 2022, ACLED has recorded a total of more than 1.3 million individual events globally.
+
+ACLED has been collecting data in Myanmar since 2010. Data is updated monthly, and is collected through a review of English and Myanmar sources to code political violence and demonstration events. The majority of the information, about 85 percent, comes from subnational, national and international media sources. The remainder comes from ACLED’s partner, the Myanmar Peace Monitor, and reports from UN agencies, international monitoring groups, and local human rights organizations. 
+
+With some exceptions, this report uses 2021 data. The data is presented using terms consistent with the ACLED codebook, the foremost resource on their methodology and a useful reference for those seeking to understand more. 
+ 
+The excellent scholarship of the Armed Conflict Location and Event Data Project, and their dedication to making a wealth of conflict data available for free to the public must be commended. Their calls for increased protections for journalists and independent reporting should also be supported.
+
+
+<br>
+
+### References for this report
+* ACLED, (2019). Armed Conflict Location & Event Data Project (ACLED) Codebook. https://www.acleddata.com/wp-content/uploads/dlm_uploads/2017/10/ACLED_Codebook_2019FINAL_pbl.pdf.
+* ACLED, (2022). ACLED data for Myanmar (2010-2022). https://acleddata.com.
+* ACLED, (2020). ACLED Methodology and Coding Decisions around Political Violence in Myanmar. https://acleddata.com/acleddatanew/wp-content/uploads/2021/11/ACLED_Political-Violence-in-Myanmar_February-2020.pdf.
+* Atillio Benini, Aldo Benini (2021). mdepriv: Synthetic scores of multiple deprivation. R package version 0.0.3.  https://github.com/a-benini/mdepriv/.
+* Food Security Cluster, Myanmar (2021). 5Ws reporting tool.
+* HARP-F and MIMU (2018). Vulnerability in Myanmar: A Secondary Data Review of Needs, Coverage and Gaps. http://themimu.info/vulnerability-in-myanmar.
+* IFPRI (2022). Agricultural value chains in a fragile state: the case of rice in Myanmar. https://www.ifpri.org/publication/agricultural-value-chains-fragile-state-case-rice-myanmar.
+* Silge J, Robinson D (2016). tidytext: Text Mining and Analysis Using Tidy Data Principles in R. JOSS, 1(3). doi: 10.21105/joss.00037, http://dx.doi.org/10.21105/joss.00037.
+<br><br><br>
+
 
 ## 1. Progression of conflict events in Myanmar in 2021, by interaction type
 
@@ -249,7 +249,7 @@ The map below plots where conflict events took place across the country, by inte
 <br><br><br>
 
 
-## 2. Distribution of food security partners in relation to conflict events 
+## 2. Food security partners and road network in relation to conflict events 
 
 In general, food security partners are not operating in the parts of Myanmar most affected by conflict in 2021. This is evident from the map below which plots Food Security Partners working across Myanmar against 2021 conflict events.
 
@@ -287,6 +287,12 @@ acled %>%
 # ggsave(filename = "./partners_conflict_map.png", dpi = 300, height = 12, width = 7, units = "in")
 ```
  
+ <br>
+ 
+ Many of the literal choke points in this conflict have to do with major roads. The map below shows conflict events as points in red and major roads in blue. The yellow square is Nay Pyi Taw and the light blue squares are Tamu in Sagaing and Muse and Tachileik in Shan. 
+ 
+ ![](./misc/road_conflict.png)
+ 
  <br><br><br>
 
 
@@ -309,7 +315,12 @@ acled %>%
   ggplot(aes(year, count, fill = event_type, group = event_type)) + 
   # geom_line(size = 1) + 
   geom_col() +
-  geom_text(aes(label = comma(stat(y), accuracy = 1), group = year), stat = "summary", fun = sum, vjust = -0.7, size = 3) +
+  geom_text(aes(label = comma(stat(y), accuracy = 1), 
+                group = year), 
+            stat = "summary", 
+            fun = sum, 
+            vjust = -0.7, 
+            size = 3) +
   scale_x_continuous(breaks = seq(2010, 2021, by = 1)) + 
   scale_y_continuous(labels = comma, limits = c(0, 17000)) +
   theme(axis.text.x = element_text(size = 9), 
@@ -337,7 +348,8 @@ acled %>%
   mutate(Percentage = round(Count / sum(Count) * 100, digits = 2)) %>% 
   rename(`Event type` = event_type) %>% 
   arrange(desc(Percentage)) %>% 
-  kable(caption = "2021 event types by percentage of total", format.args = list(big.mark = ",")) %>% 
+  kable(caption = "2021 event types by percentage of total", 
+        format.args = list(big.mark = ",")) %>% 
   kable_classic_2("striped", full_width = FALSE, position = "left") %>%  
   footnote(general = "Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com", general_title = "")
 ```
@@ -364,7 +376,8 @@ acled %>%
   ggplot(aes(year, fatalities, fill = event_type, group = event_type)) + 
   # geom_line(size = 1) + 
   geom_col() +
-  geom_text(aes(label = comma(stat(y), accuracy = 1), group = year), stat = "summary", fun = sum, vjust = -0.7, size = 3) +
+  geom_text(aes(label = comma(stat(y), accuracy = 1), group = year), 
+            stat = "summary", fun = sum, vjust = -0.7, size = 3) +
   scale_x_continuous(breaks = seq(2010, 2021, by = 1)) + 
   scale_y_continuous(labels = comma, limits = c(0, 12500)) +
   theme(axis.text.x = element_text(size = 9), 
@@ -400,7 +413,10 @@ acled %>%
   group_by(month, event_type) %>% 
   summarise(count = n()) %>%
  #  mutate(month = fct_rev(month)) %>% 
-  ggplot(aes(x = month, y = count, group = event_type, colour = event_type)) + 
+  ggplot(aes(x = month, 
+             y = count, 
+             group = event_type, 
+             colour = event_type)) + 
   geom_line(size = 1) +
   facet_wrap(~event_type, scales = "free_y") + 
   labs(x = "",
@@ -446,9 +462,11 @@ acled_new %>%
   filter(year >= 2021) %>% 
   mutate(sub_event_type = fct_lump(sub_event_type, 9)) %>%
   mutate(month = floor_date(event_date, "month")) %>% 
-  mutate(month = map(month, ~ seq.Date(as.Date(.), as.Date("2022/05/01"), by = "month"))) %>% 
+  mutate(month = 
+           map(month, 
+               ~ seq.Date(as.Date(.), as.Date("2022/05/01"), 
+                          by = "month"))) %>% 
   unnest(month) %>% 
-  group_by(event_date, sub_event_type) %>%
   group_by(month, sub_event_type) %>%
   summarise(events = n(), .groups = "drop") %>% 
   ggplot(aes(x = month, y = events, fill = sub_event_type, group = sub_event_type)) + 
@@ -1567,7 +1585,7 @@ There are fours clusters of words of note. The first centers around the word pro
 
 <br>
 
-[![conflict network graph](./text_mining/conflict_network_graph.png)](https://raw.githubusercontent.com/food-security-cluster-myanmar/exploratory-data-analysis-acled-fsc/master/conflict_network_graph.png){target="_blank"}
+[![conflict network graph](./text_mining/conflict_network_graph_june22.png)](https://raw.githubusercontent.com/food-security-cluster-myanmar/exploratory-data-analysis-acled-fsc/master/conflict_network_graph.png){target="_blank"}
 Click **[here](https://raw.githubusercontent.com/food-security-cluster-myanmar/exploratory-data-analysis-acled-fsc/master/conflict_network_graph.png){target="_blank"}** to see the full-sized graph. 
 
 <br>

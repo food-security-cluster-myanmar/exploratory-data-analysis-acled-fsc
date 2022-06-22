@@ -1,3 +1,18 @@
+
+# Introduction
+
+In 2021, Myanmar experienced more conflict events than any other country.
+
+Despite existing in a state of civil war for the past 70 years, conflict in Myanmar had remained at a relatively low level when compared with the other high conflict countries, such as Syria, Yemen and Afghanistan.
+
+However, following the military takeover on 1 February 2021, conflict in Myanmar quickly increased, and by the end of the year it had overtaken Syria as the most conflict-affected country.
+
+While the Russia-Ukraine war in 2022 might shift Myanmar from being the most conflict-affected country, it is likely to remain a conflict hotspot. As such, a deeper exploration of conflict in Myanmar is warranted, especially as it relates to food security and food security programming.
+
+The following report uses data from the Armed Conflict Location and Event Data Project, or ACLED, to analyse and provide an overview of the conflict situation in Myanmar and what that means for food security.
+
+<br><br>
+
 # Datasets used for this report
 
 ## Townships

@@ -6,6 +6,7 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
+library(tidyverse)
 library(tidytext)
 library(glmnet)
 library(glmnetUtils)
@@ -17,17 +18,27 @@ library(ggraph)
 library(ggridges)
 library(tidylo)
 library(ggrepel)
+library(widyr)
 
-acled_words <- acled %>% 
-  filter(year == 2021) %>% 
+`%out%` <- Negate(`%in%`)
+
+```
+
+# Data
+
+```{r}
+acled_new <- read_csv("C:/Users/seany/Downloads/R/acled/data/acled_20220606.csv")
+
+acled_words <- acled_new %>% 
+  filter(year >= 2021) %>% 
   select(data_id, notes) %>% 
   unnest_tokens(word, notes) %>% 
   anti_join(stop_words, by = "word") %>% 
   filter(str_detect(word, "[a-z]")) %>% 
-  left_join(acled %>% 
+  left_join(acled_new %>% 
               select(data_id, admin1, admin3_pcode, event_type, sub_event_type, fatalities, inter_type), by = "data_id")
-
 ```
+
 
 ```{r}
 acled_conf_int <- acled %>%
@@ -72,10 +83,130 @@ acled %>%
   filter(data_id == 7801674) %>% pull(notes)
 ```
 
+# Bigrams
+
+```{r}
+
+create_bigrams <- function(tbl) {
+  
+  tbl %>% 
+    select(data_id, notes, fatalities) %>% 
+    unnest_tokens(bigram, notes, token = "ngrams", n = 2) %>%
+    filter(!str_detect(bigram, c("report on|coded as|size no|no report"))) %>% 
+    filter(str_detect(bigram, "[a-z]")) %>% 
+    anti_join(stop_words, by = c("bigram" = "word")) %>% 
+    add_count(bigram) %>%   
+    mutate(bigram = case_when(bigram %in% c("civil disobedience", "disobedience movement") ~ "civil disobedience movement", 
+                              bigram %in% c("protest against", "a protest") ~ "protest", 
+                              bigram %in% c("myanmar military", "the military") ~ "myanmar military", 
+                              bigram %in% c("in support") ~ "support", 
+                              bigram %in% c("self administered", "administered zone") ~ "self administered zone", 
+                              bigram %in% c("national unity", "unity government") ~ "national unity government", 
+                              bigram %in% c("pyu saw", "saw htee") ~ "pyu saw htee", 
+                              bigram %in% c("pyin oo", "oo lwin") ~ "pyin oo lwin", 
+                              bigram %in% c("let pa", "pa taung") ~ "let pa taung", 
+                              bigram %in% c("nay pyi", "pyi taw") ~ "nay pyi taw",
+                              bigram %in% c("controlled explosives", "remote controlled") ~ "remote controlled explosives", 
+                              
+                              TRUE ~ bigram)) %>% 
+    mutate(bigram = str_remove(bigram, c("report on|township|district|region|state|city | city|town| and|and ")), 
+           bigram = str_trim(bigram)) %>%
+    filter(bigram %out% c("in the", "held a", "against the", "at around", 
+                          "on the", "there were", "by the", "from the", 
+                          "to the", "were no", "reported that", "for the", "at least", 
+                          "more than", "out between", "with the", "to be", 
+                          "near the", "at a", "who were", "who was", "in a", 
+                          "at the", "relation", "relation to", "change to"))  %>% 
+    mutate(bigram = str_remove(bigram, "in |the ")) %>% 
+    anti_join(stop_words, by = c("bigram" = "word"))
+  
+}
+
+
+acled_bigrams_2021 <- acled_new %>% 
+  filter(year == 2021) %>% 
+  create_bigrams()
+
+acled_bigrams_2022 <- acled_new %>% 
+  filter(year == 2022) %>% 
+  create_bigrams()
+  
+
+acled_bigrams %>%  group_by(bigram) %>%  
+  summarise_at("n", max) %>% 
+  arrange(desc(n))
+```
+
+```{r}
+
+bigram_net_graph <- function(tbl) {
+  
+  tbl %>%  
+    filter(!str_detect(bigram, "coded")) %>% 
+    distinct(data_id, bigram) %>%
+    pairwise_cor(bigram, data_id, sort = TRUE) %>%
+    filter(correlation >= 0.1) %>% 
+    igraph::graph_from_data_frame() %>% 
+    ggraph(layout = "fr") + 
+    geom_edge_link(aes(alpha = correlation), colour = "blue") + 
+    scale_alpha_continuous(range = c(0.1, 0.4)) +
+    geom_node_point(colour = "blue", alpha = 0.2) +
+    geom_node_text(aes(label = name), size = 2.3) + 
+    theme(legend.position = "none")
+  
+}
+
+bigram_net_graph_2021 <- acled_bigrams_2021 %>% 
+  filter(n >= 180) %>% 
+  bigram_net_graph() + 
+  labs(title = "Network graph of words in 2021 conflict event descriptions in Myanmar",
+       subtitle = "Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com")
+
+bigram_net_graph_2022 <- acled_bigrams_2022 %>% 
+  filter(n >= 185) %>%  
+  # filter(bigram %out% c("tanintharyi", "dawei")) %>% 
+  bigram_net_graph() + 
+  labs(title = "Network graph of words in 2022 conflict event descriptions in Myanmar",
+       subtitle = "Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com")
+
+bigram_net_graph_all <- acled_bigrams %>% 
+  filter(n >= 180) %>% 
+  bigram_net_graph() +  
+  labs(title = "Network graph of conflict event descriptions in Myanmar 2021-2022", 
+       subtitle = "Data soource: Amed Conflict & Event Data Project (ACLED); acleddata.com")
+
+ggsave("bigram_net_graph_2021.png", bigram_net_graph_2021, width = 42.0, height = 29.7, units = "cm", dpi = 300)
+
+ggsave("bigram_net_graph_2022.png", bigram_net_graph_2022, width = 42.0, height = 29.7, units = "cm", dpi = 300)
+
+ggsave("bigram_net_graph_all.png", bigram_net_graph_all, width = 42.0, height = 29.7, units = "cm", dpi = 300)
+```
+
+
+
+```{r}
+conflict_network_graph <- acled_words %>%  
+  filter(word %out% c("township", "district", "myanmar", "region", "village", "town", "size", "report", "code", "coded",
+                      "dvb", "aapp", "total", "irrawaddy", "rfa", "tract")) %>% 
+  distinct(data_id, word) %>% 
+  add_count(word) %>% 
+  filter(n >= 70) %>% 
+  pairwise_cor(word, data_id, sort = TRUE) %>% 
+  filter(correlation >= 0.2) %>% 
+  
+
+```
 
 
 ```{r}
 
+filter(year >= 2021) %>% 
+  select(data_id, notes) %>% 
+  unnest_tokens(word, notes) %>% 
+  anti_join(stop_words, by = "word") %>% 
+  filter(str_detect(word, "[a-z]")) %>% 
+  left_join(acled %>% 
+              select(data_id, admin1, admin3_pcode, event_type, sub_event_type, fatalities, inter_type), by = "data_id")
 
 acled_words %>% 
   count(word, sort = TRUE) %>% 

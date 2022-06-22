@@ -1,0 +1,114 @@
+---
+title: "Untitled"
+output: html_document
+date: '2022-06-19'
+---
+
+```{r}
+road_shape <-  st_read("./data/mmr_rdsl_mimu_250k.shp") %>%  st_as_sf() %>% 
+  filter(Road_Type %in% c("Main"))
+
+glimpse(road_shape)
+```
+
+
+
+```{r}
+
+acled %>% 
+  filter(year == 2021 & sub_event_type != "Peaceful protest") %>%
+  full_join(fsc %>%
+              group_by(admin3_pcode) %>% 
+              summarise(partners = n_distinct(org_code)), by = "admin3_pcode") %>% 
+  left_join(townships %>%  
+              select(admin1_pcode, admin3_pcode), by = "admin3_pcode") %>% 
+  right_join(pcode3_shape, by = "admin3_pcode") %>% 
+  st_as_sf() %>% 
+  ggplot() +
+  geom_sf(aes(fill = partners), size = 0.1) + 
+  geom_point(aes(x = longitude, y = latitude), size = 0.5, alpha = 0.4, colour = "red") +
+  geom_sf(data = pcode1_shape, alpha = 0, colour = "black", size = 0.5) +
+  scale_fill_viridis_c(option = "mako", direction = -1, breaks = c(1, 3, 6, 9, 12)) + 
+  theme_void() +
+  labs(title = "Distribution of food security partners and conflict events in 2021",
+       subtitle =  "Red dots are conflict events; peaceful protests have been excluded",
+       caption = "Data sources: ACLED; acleddata.com and Food Security Cluster Myanmar",
+       fill = "number of\npartners") + 
+  theme(plot.caption = element_text(hjust = 0.5))
+```
+
+
+```{r}
+roads_conflict_title <- acled_new %>% 
+  filter(year >= 2021 & sub_event_type != "Peaceful protest") %>% 
+  right_join(pcode3_shape, by = "admin3_pcode") %>% 
+  st_as_sf() %>%  
+  ggplot() + 
+  geom_sf(fill = "black", size = .1, colour = "black") + 
+  geom_sf(data = pcode1_shape, size = 0.5, colour = "grey70", alpha = 0) +
+  geom_sf(data = road_shape, size = 1.5, colour = "blue") +
+  geom_point(x = 96.0785, y = 19.7633, size = 5, colour = "goldenrod", pch = 15) +
+  geom_point(x = 97.9103, y = 23.9933, size = 5, colour = "cornflowerblue", pch = 15) +
+  geom_point(x = 94.3103, y = 24.2199, size = 5, colour = "cornflowerblue", pch = 15) +
+  geom_point(x = 99.8989, y = 20.4521, size = 5, colour = "cornflowerblue", pch = 15) +
+  geom_point(x = 98.4797285, y = 16.6952072, size = 5, colour = "cornflowerblue", pch = 15) +
+  geom_point(aes(x = longitude, y = latitude), size = .7, alpha = .25, colour = "red") + 
+  theme_void() + 
+  theme(plot.background = element_rect(fill = "black", colour = NA), 
+        plot.title = element_text(colour = "goldenrod"), 
+        plot.subtitle = element_text(colour = "goldenrod"), 
+        plot.caption = element_text(colour = "goldenrod", hjust = 0.5, vjust = 1)) + 
+  labs(title = "Myanmar road network and conflict events", 
+       subtitle = "Red dots are conflict events, blue squares are major border crossings, yellow square is Nay Pyi Taw", 
+       caption = "Food Security Cluster Myanmar")
+
+roads_conflict_title %>% 
+  ggsave(filename = "./misc/road_conflict_title.png", 
+         dpi = 300, 
+         height = 16.5, 
+         width = 11.7, 
+         units = "in")
+```
+
+```{r}
+roads_conflict_years <- acled_new %>% 
+  filter(year == 2021 & sub_event_type != "Peaceful protest") %>% 
+  right_join(pcode3_shape, by = "admin3_pcode") %>% 
+  st_as_sf() %>%  
+  ggplot() + 
+  geom_sf(fill = "black", size = .1, colour = "black") + 
+  geom_sf(data = pcode1_shape, size = 0.5, colour = "grey70", alpha = 0) +
+  geom_sf(data = road_shape, size = 1.5, colour = "blue") +
+  geom_point(x = 96.0785, y = 19.7633, size = 5, colour = "goldenrod", pch = 15) +
+  geom_point(x = 97.9103, y = 23.9933, size = 5, colour = "cornflowerblue", pch = 15) +
+  geom_point(x = 94.3103, y = 24.2199, size = 5, colour = "cornflowerblue", pch = 15) +
+  geom_point(x = 99.8989, y = 20.4521, size = 5, colour = "cornflowerblue", pch = 15) +
+  geom_point(aes(x = longitude, y = latitude), size = .7, alpha = .25, colour = "red") + 
+  theme_void() + 
+  theme(plot.background = element_rect(fill = "black", colour = NA)) +
+
+acled_new %>% 
+  filter(year == 2022 & sub_event_type != "Peaceful protest") %>% 
+  right_join(pcode3_shape, by = "admin3_pcode") %>% 
+  st_as_sf() %>%  
+  ggplot() + 
+  geom_sf(fill = "black", size = .1, colour = "black") + 
+  geom_sf(data = pcode1_shape, size = 0.5, colour = "grey70", alpha = 0) +
+  geom_sf(data = road_shape, size = 1.5, colour = "blue") +
+  geom_point(x = 96.0785, y = 19.7633, size = 5, colour = "goldenrod", pch = 15) +
+  geom_point(x = 97.9103, y = 23.9933, size = 5, colour = "cornflowerblue", pch = 15) +
+  geom_point(x = 94.3103, y = 24.2199, size = 5, colour = "cornflowerblue", pch = 15) +
+  geom_point(x = 99.8989, y = 20.4521, size = 5, colour = "cornflowerblue", pch = 15) +
+  geom_point(aes(x = longitude, y = latitude), size = .7, alpha = .25, colour = "red") + 
+  theme_void() + 
+  theme(plot.background = element_rect(fill = "black", colour = NA))
+
+roads_conflict_years %>% 
+  ggsave(filename = "./misc/road_conflict_years.png", 
+         dpi = 300, 
+         height = 16.5, 
+         width = 16.5, 
+         units = "in")
+
+```
+
