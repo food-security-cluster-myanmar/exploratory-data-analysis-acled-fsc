@@ -289,9 +289,17 @@ acled %>%
  
  <br>
  
- Many of the literal choke points in this conflict have to do with major roads. The map below shows conflict events as points in red and major roads in blue. The yellow square is Nay Pyi Taw and the light blue squares are Tamu in Sagaing and Muse and Tachileik in Shan. 
+Many of the literal choke points in this conflict are related to the road network. The map below shows conflict events as points in red and major roads in blue. The yellow square is Nay Pyi Taw and the light blue squares are Tamu in Sagaing and Muse and Tachileik in Shan. 
+
+The main front (where Sagaing, Mandalay, Magway and Chin border each other) seems to be preventing the Tatamdaw from accessing the border crossing at Tamu and penetrating deeper into Sagaing. The border crossing at Muse is still very much contested. However, what is clear is that much of the armed resistance is aimed at preventing the Tatmadaw (projecting forward out of Nay Pyi Taw), from accessing the north of the country. 
+
+It remains to be seen whether non-state armed groups will be able to close off Kachin and Shan to the Tatmadaw and pushing the front closer to Nay Pyi Taw.  
+
+In the southeast, 
+
+<br>
  
- ![](./misc/road_conflict.png)
+ ![](./misc/road_conflict_title.png)
  
  <br><br><br>
 
@@ -1551,14 +1559,6 @@ conflict_score %>%
 
 ## 8. Text mining conflict event descriptions
 
-### In progress -- Update for May 2022. 
-
-Changes between 2021 and 2022 
-
-```{r}
-
-```
-
 
 ### 8.1 Network graph of conflict descriptions
 
@@ -1585,7 +1585,7 @@ There are fours clusters of words of note. The first centers around the word pro
 
 <br>
 
-[![conflict network graph](./text_mining/conflict_network_graph_june22.png)](https://raw.githubusercontent.com/food-security-cluster-myanmar/exploratory-data-analysis-acled-fsc/master/conflict_network_graph.png){target="_blank"}
+![conflict network graph](./text_mining/conflict_network_graph_june22.png)](https://raw.githubusercontent.com/food-security-cluster-myanmar/exploratory-data-analysis-acled-fsc/master/conflict_network_graph.png){target="_blank"}
 Click **[here](https://raw.githubusercontent.com/food-security-cluster-myanmar/exploratory-data-analysis-acled-fsc/master/conflict_network_graph.png){target="_blank"}** to see the full-sized graph. 
 
 <br>

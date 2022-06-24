@@ -16,10 +16,15 @@ library(fuzzyjoin)
 library(scales)
 library(mdepriv)
 library(broom)
+library(sf)
+library(plotly) 
+library(viridis)
+
+`%out%` <- Negate(`%in%`)
 ```
 
 ```{r}
-pcodes <- read_excel("C:/Users/seany/Downloads/R/fsc_mmr_prioritisation/Myanmar PCodes Release_9.3_Jan2021_(StRgn_Dist_Tsp_Town_Ward_VT).xlsx",
+pcodes <- read_excel("C:/Users/seany/Downloads/R/fsc_mmr_prioritisation/data/Myanmar PCodes Release_9.3_Jan2021_(StRgn_Dist_Tsp_Town_Ward_VT).xlsx",
                      sheet = "03_Township") %>% 
   rename(admin1_pcode = SR_Pcode,
          state = SR_Name_Eng,
@@ -38,8 +43,17 @@ idps <- read_excel("C:/Users/seany/Downloads/R/not_for_sharing/220407-IDPs Popul
          pre_coup_idp = pre_1_feb_id_ps,
          post_coup_idps = post_1_feb_id_ps_weekly_displ_map_as_of_21_march_2022)
 
-acled_new <- read_csv("acled_new.csv")
+acled_new <- read_csv("C:/Users/seany/Downloads/R/fsc_mmr_prioritisation/data/acled_new.csv")
+actors <- read_csv("C:/Users/seany/Downloads/R/acled/data/actors.csv")
+acled <- read_csv("C:/Users/seany/Downloads/R/acled/data/acled_20220125.csv")
 
+pcode3_shape <- 
+  st_read("C:/Users/seany/Downloads/R/acled/mmr_polbnda_adm3_mimu_250k/mmr_polbnda_adm3_mimu_250k.shp", quiet = TRUE) %>%
+  rename(state = ST, 
+        admin1_pcode = ST_PCODE,
+        township = TS,
+        admin3_pcode = TS_PCODE) %>% 
+ mutate(admin3_pcode = ifelse(str_detect(township, "Hlaingtharya"), "MMR013008", admin3_pcode))
 
 
 ```
@@ -94,15 +108,11 @@ conflict_score2 <- conflict_df2 %>%
          score_env = (env_battles + env_explosions_remote_violence + env_violence_against_civilians + env_fatalities) / 4) %>% 
   left_join(acled %>% 
               distinct(admin1, admin3, admin3_pcode), by = "admin3_pcode") %>% 
-  left_join(conflict_score %>% select(old_conflict_score = score_i, admin3_pcode), by = "admin3_pcode") %>% 
+  # left_join(conflict_score %>% select(old_conflict_score = score_i, admin3_pcode), by = "admin3_pcode") %>% 
   rename(conflict_score = score_i)
 
 conflict_score2 %>% do.call(data.frame, .) %>% as_tibble() %>% 
   select(-total_idps) %>% write_csv("conflict_score2.csv")
-```
-
-```{r}
-
 ```
 
 
@@ -139,10 +149,11 @@ actors %>% filter(year == 2021) %>%
 ```
 
 
+
 ```{r fig.height = 10}
 actors %>% glimpse()
 
-a <- actors %>% filter(year == 2021) %>% 
+a <- actors %>% filter(year >= 2021) %>% 
   group_by(admin3_pcode) %>% 
   filter(event_type != "Protests") %>%
   filter(inter1 %out% c("state_forces", "civilians", "protesters")) %>% 
@@ -174,16 +185,17 @@ actors %>%
   mutate(nsag = political_militias + rebel_groups, 
          govt_control = nsag / state_forces) %>% 
   mutate(govt_control = ifelse(govt_control > 2, 2, govt_control)) %>%
-  left_join(conflict_score2 %>% select(score_i, admin3_pcode), by = "admin3_pcode") %>% 
+  left_join(conflict_score2 %>% select(conflict_score, admin3_pcode), by = "admin3_pcode") %>% 
   filter(!is.na(admin3_pcode)) %>% 
   right_join(pcode3_shape , by = "admin3_pcode") %>% 
   st_as_sf() %>% 
   ggplot() +
   geom_sf(aes(fill = govt_control), size = 0.1) + 
-  scale_fill_viridis(option = "plasma") + 
+  # scale_fill_gradient2(low = "forestgreen", mid = "goldenrod", high = "blue", midpoint = 1) + 
+  scale_fill_viridis(option = "plasma", direction = -1) + 
   theme_void() +
   labs(title = "Most contested areas", 
-       subtitle = "Ratio of NSAG activity vs state forces activity", 
+       subtitle = "Ratio of NSAG activity vs state forces activity; areas in red are the most contested", 
        fill = "Ratio\nNSAG vs\nGovt", 
        caption = "Data source: ACLED; acleddata.com")
 
