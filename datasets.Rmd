@@ -167,7 +167,8 @@ Extracted 2022-02-09. Conflict reference table -- long table, by incident and ac
 Only observations from 2021 used in the report. Public. [Report link](https://raw.githubusercontent.com/food-security-cluster-myanmar/exploratory-data-analysis-acled-fsc/master/data/actors.csv) (outdated); updated Link. 
 
 ```{r actors}
-actors <- read_csv("1900-01-01-2022-02-09-Myanmar.csv") %>% 
+# actors <- read_csv("1900-01-01-2022-02-09-Myanmar.csv") %>% 
+actors_new <- read_csv("./data/acled-actors-2022-06-06-Myanmar.csv") %>% 
   mutate(admin3 = recode(admin3,
                         "Dagon Myothit-South" = "Dagon Myothit (South)",
                         "Dagon Myothit-North" = "Dagon Myothit (North)",
@@ -279,6 +280,7 @@ actors <- read_csv("1900-01-01-2022-02-09-Myanmar.csv") %>%
                      str_detect(actor_simple, "Zero Guerrilla Force") ~ "Zero Guerrilla Force",
                      str_detect(actor_simple, "DNP: Democratic Party of National Politics") ~ "DNP: Democratic Party of National Politics",
                      str_detect(actor_simple, "Hlaw Tet In Ahr Su 126: Rowing Force 126") ~ "Hlaw Tet In Ahr Su 126: Rowing Force 126",
+                     str_detect(actor_simple, "Unidentified Anti-Coup Armed Group") ~ "Unidentified Armed Group (Myanmar)",
                      TRUE ~ actor_simple)) %>%  
   mutate(inter1 = recode(inter1, 
                          `1` = "state_forces",
@@ -297,6 +299,9 @@ actors <- read_csv("1900-01-01-2022-02-09-Myanmar.csv") %>%
 
 actors %>%  
   write_csv("./data/actors.csv")
+
+actors_new %>% 
+  write_csv("./data/actors_new.csv")
 ```
 
 ## ACLED Words

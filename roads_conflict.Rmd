@@ -59,7 +59,7 @@ roads_conflict_title <- acled_new %>%
         plot.title = element_text(colour = "goldenrod"), 
         plot.subtitle = element_text(colour = "goldenrod"), 
         plot.caption = element_text(colour = "goldenrod", hjust = 0.5, vjust = 1)) + 
-  labs(title = "Myanmar road network and conflict events", 
+  labs(title = "Myanmar major road network and conflict events", 
        subtitle = "Red dots are conflict events, blue squares are major border crossings, yellow square is Nay Pyi Taw", 
        caption = "Food Security Cluster Myanmar")
 
@@ -69,10 +69,44 @@ roads_conflict_title %>%
          height = 16.5, 
          width = 11.7, 
          units = "in")
+
+acled_new %>% count(event_type)
 ```
 
 ```{r}
-acled_new
+roads_conflict_event <- acled_new %>% 
+  filter(year >= 2021 & sub_event_type != "Peaceful protest") %>% 
+  filter(event_type %in% c("Battles", "Explosions/Remote violence", "Violence against civilians")) %>% 
+  select(data_id, event_type, longitude, latitude, admin3_pcode) %>% 
+  right_join(pcode3_shape, by = "admin3_pcode") %>% 
+  st_as_sf() %>%  
+  ggplot() + 
+  geom_sf(fill = "black", size = .1, colour = "black") + 
+  geom_sf(data = pcode1_shape, size = 0.5, colour = "grey70", alpha = 0) +
+  geom_sf(data = road_shape, size = 1.5, colour = "blue") +
+  geom_point(x = 96.0785, y = 19.7633, size = 5, colour = "goldenrod", pch = 15) +
+  geom_point(x = 97.9103, y = 23.9933, size = 5, colour = "cornflowerblue", pch = 15) +
+  geom_point(x = 94.3103, y = 24.2199, size = 5, colour = "cornflowerblue", pch = 15) +
+  geom_point(x = 99.8989, y = 20.4521, size = 5, colour = "cornflowerblue", pch = 15) +
+  geom_point(x = 98.4797285, y = 16.6952072, size = 5, colour = "cornflowerblue", pch = 15) +
+  geom_jitter(aes(x = longitude, y = latitude, colour = event_type), size = .7, alpha = .5) + 
+  scale_colour_viridis_d() + 
+  theme_void() + 
+  theme(plot.background = element_rect(fill = "black", colour = NA), 
+        plot.title = element_text(colour = "goldenrod"), 
+        plot.subtitle = element_text(colour = "goldenrod"), 
+        plot.caption = element_text(colour = "goldenrod", hjust = 0.5, vjust = 1), 
+        legend.text = element_text(colour = "goldenrod")) + 
+  labs(title = "Myanmar major road network and conflict events", 
+       subtitle = "Red dots are conflict events, blue squares are major border crossings, yellow square is Nay Pyi Taw", 
+       caption = "Food Security Cluster Myanmar")
+
+roads_conflict_event %>% 
+  ggsave(filename = "./misc/road_conflict_event.png", 
+         dpi = 300, 
+         height = 16.5, 
+         width = 11.7, 
+         units = "in")
 ```
 
 
@@ -87,11 +121,12 @@ roads_beneficiaries <- acled_new %>%
               group_by(admin3_pcode = admin3_pcode_old) %>% 
               summarise(beneficiaries = sum(new_beneficiaries),by = "admin3_pcode"), 
             by = "admin3_pcode") %>%
+  select(admin3_pcode, beneficiaries, longitude, latitude) %>% 
   left_join(pcode3_shape, by = "admin3_pcode") %>% 
   mutate(beneficiaries = ifelse(beneficiaries == 0, NA_real_, beneficiaries)) %>% 
   st_as_sf() %>%  
   ggplot() + 
-  geom_sf(aes(fill = beneficiaries), size = .1) + 
+  geom_sf(aes(fill = beneficiaries), size = .1, alpha = .5) + 
   geom_sf(data = road_shape, size = 1.5, colour = "black") +
   geom_sf(data = pcode1_shape, size = 0.5, colour = "grey70", alpha = 0) +
   geom_point(x = 96.0785, y = 19.7633, size = 5, colour = "goldenrod", pch = 15) +
@@ -100,7 +135,7 @@ roads_beneficiaries <- acled_new %>%
   geom_point(x = 99.8989, y = 20.4521, size = 5, colour = "cornflowerblue", pch = 15) +
   geom_point(x = 98.4797285, y = 16.6952072, size = 5, colour = "cornflowerblue", pch = 15) +
   geom_point(aes(x = longitude, y = latitude), size = .7, alpha = .25, colour = "red") +
-  scale_fill_viridis(option = "mako", direction = -1, trans = "log") +
+  scale_fill_viridis(option = "mako", direction = -1, trans = "log", breaks = c(100, 1000, 10000, 100000, 500000)) +
   theme_void() + 
   theme(plot.title = element_text(colour = "goldenrod"), 
         plot.subtitle = element_text(colour = "goldenrod"), 
@@ -228,5 +263,21 @@ provision of livestock kits
 food/cash for work/assets  
 townships %>% filter(state_name == "Ayeyarwady") %>% 
   distinct(township_name) 
+```
+
+```{r}
+fsc_2022 %>% 
+  filter(state %in% c("Yangon", "Mandalay", "Ayeyarwady")) %>% 
+  group_by(org_code, report_org_code, state, township, activity) %>% 
+  summarise(beneficiaries = sum(new_beneficiaries))
+  
+  glimpse()
+  
+fsc <- read_csv("./data/fsc5w_2021.csv")
+
+fsc %>% 
+  filter(state %in% c("Yangon", "Mandalay", "Ayeyarwady") & unique_beneficiaries == "Yes") %>% 
+  group_by(org_code, report_org_code, state, township, activity) %>% 
+  summarise(beneficiaries = sum(beneficiaries))
 ```
 

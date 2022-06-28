@@ -977,6 +977,7 @@ Political militias and rebel groups are associated with the highest fatality eve
 
 <br>
 
+
 ```{r fatalities-actors-errorbarh, fig.height=7.5}
 actors_conf_int <- actors_new %>%  
   filter(year <= 2021) %>% 
@@ -1514,8 +1515,8 @@ There are fours clusters of words of note. The first centers around the word pro
 
 <br>
 
-![conflict network graph](./text_mining/conflict_network_graph_june22.png)](https://raw.githubusercontent.com/food-security-cluster-myanmar/exploratory-data-analysis-acled-fsc/master/conflict_network_graph.png){target="_blank"}
-Click **[here](https://raw.githubusercontent.com/food-security-cluster-myanmar/exploratory-data-analysis-acled-fsc/master/conflict_network_graph.png){target="_blank"}** to see the full-sized graph. 
+[![conflict network graph](./text_mining/conflict_network_graph_june22.png)](https://raw.githubusercontent.com/food-security-cluster-myanmar/exploratory-data-analysis-acled-fsc/master/text_mining/conflict_network_graph_june22.png){target="_blank"}
+Click **[here](https://raw.githubusercontent.com/food-security-cluster-myanmar/exploratory-data-analysis-acled-fsc/master/text_mining/conflict_network_graph_june22.png){target="_blank"}** to see the full-sized graph. 
 
 <br>
 
@@ -1863,4 +1864,6 @@ fsc_2022 %>%
   theme(plot.caption=element_text(hjust = 0.2))
 
 ```
+
+
 

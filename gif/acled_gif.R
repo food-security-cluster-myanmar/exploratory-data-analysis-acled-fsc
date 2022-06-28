@@ -30,9 +30,9 @@ anim_acled <- acled %>%
 
 # this one works 
 anim_acled <- acled %>%
-  filter(year == 2021) %>% 
+  filter(year >= 2021) %>% 
   mutate(month = floor_date(event_date, "month")) %>% 
-  mutate(month = map(month, ~ seq.Date(as.Date(.), as.Date("2021/12/01"), by = "month"))) %>% 
+  mutate(month = map(month, ~ seq.Date(as.Date(.), as.Date("2022/05/31"), by = "month"))) %>% 
   unnest(month) %>% 
   mutate(month = format_ISO8601(month, precision = "ym")) %>%
   filter(inter_type != "sole protester action") %>% 
@@ -56,7 +56,7 @@ anim_acled <- acled %>%
 
 animate(anim_acled, width = 1748, height = 2480, res = 150, duration = 22)
 
-anim_save("acled4.gif")
+anim_save("acled_inter_2022.gif")
 
 # static version for PDF
 
@@ -86,10 +86,10 @@ ggsave(filename = "./static_version_interaction_type_small.png", dpi = 300, heig
 
 # new gif for event types
 
-event_type <- acled %>%
-  filter(year == 2021) %>% 
+event_type <- acled_new %>%
+  filter(year >= 2021) %>% 
   mutate(month = floor_date(event_date, "month")) %>% 
-  mutate(month = map(month, ~ seq.Date(as.Date(.), as.Date("2021/12/01"), by = "month"))) %>% 
+  mutate(month = map(month, ~ seq.Date(as.Date(.), as.Date("2022/05/31"), by = "month"))) %>% 
   unnest(month) %>% 
   mutate(month = format_ISO8601(month, precision = "ym")) %>%
   # filter(sub_event_type != "Peaceful protest") %>% 
@@ -112,7 +112,7 @@ event_type <- acled %>%
 
 animate(event_type, width = 1748, height = 2480, res = 150, duration = 22)
 
-anim_save("event_type.gif")
+anim_save("event_type_2022.gif")
 
 
 # static version of event_types
