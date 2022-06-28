@@ -37,12 +37,20 @@ acled_words <- acled_new %>%
   filter(str_detect(word, "[a-z]")) %>% 
   left_join(acled_new %>% 
               select(data_id, admin1, admin3_pcode, event_type, sub_event_type, fatalities, inter_type), by = "data_id")
+
+acled_words %>% 
+  write_csv("C:/Users/seany/Downloads/R/acled/data/acled_words_20220606.csv")
 ```
 
 
 ```{r}
-acled_conf_int <- acled %>%
-  filter(year == 2021) %>%
+bigrams_conf_int <- acled_new %>%
+```
+
+
+```{r}
+acled_conf_int <- acled_new %>%
+  filter(year >= 2021) %>%
   select(data_id, admin3_pcode, event_date, sub_event_type, event_type, fatalities, inter_type, notes) %>% 
   unnest_tokens(word, notes) %>% 
   anti_join(stop_words, by = "word") %>% 
@@ -59,7 +67,7 @@ acled_conf_int %>% arrange(desc(estimate))
 acled_conf_int %>% 
   filter(word %out% c("fatality", "coded", "death", "village", "township", "district", "villages",
                       "town", "tract", "fatalities", "dvb", "aapp", "total", "irrawaddy", "rfa", "died",
-                      "killing")) %>% 
+                      "killing", "fifteen")) %>% 
   arrange(desc(estimate)) %>% 
   head(40) %>% 
   ggplot(aes(x = estimate, y = word)) +
@@ -130,12 +138,48 @@ acled_bigrams_2021 <- acled_new %>%
 acled_bigrams_2022 <- acled_new %>% 
   filter(year == 2022) %>% 
   create_bigrams()
+
+acled_bigrams <- acled_new %>% 
+  filter(year >= 2021) %>% 
+  create_bigrams()
   
 
 acled_bigrams %>%  group_by(bigram) %>%  
   summarise_at("n", max) %>% 
   arrange(desc(n))
 ```
+
+
+### Bigrams conf int
+
+
+```{r}
+bigrams_conf_int <- acled_bigrams %>%
+  filter(year >= 2021) %>%
+  select(data_id, admin3_pcode, event_date, sub_event_type, event_type, fatalities, inter_type, notes) %>% 
+  unnest_tokens(word, notes) %>% 
+  anti_join(stop_words, by = "word") %>% 
+  filter(str_detect(word, "[a-z]")) %>%
+  add_count(word) %>% 
+  filter(n > 50) %>% 
+  nest(-word) %>% 
+  mutate(model = map(data, ~ t.test(.$fatalities))) %>% 
+  unnest_legacy(map(model, tidy)) %>%  
+  mutate(word = fct_reorder(word, estimate))
+
+acled_conf_int %>% arrange(desc(estimate))
+
+acled_conf_int %>% 
+  filter(word %out% c("fatality", "coded", "death", "village", "township", "district", "villages",
+                      "town", "tract", "fatalities", "dvb", "aapp", "total", "irrawaddy", "rfa", "died",
+                      "killing", "fifteen")) %>% 
+  arrange(desc(estimate)) %>% 
+  head(40) %>% 
+  ggplot(aes(x = estimate, y = word)) +
+  geom_point() + 
+  geom_errorbarh(aes(xmin = conf.low, xmax = conf.high), size = 0.5) 
+```
+
 
 ```{r}
 

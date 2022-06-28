@@ -184,11 +184,19 @@ The following report uses data from the Armed Conflict Location and Event Data P
 
 townships <- read_csv("./data/townships.csv")
 acled <- read_csv("./data/acled_20220125.csv")
-actors <- read_csv("./data/actors.csv") 
+actors_new <- read_csv("./data/actors_new.csv") 
 acled_words <- read_csv("./data/acled_words.csv")
 vulmmr <- read_csv("./data/vulmmr.csv")
 fsc <- read_csv("./data/fsc5w_2021.csv")
+fsc_2022 <- read_csv("./data/fsc_q1_2022.csv")
 acled_new <- read_csv("./data/acled_20220606.csv")
+conflict_score <- read_csv("./data/conflict_score2.csv") %>% 
+  left_join(acled %>% 
+              distinct(admin1, admin3, admin3_pcode), by = "admin3_pcode") %>% 
+  left_join(fsc_2022 %>%  
+              group_by(admin3_pcode) %>% 
+              summarise(partners = n_distinct(org_code),
+                        beneficiaries = sum(new_beneficiaries)), by = "admin3_pcode")
 
 # shapefiles
 pcode3_shape <- 
@@ -243,7 +251,7 @@ The map below plots where conflict events took place across the country, by inte
 
 
 <br>
-![](./gif/acled4.gif)
+![](./gif/acled_inter_2022.gif)
 
 
 <br><br><br>
@@ -251,44 +259,45 @@ The map below plots where conflict events took place across the country, by inte
 
 ## 2. Food security partners and road network in relation to conflict events 
 
-In general, food security partners are not operating in the parts of Myanmar most affected by conflict in 2021. This is evident from the map below which plots Food Security Partners working across Myanmar against 2021 conflict events.
+In general, food security partners are not operating in the parts of Myanmar most affected by the post-coup. This is evident from the map below which plots Food Security Partners working across Myanmar against 2021-2022 conflict events.
 
-This lack of partners in conflict areas is especially true around Sagaing and Magway. Sagaing region experienced the most conflict in 2021, followed by Magway and Chin.
-
-Humanitarian partners have traditionally focused on Rakhine, Kachin and northern Shan – the areas which had experienced more conflict in the past. However, a shift in the conflict dynamics in Myanmar has not yet led to a reallocation of resources to target new populations most affected by conflict. The allocation of funds away from Sagaing and Magway may also be a result of OCHA’s decision to focus on peri-urban areas under the Interim Emergency Response Plan for Myanmar which was released in June of 2021.
-
-The distribution of Food Security Cluster partners in correlation to conflict areas is discussed in more detail in Section 6.
- 
+This lack of partners in conflict areas is especially true around Sagaing and Magway. Sagaing region experienced the most conflict in this period, followed by Magway and Chin.
 
 <br>
 
 ```{r map-events-fsc-parnters, fig.height=12}
-acled %>% 
-  filter(year == 2021 & sub_event_type != "Peaceful protest") %>%
-  full_join(fsc %>%
-              group_by(admin3_pcode) %>% 
-              summarise(partners = n_distinct(org_code)), by = "admin3_pcode") %>% 
-  left_join(townships %>%  
+acled_new %>% 
+  filter(year >= 2021 & sub_event_type != "Peaceful protest") %>% 
+  full_join(fsc_2022 %>%
+              group_by(admin3_pcode = admin3_pcode_old) %>% 
+              summarise(partners = n_distinct(org_code), 
+                        bbeneficiaries = sum(new_beneficiaries)), by = "admin3_pcode")  %>% 
+  left_join(townships %>% 
               select(admin1_pcode, admin3_pcode), by = "admin3_pcode") %>% 
   right_join(pcode3_shape, by = "admin3_pcode") %>% 
   st_as_sf() %>% 
-  ggplot() +
-  geom_sf(aes(fill = partners), size = 0.1) + 
-  geom_point(aes(x = longitude, y = latitude), size = 0.5, alpha = 0.4, colour = "red") +
-  geom_sf(data = pcode1_shape, alpha = 0, colour = "black", size = 0.5) +
-  scale_fill_viridis_c(option = "mako", direction = -1, breaks = c(1, 3, 6, 9, 12)) + 
-  theme_void() +
-  labs(title = "Distribution of food security partners and conflict events in 2021",
+  ggplot() + 
+  geom_sf(aes(fill = partners), size = .1) + 
+  geom_point(aes(x = longitude, y = latitude), size = .5, alpha = .25, colour = "red") + 
+  geom_sf(data = pcode1_shape, alpha = 0, colour = "black", size = .5) + 
+  scale_fill_viridis_c(option = "mako", direction = -1) + 
+  theme_void() + 
+  labs(title = "Distribution of food security partners and conflict events in 2021-2022",
        subtitle =  "Red dots are conflict events; peaceful protests have been excluded",
        caption = "Data sources: ACLED; acleddata.com and Food Security Cluster Myanmar",
        fill = "number of\npartners") + 
   theme(plot.caption = element_text(hjust = 0.5))
-
-# ggsave(filename = "./partners_conflict_map.png", dpi = 300, height = 12, width = 7, units = "in")
 ```
- 
+
+
+
  <br>
  
+Humanitarian partners have traditionally focused on Rakhine, Kachin and northern Shan – the areas which had experienced more conflict in the past. However, a shift in the conflict dynamics in Myanmar has not yet led to a reallocation of resources to target new populations most affected by conflict. The allocation of funds away from Sagaing and Magway may also be a result of OCHA’s decision to focus on peri-urban areas under the Interim Emergency Response Plan for Myanmar which was released in June of 2021.
+
+The distribution of Food Security Cluster partners in correlation to conflict areas is discussed in more detail in Section 6.
+
+
 Many of the literal choke points in this conflict are related to the road network. The map below shows conflict events as points in red and major roads in blue. The yellow square is Nay Pyi Taw and the light blue squares are Tamu in Sagaing and Muse and Tachileik in Shan. 
 
 The main front (where Sagaing, Mandalay, Magway and Chin border each other) seems to be preventing the Tatamdaw from accessing the border crossing at Tamu and penetrating deeper into Sagaing. The border crossing at Muse is still very much contested. However, what is clear is that much of the armed resistance is aimed at preventing the Tatmadaw (projecting forward out of Nay Pyi Taw), from accessing the north of the country. 
@@ -315,8 +324,8 @@ In 2021, there were 16,263 conflict events in Myanmar, while in 2020 there were 
 <br>
 
 ```{r barplot-year-events}
-acled %>% 
-  filter(!is.na(event_type) & year < 2022) %>%
+acled_new %>% 
+  filter(!is.na(event_type) & year <= 2022) %>%
   mutate(year = round(year)) %>% 
   group_by(year, event_type) %>%
   summarise(count = n(), .groups = "drop") %>%
@@ -329,7 +338,7 @@ acled %>%
             fun = sum, 
             vjust = -0.7, 
             size = 3) +
-  scale_x_continuous(breaks = seq(2010, 2021, by = 1)) + 
+  scale_x_continuous(breaks = seq(2010, 2022, by = 1)) + 
   scale_y_continuous(labels = comma, limits = c(0, 17000)) +
   theme(axis.text.x = element_text(size = 9), 
         axis.text.y = element_text(size = 9), 
@@ -350,13 +359,13 @@ The breakdown of conflict events in 2021 was:
 
 ```{r conflict-events-summary-2021}
 acled %>%  
-  filter(year == 2021) %>% 
+  filter(year >= 2021) %>% 
   group_by(event_type) %>% 
   summarise(Count = n()) %>% 
   mutate(Percentage = round(Count / sum(Count) * 100, digits = 2)) %>% 
   rename(`Event type` = event_type) %>% 
   arrange(desc(Percentage)) %>% 
-  kable(caption = "2021 event types by percentage of total", 
+  kable(caption = "2021-2022 event types by percentage of total", 
         format.args = list(big.mark = ",")) %>% 
   kable_classic_2("striped", full_width = FALSE, position = "left") %>%  
   footnote(general = "Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com", general_title = "")
@@ -364,11 +373,11 @@ acled %>%
 
 <br><br>
 
-### 3.2 Conflict-related fatalities in 2021
+### 3.2 Conflict-related fatalities 
 
-Myanmar experienced  more conflict fatalities in 2021 than in the preceding decade. In 2021 there were 11,506 conflict-related deaths. Between 2010 and 2020 the combined number of deaths was 9,404.
+Myanmar experienced  more conflict fatalities in 2021 than in the preceding decade. In 2021 there were 11,506 conflict-related deaths. Between 2010 and 2020 the combined number of deaths was 9,404. The violence appears to be intensifying, with 9,383 fatalities as of 31 May 2022. 
 
-Violence against civilians accounted for 1,891 deaths. This was more than the total number of fatalities across all conflict events in 2019. Until last year, 2019 had been the deadliest conflict year in Myanmar in the past decade.
+Violence against civilians accounted for 1,891 deaths. This was more than the total number of fatalities across all conflict events in 2019. Before 2021, 2019 had been the deadliest conflict year in Myanmar in the past decade.
 
 However, any reaction to this significant increase appears limited. Yet, if a single event such as a cyclone had increased annual fatalities by more than 1000%, one might expect an urgent response and a drastic reallocation of resources.
 
@@ -376,8 +385,8 @@ However, any reaction to this significant increase appears limited. Yet, if a si
 <br>
 
 ```{r barplot-year-fatalties}
-acled %>% 
-  filter(!is.na(event_type) & year < 2022) %>%
+acled_new %>% 
+  filter(!is.na(event_type) & year <= 2022) %>%
   mutate(year = round(year)) %>% 
   group_by(year, event_type) %>%
   summarise(fatalities = sum(fatalities), .groups = "drop") %>%
@@ -386,7 +395,7 @@ acled %>%
   geom_col() +
   geom_text(aes(label = comma(stat(y), accuracy = 1), group = year), 
             stat = "summary", fun = sum, vjust = -0.7, size = 3) +
-  scale_x_continuous(breaks = seq(2010, 2021, by = 1)) + 
+  scale_x_continuous(breaks = seq(2010, 2022, by = 1)) + 
   scale_y_continuous(labels = comma, limits = c(0, 12500)) +
   theme(axis.text.x = element_text(size = 9), 
         axis.text.y = element_text(size = 9), 
@@ -395,7 +404,7 @@ acled %>%
         plot.caption = element_text(hjust = 0.5)) +
   labs(x = "", 
        y = "Number of conflict-related fatalities",
-       title = "Fatalities by conflict event type, 2010-2021", 
+       title = "Fatalities by conflict event type, 2010-2022", 
        caption = "Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com")
 
 
@@ -415,49 +424,28 @@ Protests and riots peaked in March 2021, immediately after the takeover. Events 
 
 <br>
 
-```{r facet-line-plot-monthly}
-acled %>%  
-  filter(year == 2021) %>% 
-  group_by(month, event_type) %>% 
-  summarise(count = n()) %>%
- #  mutate(month = fct_rev(month)) %>% 
-  ggplot(aes(x = month, 
-             y = count, 
-             group = event_type, 
-             colour = event_type)) + 
-  geom_line(size = 1) +
-  facet_wrap(~event_type, scales = "free_y") + 
-  labs(x = "",
+```{r facet-line-plot-monthly,fig.height=9}
+
+acled_new %>% 
+  filter(year >= 2021) %>% 
+  filter(event_date < "2022-06-01") %>% 
+  group_by(event_date, event_type) %>%  
+  summarise(count = n()) %>% 
+  ggplot(aes(x = event_date, y = count, colour = event_type, group = event_type)) + 
+  geom_smooth(se = FALSE, alpha = .5, size = .5) +
+  geom_line() +
+  facet_wrap(~ event_type, scales = "free_y", ncol = 1) + 
+   labs(x = "",
        y = "Number of events", 
-       title = "Number of 2021 conflict events per month, by type",
+       title = "Number of conflict events per month, by type",
        subtitle = "Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com") + 
   theme(legend.position = "none",
-        axis.text.x = element_text(size = 5))
+        axis.text.x = element_text(size = 7, angle = 30, hjust = 1)) + 
+  scale_x_date(date_breaks = "1 month", labels = date_format(format = "%Y-%b"))
 
-# cumulative counts results in a less interesting graph 
-# acled %>%  
-#   filter(year == 2021) %>% 
-#   mutate(month = lubridate::month(event_date, label = TRUE)) %>%
-#   group_by(month, event_type) %>% 
-#   summarise(count = n()) %>% 
-#   ungroup() %>% 
-#   group_by(event_type) %>% 
-#   mutate(cum_count = cumsum(count)) %>% 
-#   ggplot(aes(x = month, y = cum_count, group = event_type, colour = event_type)) + 
-#   geom_smooth(se = FALSE) +
-#   facet_wrap(~event_type, scales = "free_y") + 
-#   labs(x = "",
-#        y = "Number of events", 
-#        title = "Progression of 2021 conflict events, by type",
-#        subtitle = "Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com") + 
-#   theme(legend.position = "none")
 ```
 
 <br>
-
-It is not clear what caused a drop in the number of conflict events in June, July and August, though one hypothesis is that heavy fighting in May led to a lull in activity as actors spent time regrouping and rethinking their strategies. A possible example of this is the formation of  the People’s Defence Force in May 2021. 
-
-A spike in arrests during May might have also contributed, with mass arrests diminishing the capacity of certain actors to engage in conflict. The dip in conflict also coincides with the paddy sowing period. 
 
 The table below provides a more detailed snapshot of conflicts, broken down by sub-events. Most violence against civilians was through the sub-event type labelled *Attack*. 
  
@@ -489,8 +477,6 @@ acled_new %>%
        subtitle = "Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com", 
        fill = "")
   
-
-
 
 ```
 
@@ -548,7 +534,7 @@ acled_new %>%
 
 <br>
 
-However, the event type *Violence against civilians* does not encompass all fatal incidents involving non-combatants. If the data is examined through the lens of interaction type, which records the types of actors involved in each conflict event, it shows that `r round((filter(acled, year == 2021 & str_detect(inter_type, "civilian|protester")) %>% {sum(.$fatalities)}) / (filter(acled, year == 2021) %>% {sum(.$fatalities)}) * 100, digits = 2)` percent of fatalities stem from interactions involving non-combatants, that is civilians and protesters. The next chapter deals with a more detailed assessment of the number of fatalities related to non-combatants.
+However, the event type *Violence against civilians* does not encompass all fatal incidents involving non-combatants. If the data is examined through the lens of interaction type, which records the types of actors involved in each conflict event, it shows that `r round((filter(acled_new, year >= 2021 & str_detect(inter_type, "civilian|protester")) %>% {sum(.$fatalities)}) / (filter(acled_new, year >= 2021) %>% {sum(.$fatalities)}) * 100, digits = 2)` percent of fatalities stem from interactions involving non-combatants, that is civilians and protesters. The next chapter deals with a more detailed assessment of the number of fatalities related to non-combatants.
 
 <br>
 
@@ -586,7 +572,7 @@ The largest number of fatalities are related to events involving the military, p
 
 ```{r fatalities-summary-2021-inter-type}
 acled %>%  
-  filter(year == 2021) %>%
+  filter(year >= 2021) %>%
   filter(inter_type != "sole protester action") %>% 
   mutate(inter_type = fct_lump(inter_type, 6), 
          inter_type = str_to_title(inter_type), 
@@ -598,7 +584,7 @@ acled %>%
          Percentage = percentage,
          `Interaction type` = inter_type) %>% 
   arrange(desc(Percentage)) %>% 
-  kable(caption = "2021 conflict fatalities by interaction type", format.args = list(big.mark = ",")) %>% 
+  kable(caption = "2021-2022 conflict fatalities by interaction type", format.args = list(big.mark = ",")) %>% 
   kable_classic_2("striped", full_width = FALSE, position = "left") %>%  
   footnote(general = "Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com", general_title = "")
 
@@ -614,8 +600,8 @@ acled %>%
 
 ```{r state-events-plot}
 
-acled %>% 
-  filter(year == 2021) %>% 
+acled_new %>% 
+  filter(year >= 2021) %>% 
   group_by(admin1, event_type) %>% 
   summarise(count = n()) %>% 
   mutate(sum = sum(count)) %>% 
@@ -624,7 +610,7 @@ acled %>%
   ggplot(aes(x = admin1, y = count, fill = event_type)) + 
   geom_col() +
   geom_text(aes(label = comma(stat(y), accuracy = 1), group = admin1), stat = "summary", fun = sum, vjust = -0.5, size = 3) +
-  scale_y_continuous(labels = comma, breaks = seq(0, 3800, by = 1000)) +
+  scale_y_continuous(labels = comma, breaks = seq(0, 6000, by = 1000)) +
   theme(axis.text.x = element_text(size = 7, hjust = 1, angle = 60), 
         axis.text.y = element_text(size = 9), 
         legend.text = element_text(size = 5),
@@ -632,7 +618,7 @@ acled %>%
         plot.caption = element_text(hjust = 0.5)) +
   labs(x = "", 
        y = "Number of conflict events",
-       title = "2021 conflict events by state/region", 
+       title = "2021-2022 conflict events by state/region", 
        caption = "Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com")
 
   
@@ -646,8 +632,8 @@ Sagaing experienced the highest number of conflict events and fatalities in 2021
 
 ```{r state-fatalities-plot}
 
-acled %>% 
-  filter(year == 2021) %>% 
+acled_new %>% 
+  filter(year >= 2021) %>% 
   group_by(admin1, event_type) %>% 
   summarise(fatalities = sum(fatalities)) %>% 
   mutate(sum = sum(fatalities)) %>% 
@@ -656,7 +642,7 @@ acled %>%
   ggplot(aes(x = admin1, y = fatalities, fill = event_type)) + 
   geom_col() +
   geom_text(aes(label = comma(stat(y), accuracy = 1), group = admin1), stat = "summary", fun = sum, vjust = -0.5, size = 3) +
-  scale_y_continuous(labels = comma, breaks = seq(0, 5000, by = 1000)) +
+  scale_y_continuous(labels = comma, breaks = seq(0, 9000, by = 1000)) +
   theme(axis.text.x = element_text(size = 7, hjust = 1, angle = 60), 
         axis.text.y = element_text(size = 9), 
         legend.text = element_text(size = 5),
@@ -671,12 +657,12 @@ acled %>%
 
 <br><br>
 
-### 3.6 Progression of the conflict in 2021 by event type
+### 3.6 Progression of the conflict in 2021-2022 by event type
 
-The map below shows 2021 conflict events by **month**. The color of each point indicates the type of conflict event. The number of fatalities associated with each event is indicated by the size of each point. It is interesting to note that after the protests in February and March 2021, the conflict moves on to a new stage in April and May, visibly increasing in intensity.
+The map below shows 2021-2022 conflict events by **month**. The color of each point indicates the type of conflict event. The number of fatalities associated with each event is indicated by the size of each point. It is interesting to note that after the protests in February and March 2021, the conflict moves on to a new stage in April and May, visibly increasing in intensity.
 
 <br>
-![](./gif/event_type.gif)
+![](./gif/event_type_2022.gif)
 
 <br><br><br>
 
@@ -686,7 +672,7 @@ The map below shows 2021 conflict events by **month**. The color of each point i
 
 <br>
 
-Non-combatants were involved in almost one third of conflict-related fatalities in Myanmar in 2021. In total, there were `r filter(acled, year == 2021) %>% {sum(.$fatalities)} %>% format(big.mark = ",")` fatalities, of which `r round(filter(acled, year == 2021 & non_combatant == TRUE) %>% {sum(.$fatalities)}) %>% format(big.mark = ",")` were related to non-combatants. 
+Non-combatants were involved in almost one third of conflict-related fatalities in Myanmar in 2021. In total, there were `r filter(acled_new, year >= 2021) %>% {sum(.$fatalities)} %>% format(big.mark = ",")` fatalities, of which `r round(filter(acled_new, year >= 2021 & non_combatant == TRUE) %>% {sum(.$fatalities)}) %>% format(big.mark = ",")` were related to non-combatants. 
 
 The map below shows conflict events labelled by ACLED as *Violence against civilians* and where the event was described as involving a civilian, protester, or villager.
 
@@ -697,8 +683,8 @@ Events involving non-combatants are plotted on the map below, with those events 
 <br>
 
 ```{r map-non-combatants, fig.height=10}
-acled %>% 
-  filter(year == 2021 & sub_event_type != "Peaceful protest") %>% 
+acled_new %>% 
+  filter(year >= 2021 & sub_event_type != "Peaceful protest") %>% 
   filter(non_combatant == TRUE) %>% 
   right_join(pcode3_shape, by = "admin3_pcode") %>% 
   filter(!is.na(has_fatalities)) %>% 
@@ -725,8 +711,8 @@ A breakdown of sub conflict events involving non-combatants is listed below.
 
 
 ```{r table-sub-event-non-combatants}
-acled %>% 
-  filter(year == 2021 & sub_event_type != "Peaceful protest") %>% 
+acled_new %>% 
+  filter(year >= 2021 & sub_event_type != "Peaceful protest") %>% 
   filter(non_combatant == TRUE) %>% 
   group_by(sub_event_type) %>% 
   summarise(events = n(), 
@@ -739,7 +725,7 @@ acled %>%
   rename(`Sub-event type` = sub_event_type, 
          Events = events, 
          Fatalities = fatalities) %>% 
-  kable(caption = "Top 10 sub-event types involving non-combatants in 2021", format.args = list(big.mark = ",")) %>% 
+  kable(caption = "Top 10 sub-event types involving non-combatants in 2021-2022", format.args = list(big.mark = ",")) %>% 
   kable_classic_2("striped", position = "left", full_width = FALSE) %>% 
   footnote(general = "Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com", 
            general_title = "")
@@ -752,8 +738,8 @@ acled %>%
 Most of the fatal conflict events in Myanmar in 2021 occurred in Sagaing region. In total, the region recorded 1,178 conflict-related fatalities, significantly more than in Mandalay and Yangon, the next most fatal regions. In Mandalay, there were 411 conflict-related deaths and in Yangon there were 300.
 
 ```{r barplot-events-fatalities-sr}
-acled %>% 
-  filter(year == 2021 & sub_event_type != "Peaceful protest") %>% 
+acled_new %>% 
+  filter(year >= 2021 & sub_event_type != "Peaceful protest") %>% 
   filter(non_combatant == TRUE) %>%
   group_by(admin1) %>% 
   summarise(events = n(), 
@@ -781,8 +767,8 @@ The large number of fatalities in Sagaing, Mandalay and Yangon are due to a high
 
 
 ```{r table-sub-events-sr}
-acled %>% 
-  filter(year == 2021 & sub_event_type != "Peaceful protest") %>% 
+acled_new %>% 
+  filter(year >= 2021 & sub_event_type != "Peaceful protest") %>% 
   filter(non_combatant == TRUE) %>%
   mutate(sub_event_type = fct_lump(sub_event_type, 5)) %>% 
   group_by(admin1, sub_event_type) %>%
@@ -808,13 +794,13 @@ acled %>%
 
 <br>
 
-Kale Township in Sagaing experienced the highest rate of fatalities involving non-combatants in 2021. In total, 7 per cent of non-combatant-related fatalities occured in Kale, which represents `r filter(acled, year == 2021 & admin3_pcode == "MMR005027" & non_combatant == TRUE) %>% {sum(.$fatalities)}` deaths. Overall, `r filter(acled, year == 2021 & fatalities > 0 & non_combatant == TRUE) %>% distinct(admin3_pcode) %>% nrow()`  townships reported fatalities involving non-combatants in 2021. Of the 20 townships with the most non-combatant fatalities, 11 were in the Sagaing Region. 
+Kale Township in Sagaing experienced the highest rate of fatalities involving non-combatants in 2021. In total, 7 per cent of non-combatant-related fatalities occured in Kale, which represents `r filter(acled_new, year >= 2021 & admin3_pcode == "MMR005027" & non_combatant == TRUE) %>% {sum(.$fatalities)}` deaths. Overall, `r filter(acled_new, year >= 2021 & fatalities > 0 & non_combatant == TRUE) %>% distinct(admin3_pcode) %>% nrow()`  townships reported fatalities involving non-combatants in 2021 and 2022. Of the 20 townships with the most non-combatant fatalities, 11 were in the Sagaing Region. 
 
 <br>
 
 ```{r map-townships-fatalities-noncombatant, fig.height=10}
-acled %>% 
-  filter(year == 2021) %>% 
+acled_new %>% 
+  filter(year >= 2021) %>% 
   filter(non_combatant == TRUE) %>% 
   group_by(admin1, admin3, admin3_pcode) %>% 
   summarise(events = n(), 
@@ -859,12 +845,12 @@ Because most event types, with the exception of peaceful protests, involve more 
 
 ```{r actor-facet-event-count, fig.height = 7}
 
-actors %>%
+actors_new %>%
   mutate(event_type = fct_relevel(event_type, c("Battles", "Explosions/Remote violence", "Violence against civilians",
                                                 "Protests", "Riots", "Strategic developments"))) %>% 
   mutate(inter1 = fct_relevel(inter1, c("state_forces", "protesters", "civilians", "political_militias", "rebel_groups",
                                         "rioters", "identity_militias", "external_other_force"))) %>% 
-  filter(year == 2021) %>% 
+  filter(year >= 2021) %>% 
   group_by(actor_simple, event_type, inter1) %>% 
   summarise(count = n(),
             fatalities = sum(fatalities)) %>% 
@@ -889,10 +875,10 @@ actors %>%
 <br>
 
 ```{r summary-table-event_type}
-actors %>% 
+actors_new %>% 
   mutate(inter1 = fct_relevel(inter1, c("state_forces", "protesters", "civilians", "political_militias", "rebel_groups",
                                         "rioters", "identity_militias", "external_other_force"))) %>% 
-  filter(year == 2021) %>% 
+  filter(year >= 2021) %>% 
   group_by(`Actor type` = inter1) %>% 
   summarise(events = n()) %>%  
   mutate(`Actor type` = str_to_title(`Actor type`)) %>% 
@@ -901,7 +887,7 @@ actors %>%
   mutate_at(vars("Protesters", "Civilians", "State_forces", "Political_militias", "Rebel_groups",
                                         "Rioters", "Identity_militias", "External_other_force"),
             ~ as.numeric(.x)) %>% 
-  kable(caption = "2021 number of conflict events by actor type", format.args = list(big.mark = ","), digits = 0) %>% 
+  kable(caption = "2021-2022 number of conflict events by actor type", format.args = list(big.mark = ","), digits = 0) %>% 
   kable_classic_2() %>% 
   footnote(general = "Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com",
            general_title = "")
@@ -915,18 +901,18 @@ The tables below show the number of fatalities associated with each type of acto
 
 Similar to the plot above, the plot below has been faceted by actor type and shows the number of fatalities associated with a specific actor type by type of event. As these actor types are exhaustive, a specific event type can be tracked across different actors. For instance, there were 1,729 fatalities related to *Violence against civilians* (in green), using the plot below, one can see how many of these 1,729 fatalities the various actor types were associated with. Civilians were, of course, one of the parties involved in the *Violence against civilians* event type, but the other largest actors were state forces and political militias.  
 
-It should be noted that the ACLED dataset does not have a column to assign blame. For instance, under fatalities related to protests, `r filter(actors, inter1 == "protesters") %>% {sum(.$fatalities)}` fatalities were associated with protesters, with the main other party involved almost entirely being state forces, with very small numbers being associated with rioters.
+It should be noted that the ACLED dataset does not have a column to assign blame. For instance, under fatalities related to protests, `r filter(actors_new, inter1 == "protesters") %>% {sum(.$fatalities)}` fatalities were associated with protesters, with the main other party involved almost entirely being state forces, with very small numbers being associated with rioters.
 
 <br>
 
 ```{r actor-facet-event-fatalities, fig.height=7}
 
-actors %>%
+actors_new %>%
   mutate(event_type = fct_relevel(event_type, c("Battles", "Explosions/Remote violence", "Violence against civilians",
                                                 "Protests", "Riots", "Strategic developments"))) %>% 
   mutate(inter1 = fct_relevel(inter1, c("state_forces", "protesters", "civilians", "political_militias", "rebel_groups",
                                         "rioters", "identity_militias", "external_other_force"))) %>% 
-  filter(year == 2021) %>% 
+  filter(year >= 2021) %>% 
   group_by(actor_simple, event_type, inter1) %>% 
   summarise(count = n(),
             fatalities = sum(fatalities)) %>% 
@@ -947,26 +933,6 @@ actors %>%
        caption = "Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com")
 
 ```
-<br>
-
-```{r summary-table-fatalities}
-actors %>% 
-  mutate(inter1 = fct_relevel(inter1, c("state_forces", "protesters", "civilians", "political_militias", "rebel_groups",
-                                        "rioters", "identity_militias", "external_other_force"))) %>% 
-  filter(year == 2021) %>% 
-  group_by(`Actor type` = inter1) %>% 
-  summarise(Fatalities = sum(fatalities)) %>%  
-  mutate(`Actor type` = str_to_title(`Actor type`)) %>% 
-  transpose_df() %>% 
-  row_to_names(row_number = 1) %>% 
-  mutate_at(vars("Protesters", "Civilians", "State_forces", "Political_militias", "Rebel_groups",
-                                        "Rioters", "Identity_militias", "External_other_force"),
-            ~ as.numeric(.x)) %>% 
-  kable(caption = "2021 number of fatalities associated with each actor type", format.args = list(big.mark = ","), digits = 0) %>% 
-  kable_classic_2() %>% 
-  footnote(general = "Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com",
-           general_title = "")
-```
 
 <br><br>
 
@@ -982,8 +948,8 @@ The list below shows the number of fatalities associated with interactions betwe
 
 
 ```{r table-actor-pairs-fatalities}
-actors %>% 
-  filter(year == 2021) %>% 
+actors_new %>% 
+  filter(year >= 2021) %>% 
   filter(sub_event_type != "Peaceful protest") %>% 
   pairwise_count(actor_simple, data_id, sort = TRUE, upper = FALSE, wt = fatalities) %>% 
   transmute(Actor1 = item1, 
@@ -992,6 +958,8 @@ actors %>%
   head(20) %>% 
   kable(caption = "Conflict actor pairs with the highest fatalities in 2021", format.args = list(big.mark = ",")) %>% 
   kable_classic_2("striped") %>% 
+  column_spec(1, width = "15em") %>% 
+  column_spec(2, width = "30em") %>% 
   footnote("Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com", general_title = "")
 ```
 
@@ -1009,37 +977,44 @@ Political militias and rebel groups are associated with the highest fatality eve
 
 <br>
 
-```{r fatalities-actors-errorbarh, fig.height=6}
-actors_conf_int <- actors %>%  
-  filter(year == 2021) %>% 
+```{r fatalities-actors-errorbarh, fig.height=7.5}
+actors_conf_int <- actors_new %>%  
+  filter(year <= 2021) %>% 
   add_count(actor_simple) %>% 
   filter(n > 50) %>% 
   nest(-actor_simple) %>% 
   mutate(model = map(data, ~ t.test(.$fatalities))) %>% 
   unnest_legacy(map(model, tidy))
 
-actors_conf_int %>%  
-  left_join(actors %>% select(actor_simple, inter1) %>% distinct(), by = "actor_simple") %>% 
+actors_conf_int %>% 
+  left_join(actors_new %>% 
+              group_by(actor_simple, inter1) %>% 
+              summarise(fatalities = sum(fatalities)), 
+            by = "actor_simple") %>% 
+  # left_join(actors_new %>% select(actor_simple, inter1) %>% distinct(), by = "actor_simple") %>% 
   mutate(inter1 = fct_relevel(inter1, c("protesters", "civilians", "state_forces", "political_militias", "rebel_groups",
                                         "rioters", "identity_militias", "external_other_force"))) %>% 
   mutate(actor_simple = str_remove(actor_simple, "\\:.*"),
          actor_simple = fct_reorder(actor_simple, estimate)) %>% 
   ggplot(aes(x = estimate, y = actor_simple, colour = inter1)) + 
-  geom_point(size = 2) + 
+  geom_point(aes(size = fatalities)) + 
   geom_errorbarh(aes(xmin = conf.low, xmax = conf.high), height = 0.15) + 
-  scale_colour_viridis_d(direction = -1) +
-  scale_x_continuous(breaks = seq(0, 7, by = 1)) +
+  scale_colour_viridis_d(option = "inferno", direction = -1) +
+  scale_x_continuous(trans = "log10") +
+  scale_size_continuous(range = c(1, 9)) + 
   # scale_colour_brewer(palette = "Dark2") + 
-  labs(x = "Average number of fatalities per conflict event",
-      y = "Conflict actor", 
+  labs(x = "Log of average number of fatalities per conflict event",
+      y = "", 
       title = "Which conflict actors are associated with the most fatalities per event?", 
-      subtitle = "Only includes actors involved in more than 50 conflict events", 
+      subtitle = "Only actors in more than 50 conflict events\nSize indicates number of fatalities associated with actor", 
       caption = "Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com",
-      colour = "") + 
+      colour = "", size = "") + 
+  guides(size = "none") + 
   theme(plot.caption = element_text(hjust = 0.5), 
         legend.text = element_text(size = 6), 
         legend.position = "bottom") +
   guides(colour = guide_legend(nrow = 1))
+
 
 ```
 
@@ -1048,8 +1023,8 @@ actors_conf_int %>%
 ### 5.4 Summary table of main conflict actors by actor type
 
 ```{r table-main-conflict-actors}
-top_actors <- actors %>%  
-  filter(year == 2021 & inter1 != "external_other_force") %>%
+top_actors <- actors_new %>%  
+  filter(year <= 2021 & inter1 != "external_other_force") %>%
   group_by(inter1) %>% 
   mutate(actor_simple = fct_lump(actor_simple, prop = .02)) %>% 
   ungroup() %>% 
@@ -1063,7 +1038,7 @@ top_actors <- actors %>%
   # top_n(n = 5) %>% 
   arrange(`Actor type`)
 
-kable(top_actors, caption = "Top conflict actors in 2021 by actor type", format.args = list(big.mark = ",")) %>% 
+kable(top_actors, caption = "Top conflict actors in 2021-2022 by actor type", format.args = list(big.mark = ",")) %>% 
   pack_rows(index = table(top_actors$`Actor type`)) %>% 
   kable_classic_2("striped") %>%  
   footnote(general = "Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com", 
@@ -1081,8 +1056,8 @@ Sagaing is home to a huge concentration of conflict actors, with many more than 
 <br>
 
 ```{r map-conflict-actors-township, fig.height=10}
-actors %>% 
-  filter(year == 2021) %>% 
+actors_new %>% 
+  filter(year >= 2021) %>% 
   group_by(admin3_pcode) %>% 
   summarise(conflict_actors = n_distinct(actor_simple)) %>% 
   left_join(pcode3_shape, by = "admin3_pcode") %>% 
@@ -1108,62 +1083,6 @@ actors %>%
 
 
 ### 6.1 Correlation plot
-
-
-```{r conflict-score-df, warning=FALSE}
-conflict_df <- acled %>% 
-  # do you really need this step since you're using Betti-Verma
-  mutate(event_type = case_when(event_type == "Protests" ~ "Protests_and_Riots",
-                                event_type == "Riots" ~ "Protests_and_Riots", 
-                                TRUE ~ event_type)) %>% 
-  filter(year == 2021 & sub_event_type != "Peaceful protest") %>%
-  group_by(admin3_pcode, event_type) %>% 
-  summarise(count = n(), .groups = "drop") %>%  
-  pivot_wider(names_from = event_type, values_from = count) %>% 
-  clean_names() %>% 
-  replace_na(list(battles = 0, explosions_remote_violence = 0, violence_against_civilians = 0,
-                  strategic_developments = 0, protests_and_riots = 0)) %>% 
-  # mutate(total_events = rowSums(across(where(is.numeric)), na.rm = TRUE)) %>% 
-  left_join(acled %>% 
-              filter(year == 2021) %>% 
-              group_by(admin3_pcode) %>% 
-              summarise(fatalities = sum(fatalities)), by = "admin3_pcode") %>% 
-  ungroup()
-  
-index_shares <- conflict_df %>%   
-  mutate_at(vars(c(battles, explosions_remote_violence, violence_against_civilians, fatalities,
-                   strategic_developments, protests_and_riots)), 
-           scale) %>%  
-  mutate_at(vars(c(battles, explosions_remote_violence, violence_against_civilians, fatalities,
-                   strategic_developments, protests_and_riots)), 
-           funs((. - min(., na.rm = T))/(max(., na.rm = T) - min(., na.rm = T)))) %>% 
-  mdepriv(c("battles", "explosions_remote_violence", "violence_against_civilians", "fatalities", "strategic_developments", "protests_and_riots"),
-          method = "bv", output = "all")
-
-conflict_score <- conflict_df %>% 
-  left_join(index_shares$data %>% 
-              select(admin3_pcode, 
-                     score_i,
-                     index_battles = battles, 
-                     index_explosions_remote_violence = explosions_remote_violence,
-                     index_violence_against_civilians = violence_against_civilians, 
-                     index_fatalities = fatalities, 
-                     index_strategic_developments = strategic_developments, 
-                     index_protests_and_riots = protests_and_riots), by = "admin3_pcode") %>% 
-  mutate(env_battles = battles / max(battles), 
-         env_explosions_remote_violence = explosions_remote_violence / max(explosions_remote_violence),
-         env_violence_against_civilians = violence_against_civilians / max(violence_against_civilians), 
-         env_fatalities = fatalities / max(fatalities), 
-         score_env = (env_battles + env_explosions_remote_violence + env_violence_against_civilians + env_fatalities) / 4) %>% 
-  left_join(acled %>% 
-              distinct(admin1, admin3, admin3_pcode), by = "admin3_pcode") %>% 
-  left_join(fsc %>%  
-              group_by(admin3_pcode) %>% 
-              summarise(partners = n_distinct(org_code),
-                        beneficiaries = sum(beneficiaries[unique_beneficiaries == "Yes"])), by = "admin3_pcode")
-
-# conflict_score %>% do.call(data.frame, .) %>% as_tibble() %>% write_csv("conflict_score.csv")
-```
 
 
 Food security partners are not operating in the parts of Myanmar most affected by conflict in 2021, as shown previously in Section 2. Sagaing region experienced the most conflict in 2021, followed by Kachin and northern Shan, however humanitarian partners continue to work in Rakhine, Kachin and southern Shan, with some shift towards working in peri-urban Yangon and Mandalay.
@@ -1206,9 +1125,16 @@ For instance, the two variables most highly-correlated with each other are viole
 
 ```{r corrplot, fig.height=7.5}
 conflict_score %>% 
-  mutate(log_beneficiaries = log(beneficiaries)) %>% 
+  mutate(log_beneficiaries = log(beneficiaries), 
+         log_fatalities = log(fatalities)) %>% 
+  mutate_at(vars(beneficiaries, battles, fatalities, 
+                 violence_against_civilians, protests_and_riots, 
+                 strategic_developments, explosions_remote_violence), 
+            ~ ifelse(!is.infinite(log(.x)), log(.x), 0)) %>% 
   select(battles, explosions_remote_violence, violence_against_civilians, protests_and_riots, strategic_developments, 
-         fatalities, partners, log_beneficiaries) %>%
+          fatalities, partners, beneficiaries) %>% 
+  replace(is.na(.), 0) %>% 
+  # select() %>%
   pairs.panels(smooth = TRUE,      # If TRUE, draws loess smooths
                scale = FALSE,      # If TRUE, scales the correlation text font
                density = TRUE,     # If TRUE, adds density plots and histograms
@@ -1242,16 +1168,18 @@ The spread of beneficiaries shows no discernible relationship between the incide
 ```{r score-i-ben-plot}
 # there is no relationship between conflict score and the number of beneficiaries or number of partners per township
 conflict_score %>%
-  ggplot(aes(x = beneficiaries, y = score_i)) + 
+  mutate(beneficiaries = log(beneficiaries)) %>% 
+  ggplot(aes(x = beneficiaries, y = conflict_score)) + 
   geom_point() + 
   scale_x_continuous(trans = "log10", labels = comma) +
   geom_smooth(method = "lm") +
-  labs(x = "Number of beneficiaries",
-       y = "Conflict score", 
-       title = "Relationship between beneficiaries reached and conflict score at township level",
+  labs(x = "Log of beneficiaries",
+       y = "Conflict score",
+title = "Relationship between Q1 2022 beneficiaries reached and conflict score at township level",
        subtitle = "Higher conflict scores indicate more conflict events and fatalities", 
        caption = "Data sources: Armed Conflict Location & Event Data Project (ACLED); acleddata.com and Food Security Cluster Myanmar") +
   theme(plot.caption = element_text(hjust = 0.5))
+
 ```
 
 <br><br>
@@ -1268,12 +1196,12 @@ Further detail is provided about these townships in section 9.1.
 <br>
 
 ```{r scatterplot-events-fatalities-tsp}
-conflict_scatter <- acled %>%
-  filter(year == 2021 & sub_event_type != "Peaceful protests") %>% 
+conflict_scatter <- acled_new %>%
+  filter(year >= 2021 & sub_event_type != "Peaceful protests") %>% 
   group_by(admin3_pcode) %>% 
   summarise(events = n(),
             fatalities = sum(fatalities)) %>% 
-  left_join(conflict_score %>% select(partners, admin3_pcode, admin1, admin3), by = "admin3_pcode") %>% 
+  left_join(conflict_score %>% select(partners, admin3_pcode, admin1 = admin1.x, admin3 = admin3.x), by = "admin3_pcode") %>% 
   replace_na(list(partners = 0)) %>% 
   ggplot(aes(x = events, y = fatalities, colour = events,
              text = paste0("township: ", admin3, ",", "\n",
@@ -1299,6 +1227,7 @@ ggplotly(conflict_scatter, tooltip = c("text")) %>%
                                     "<br>",
                                     "<sup>",
                                     "mouse over for details; means marked by red lines; fatalities marked by size","</sup>")))  
+
 ```
 
 
@@ -1443,11 +1372,11 @@ Ensuring food security in Sagaing, Magway, Mandalay, Mon, Kayin, Kachin and Kaya
 vulmmr %>%  
   select(admin3_pcode = township_pcode, area_sown = all_area_sowed_mali) %>% 
   left_join(conflict_score %>% 
-            select(score_i, admin3_pcode, battles, explosions_remote_violence, 
+            select(conflict_score, admin3_pcode, battles, explosions_remote_violence, 
                    violence_against_civilians, fatalities), by = "admin3_pcode") %>% 
   left_join(townships %>% select(state_name, township_name, admin3_pcode), by = "admin3_pcode") %>% 
-  mutate(score_i = replace_na(score_i, 0)) %>% 
-  ggplot(aes(area = area_sown, fill = score_i, subgroup = state_name, 
+  mutate(conflict_score = replace_na(conflict_score, 0)) %>% 
+  ggplot(aes(area = area_sown, fill = conflict_score, subgroup = state_name, 
              # these next arguments are unnecessary as the ggplotly doesn't work for treemaps 
              text = paste0(township_name, "\n",
                            state_name, "\n",
@@ -1470,7 +1399,7 @@ vulmmr %>%
 
 <br>
 
-The next treemap uses the same area scale as above,  but the colors of each township have been changed to reflect the net margins earned from agricultural production in 2015/2016.
+The next treemap uses the same area scale as above,  but the colours of each township have been changed to reflect the net margins earned from agricultural production in 2015/2016.
 
 While Ayeyarwady had the largest cultivated area of all the states and regions, its share of the net margins per acre tended to be lower than in many other parts of the country. This is largely due to the much higher levels of crop diversification in Magway and Sagaing or rather, the predominance of paddy cultivation in Ayeyarwady. Despite the anomalous post-flood data from 2015/2016, this shows the areas of Sagaing and Magway have the most to lose in relation to conflict and crop losses or damage.
 
@@ -1482,10 +1411,10 @@ vulmmr %>% select(all_net_margin = all_harvested_net_margin_usd, all_area_harves
                   area_sown = all_area_sowed_mali, admin3_pcode = township_pcode) %>% 
   mutate(net_margin_acre = all_net_margin / all_area_harvested) %>% 
   left_join(conflict_score %>% 
-            select(score_i, admin3_pcode, battles, explosions_remote_violence, 
+            select(conflict_score, admin3_pcode, battles, explosions_remote_violence, 
                    violence_against_civilians, fatalities), by = "admin3_pcode") %>% 
   left_join(townships %>% select(state_name, township_name, admin3_pcode), by = "admin3_pcode") %>% 
-  mutate(score_i = replace_na(score_i, 0)) %>% 
+  mutate(conflict_score = replace_na(conflict_score, 0)) %>% 
   ggplot(aes(area = area_sown, fill = net_margin_acre, subgroup = state_name)) +
   geom_treemap() +
   geom_treemap_subgroup_text(place = "centre", grow = TRUE, alpha = 0.5, colour = "black", fontface = "italic") +
@@ -1517,7 +1446,7 @@ ag_mali %>%
   st_as_sf() %>%
   ggplot() +
   geom_sf(aes(fill = area_sown), size = 0.1) + 
-  geom_point(data = acled %>% filter(year == 2021 & sub_event_type != "Peaceful protest") %>% 
+  geom_point(data = acled %>% filter(year >= 2021 & sub_event_type != "Peaceful protest") %>% 
                select(latitude, longitude, fatalities), 
              aes(x = longitude, y = latitude, size = fatalities), alpha = 0.5, colour = "red") +
   scale_colour_manual(values = c("red", "black")) +
@@ -1535,11 +1464,11 @@ ag_mali %>%
   
 conflict_score %>% 
   left_join(townships %>% select(state_name, township_name, admin3_pcode), by = "admin3_pcode") %>% 
-  mutate(score_i = round(score_i, digits = 2)) %>% 
+  mutate(conflict_score = round(conflict_score, digits = 2)) %>% 
   right_join(pcode3_shape, by = "admin3_pcode") %>%
   st_as_sf() %>%
   ggplot() +
-  geom_sf(aes(fill = score_i), size = 0.1) +
+  geom_sf(aes(fill = conflict_score), size = 0.1) +
   geom_sf(data = pcode1_shape, alpha = 0, colour = "black", size = 0.5) +
   scale_fill_viridis_c(direction = -1, option = "magma") + 
   theme_void() + 
@@ -1566,7 +1495,7 @@ ACLED data catalogued 16,263 conflict events in Myanmar in 2021. For each event,
 
 
 ```{r event-descriptions}
-acled %>%  
+acled_new %>%  
   filter(data_id %in% c("7695728", "7761223", "8655424")) %>% 
   select(data_id, notes) %>% 
   kable(caption = "Examples of conflict descriptions from the ACLED dataset") %>% 
@@ -1722,7 +1651,7 @@ acled_words %>%
 ```{r sources-df}
 
 acled_source <- acled %>% 
-  filter(year == 2021) %>% 
+  filter(year >= 2021) %>% 
   separate(source, sep = "; ", into = paste("v", 1:4, sep = "_")) %>% 
   pivot_longer(cols = c(v_1:v_4), names_to = "ignore", values_to = "source_long") %>% 
   filter(!is.na(source_long))
@@ -1829,14 +1758,14 @@ acled %>%
 ### 10.2 Conflict actors in 2021
 
 ```{r DT-conflict-actors}
-actors %>% 
-  filter(year == 2021) %>% 
+actors_new %>% 
+  filter(year >= 2021) %>% 
   group_by(actor_simple, actor_type = inter1, event_type) %>% 
   summarise(count = n(), .groups = "drop") %>%  
   pivot_wider(names_from = event_type, values_from = count) %>%  clean_names() %>% 
   mutate(total_events = rowSums(across(where(is.numeric)), na.rm = TRUE)) %>%
-  left_join(actors %>% 
-              filter(year == 2021) %>% 
+  left_join(actors_new %>% 
+              filter(year >= 2021) %>% 
               group_by(actor_simple) %>% 
               summarise(fatalities = sum(fatalities),
                         townships = n_distinct(admin3_pcode)), by = "actor_simple") %>%
@@ -1869,8 +1798,8 @@ actors %>%
 ### 10.3 Reference maps
 
 ```{r patchwork-maps, fig.height=16} 
-acled %>%  
-  filter(year == 2021 & sub_event_type != "Peaceful protests") %>% 
+acled_new %>%  
+  filter(year >= 2021 & sub_event_type != "Peaceful protests") %>% 
   group_by(admin3_pcode) %>%
   summarise(count = n()) %>% 
   full_join(pcode3_shape, by = "admin3_pcode") %>%
@@ -1880,14 +1809,14 @@ acled %>%
   geom_sf(data = pcode1_shape, size = 0.5, colour = "black", alpha = 0) + 
   scale_fill_viridis_c(option = "mako", direction = -1) +
   theme_void() + 
-  labs(title = "Conflict events by township 2021",
+  labs(title = "Conflict events by township 2021-2022",
        subtitle = "Peaceful protests have been excluded",
        caption = "Data source: ACLED; acleddata.com",
        fill = "conflict events") +
   theme(plot.caption=element_text(hjust = 0.2)) +
   
-fsc %>%
-  group_by(admin3_pcode) %>%
+fsc_2022 %>%
+  group_by(admin3_pcode = admin3_pcode_old) %>%
   summarise(partners = n_distinct(org_code), by = "admin3_pcode") %>%
   right_join(pcode3_shape, by = "admin3_pcode") %>% 
   st_as_sf() %>% 
@@ -1896,13 +1825,13 @@ fsc %>%
   geom_sf(data = pcode1_shape, size = 0.5, colour = "black", alpha = 0) + 
   scale_fill_viridis_c(option = "mako", direction = -1, breaks = c(1, 3, 6, 9, 12)) + 
   theme_void() +
-  labs(title = "Distribution of food security partners in 2021",
+  labs(title = "Distribution of food security partners in 2022",
        caption = "Data source: Food Security Cluster Myanmar",
        fill = "number of\npartners") +
   theme(plot.caption=element_text(hjust = 0.2)) + 
   
-acled %>%  
-  filter(year == 2021) %>% 
+acled_new %>%  
+  filter(year >= 2021) %>% 
   group_by(admin3_pcode) %>% 
   summarise(fatalities = sum(fatalities)) %>% 
   na_if(0) %>% 
@@ -1913,14 +1842,14 @@ acled %>%
   geom_sf(data = pcode1_shape, size = 0.5, colour = "black", alpha = 0) + 
   scale_fill_viridis_c(option = "mako", direction = -1) +
   theme_void() + 
-  labs(title = "Conflict fatalities by township 2021",
+  labs(title = "Conflict fatalities by township 2021-2022",
        caption = "Data source: ACLED; acleddata.com",
        fill = "fatalities") +
   theme(plot.caption=element_text(hjust = 0.2)) +
   
-fsc %>%
-  group_by(admin3_pcode) %>%
-  summarise(beneficiaries = sum(u_ben), by = "admin3_pcode") %>%
+fsc_2022 %>%
+  group_by(admin3_pcode = admin3_pcode_old) %>%
+  summarise(beneficiaries = sum(new_beneficiaries), by = "admin3_pcode") %>%
   right_join(pcode3_shape, by = "admin3_pcode") %>% 
   st_as_sf() %>% 
   ggplot() +
@@ -1928,12 +1857,10 @@ fsc %>%
   geom_sf(data = pcode1_shape, size = 0.5, colour = "black", alpha = 0) + 
   scale_fill_viridis_c(option = "mako", direction = -1, begin = 0.2, trans = "log10") + 
   theme_void() +
-  labs(title = "Distribution of food security beneficiaries in 2021",
+  labs(title = "Distribution of food security beneficiaries in 2022",
        caption = "Data source: Food Security Cluster Myanmar",
        fill = "number of\nbeneficiaries") +
   theme(plot.caption=element_text(hjust = 0.2))
 
 ```
-
-Interactive versions of some of these maps can be found **[here](https://food-security-cluster-myanmar.github.io/acled_maps/)**. Please note that the maps are large and will take a long time to load. 
 

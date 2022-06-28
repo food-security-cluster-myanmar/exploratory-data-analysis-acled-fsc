@@ -37,6 +37,7 @@ acled %>%
   theme(plot.caption = element_text(hjust = 0.5))
 ```
 
+# roads conflict
 
 ```{r}
 roads_conflict_title <- acled_new %>% 
@@ -69,6 +70,55 @@ roads_conflict_title %>%
          width = 11.7, 
          units = "in")
 ```
+
+```{r}
+acled_new
+```
+
+
+
+
+### Roads, partners, beneficiaries 
+
+```{r}
+roads_beneficiaries <- acled_new %>% 
+  filter(year >= 2021 & sub_event_type != "Peaceful protest") %>% 
+  left_join(fsc_2022 %>% 
+              group_by(admin3_pcode = admin3_pcode_old) %>% 
+              summarise(beneficiaries = sum(new_beneficiaries),by = "admin3_pcode"), 
+            by = "admin3_pcode") %>%
+  left_join(pcode3_shape, by = "admin3_pcode") %>% 
+  mutate(beneficiaries = ifelse(beneficiaries == 0, NA_real_, beneficiaries)) %>% 
+  st_as_sf() %>%  
+  ggplot() + 
+  geom_sf(aes(fill = beneficiaries), size = .1) + 
+  geom_sf(data = road_shape, size = 1.5, colour = "black") +
+  geom_sf(data = pcode1_shape, size = 0.5, colour = "grey70", alpha = 0) +
+  geom_point(x = 96.0785, y = 19.7633, size = 5, colour = "goldenrod", pch = 15) +
+  geom_point(x = 97.9103, y = 23.9933, size = 5, colour = "cornflowerblue", pch = 15) +
+  geom_point(x = 94.3103, y = 24.2199, size = 5, colour = "cornflowerblue", pch = 15) +
+  geom_point(x = 99.8989, y = 20.4521, size = 5, colour = "cornflowerblue", pch = 15) +
+  geom_point(x = 98.4797285, y = 16.6952072, size = 5, colour = "cornflowerblue", pch = 15) +
+  geom_point(aes(x = longitude, y = latitude), size = .7, alpha = .25, colour = "red") +
+  scale_fill_viridis(option = "mako", direction = -1, trans = "log") +
+  theme_void() + 
+  theme(plot.title = element_text(colour = "goldenrod"), 
+        plot.subtitle = element_text(colour = "goldenrod"), 
+        plot.caption = element_text(colour = "goldenrod", hjust = 0.5, vjust = 1), 
+        legend.text = element_text(colour = "goldenrod"), 
+        legend.title = element_text(colour = "goldenrod")) +
+  labs(title = "Myanmar road network and conflict events", 
+       subtitle = "Red dots are conflict events, blue squares are major border crossings, yellow square is Nay Pyi Taw", 
+       caption = "Food Security Cluster Myanmar")
+
+roads_beneficiaries %>% 
+  ggsave(filename = "./misc/roads_beneficiaries.png", 
+         dpi = 300, 
+         height = 16.5, 
+         width = 11.7, 
+         units = "in")
+```
+
 
 ```{r}
 roads_conflict_years <- acled_new %>% 
@@ -110,5 +160,73 @@ roads_conflict_years %>%
          width = 16.5, 
          units = "in")
 
+```
+
+### FSC worksheet
+
+```{r}
+
+townships %>% distinct(state_name) 
+townships %>% glimpse()
+
+Ayeyarwady				
+Bago (East)				
+Bago (West)				
+Chin				
+Kachin				
+Kayah				
+Kayin				
+Magway				
+Mandalay				
+Mon
+Nay Pyi Taw				
+Rakhine				
+Sagaing				
+Shan (East)				
+Shan (North)				
+Shan (South)				
+Tanintharyi				
+Yangon
+
+Bogale        
+Danubyu       
+Dedaye        
+Einme         
+Hinthada      
+Ingapu        
+Kangyidaunt   
+Kyaiklat      
+Kyangin       
+Kyaunggon     
+Kyonpyaw      
+Labutta       
+Lemyethna     
+Maubin        
+Mawlamyinegyun
+Myanaung      
+Myaungmya     
+Ngapudaw      
+Nyaungdon     
+Pantanaw      
+Pathein       
+Pyapon        
+Thabaung      
+Wakema        
+Yegyi         
+Zalun  
+
+
+food distributions (in kind/voucher/cash), severe  
+multi-purpose cash transfer (MPC), moderate        
+provision of crop, vegetable and seed kits         
+food distributions (in kind/voucher/cash), moderate
+livelihoods vocational training                    
+FFS and farmer training                            
+income-generating activities and small grants      
+multi-purpose cash transfer (MPC), severe          
+provision of livestock kits                        
+food/cash for work/assets  
+townships %>% filter(state_name == "Ayeyarwady") %>% 
+  distinct(township_name) 
 ```
 
