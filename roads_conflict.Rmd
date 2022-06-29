@@ -5,8 +5,13 @@ date: '2022-06-19'
 ---
 
 ```{r}
-road_shape <-  st_read("./data/mmr_rdsl_mimu_250k.shp") %>%  st_as_sf() %>% 
+
+road_shape <-  st_read("./data/mmr_rdsl_mimu_250k.shp") %>%  st_as_sf()  
   filter(Road_Type %in% c("Main"))
+
+yangon_road <- st_read("./data/mmr_rdsl_mimu_250k.shp") %>%  st_as_sf() %>%
+  st_crop(road_shape, ymax = 17.822881, ymin = 16.3482211, xmin = 95.590807, xmax = 96.801033) %>% 
+  filter(Road_Type %in% c("Main")) 
 
 glimpse(road_shape)
 ```
@@ -109,6 +114,42 @@ roads_conflict_event %>%
          units = "in")
 ```
 
+```{r}
+
+roads_conflict_title <- acled_new %>% 
+  filter(year >= 2021 & sub_event_type != "Peaceful protest") %>% 
+  right_join(pcode3_shape, by = "admin3_pcode") %>% 
+  st_as_sf() %>%  
+  ggplot() + 
+  geom_sf(fill = "black", size = .25, colour = "black") + 
+  geom_sf(data = pcode1_shape, size = 0.5, colour = "grey70", alpha = 0) +
+  geom_sf(data = road_shape %>% filter(Road_Type %in% c("Main")), 
+          size = 1.5, colour = "blue") +
+  geom_sf(data = road_shape %>% filter(Road_Type %in% c("Secondary")), 
+          size = .1, colour = "grey50") +
+  geom_point(x = 96.0785, y = 19.7633, size = 5, colour = "goldenrod", pch = 15) +
+  geom_point(x = 97.9103, y = 23.9933, size = 5, colour = "cornflowerblue", pch = 15) +
+  geom_point(x = 94.3103, y = 24.2199, size = 5, colour = "cornflowerblue", pch = 15) +
+  geom_point(x = 99.8989, y = 20.4521, size = 5, colour = "cornflowerblue", pch = 15) +
+  geom_point(x = 98.4797285, y = 16.6952072, size = 5, colour = "cornflowerblue", pch = 15) +
+  geom_point(aes(x = longitude, y = latitude), size = .7, alpha = .25, colour = "red") + 
+  theme_void() + 
+  theme(plot.background = element_rect(fill = "black", colour = NA), 
+        plot.title = element_text(colour = "goldenrod"), 
+        plot.subtitle = element_text(colour = "goldenrod"), 
+        plot.caption = element_text(colour = "goldenrod", hjust = 0.5, vjust = 1)) + 
+  labs(title = "Myanmar major road network and conflict events", 
+       subtitle = "Red dots are conflict events, blue squares are major border crossings, yellow square is Nay Pyi Taw", 
+       caption = "Food Security Cluster Myanmar")
+
+roads_conflict_title %>% 
+  ggsave(filename = "./misc/road_conflict_title.png", 
+         dpi = 300, 
+         height = 16.5, 
+         width = 11.7, 
+         units = "in")
+```
+
 
 
 
@@ -196,6 +237,50 @@ roads_conflict_years %>%
          units = "in")
 
 ```
+
+# Yangon conflict
+
+```{r}
+yangon_conflict_roads <- acled_new %>% 
+  filter(year >= 2021 & sub_event_type != "Peaceful protest") %>% 
+  right_join(pcode3_shape, by = "admin3_pcode") %>% 
+  filter(admin1 == "Yangon") %>% 
+  st_as_sf() %>%  
+  ggplot() + 
+  geom_sf(fill = "black", size = .1, colour = "black") + 
+  geom_sf(data = pcode1_shape %>% 
+            filter(state == "Yangon"), 
+          size = 0.5, colour = "grey70", alpha = 0) +
+  geom_sf(data = yangon_road, size = 1.5, colour = "blue") +
+  # geom_point(x = 96.0785, y = 19.7633, size = 5, colour = "goldenrod", pch = 15) +
+  # geom_point(x = 97.9103, y = 23.9933, size = 5, colour = "cornflowerblue", pch = 15) +
+  # geom_point(x = 94.3103, y = 24.2199, size = 5, colour = "cornflowerblue", pch = 15) +
+  # geom_point(x = 99.8989, y = 20.4521, size = 5, colour = "cornflowerblue", pch = 15) +
+  # geom_point(x = 98.4797285, y = 16.6952072, size = 5, colour = "cornflowerblue", pch = 15) +
+  geom_point(aes(x = longitude, y = latitude), size = .7, alpha = .25, colour = "red") + 
+  theme_void() + 
+  theme(plot.background = element_rect(fill = "black", colour = NA), 
+        plot.title = element_text(colour = "goldenrod"), 
+        plot.subtitle = element_text(colour = "goldenrod"), 
+        plot.caption = element_text(colour = "goldenrod", hjust = 0.5, vjust = 1)) + 
+  labs(title = "Myanmar major road network and conflict events", 
+       subtitle = "Red dots are conflict events, blue squares are major border crossings, yellow square is Nay Pyi Taw", 
+       caption = "Food Security Cluster Myanmar")
+
+yangon_conflict_roads %>% 
+  ggsave(filename = "./misc/yangon_conflict_roads.png", 
+         dpi = 300, 
+         height = 16.5, 
+         width = 11.7, 
+         units = "in")
+
+
+glimpse(road_shape)
+
+yangon_road <- st_crop(road_shape, ymax = 17.822881, ymin = 16.3482211, xmin = 95.590807, xmax = 96.801033)
+
+```
+
 
 ### FSC worksheet
 
