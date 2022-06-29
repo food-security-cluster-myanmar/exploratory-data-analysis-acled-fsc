@@ -1515,8 +1515,8 @@ There are fours clusters of words of note. The first centers around the word pro
 
 <br>
 
-[![conflict network graph](./text_mining/conflict_network_graph_june22.png)](https://raw.githubusercontent.com/food-security-cluster-myanmar/exploratory-data-analysis-acled-fsc/master/text_mining/conflict_network_graph_june22.png){target="_blank"}
-Click **[here](https://raw.githubusercontent.com/food-security-cluster-myanmar/exploratory-data-analysis-acled-fsc/master/text_mining/conflict_network_graph_june22.png){target="_blank"}** to see the full-sized graph. 
+[![conflict network graph](./text_mining/conflict_network_graph.png)](https://raw.githubusercontent.com/food-security-cluster-myanmar/exploratory-data-analysis-acled-fsc/master/text_mining/conflict_network_graph.png){target="_blank"}
+Click **[here](https://raw.githubusercontent.com/food-security-cluster-myanmar/exploratory-data-analysis-acled-fsc/master/text_mining/conflict_network_graph.png){target="_blank"}** to see the full-sized graph. 
 
 <br>
 
@@ -1524,7 +1524,7 @@ The first cluster centers on the word protests. The word is closely linked to ot
 
 Another cluster of note centers around the words *remote*, *controlled* and *explosives*. The cluster is closely linked to a second series of words, including *convoy*, *trucks* and *landmines*. These word are likely linked to events where military convoys were bombed and ambushed by the People’s Defence Forces.
 
-There is also a Kachin cluster of words, centered around the township names of *Myitkyina*, *Waingmaw*, *Monhyin*, *Hpakant*, *Bhamo*, as well as *KIA*, the acronym for the Kachin Independence Army. Noticeably, this cluster also has links with the words *battalion*, *jet* and *fighters*.
+There is also a Kachin cluster of words, centered around the township names of *Myitkyina*, *Waingmaw*, *Monhyin*, *Hpakant*, *Bhamo*, as well as *KIA*, the acronym for the Kachin Independence Army. 
 
 The plots below show the top 20 words  associated with each type of conflict event. These plots provide an alternative way of reading or interpreting the word data. Of interest, the word *clashed* is most likely to appear in descriptions of battles, while the word *coup* is more likely to appear in descriptions of protest events.
  
