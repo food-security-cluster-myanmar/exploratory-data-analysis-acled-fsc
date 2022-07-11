@@ -192,7 +192,7 @@ bigram_net_graph <- function(tbl) {
     filter(correlation >= 0.1) %>% 
     igraph::graph_from_data_frame() %>% 
     ggraph(layout = "fr") + 
-    geom_edge_link(aes(alpha = correlation), colour = "blue") + 
+    geom_edge_link(aes(alpha = correlation), colour = "blue", check_overlap = TRUE) + 
     scale_alpha_continuous(range = c(0.1, 0.4)) +
     geom_node_point(colour = "blue", alpha = 0.2) +
     geom_node_text(aes(label = name), size = 2.3) + 
@@ -214,7 +214,7 @@ bigram_net_graph_2022 <- acled_bigrams_2022 %>%
        subtitle = "Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com")
 
 bigram_net_graph_all <- acled_bigrams %>% 
-  filter(n >= 180) %>% 
+  filter(n >= 200) %>% 
   bigram_net_graph() +  
   labs(title = "Network graph of conflict event descriptions in Myanmar 2021-2022", 
        subtitle = "Data soource: Amed Conflict & Event Data Project (ACLED); acleddata.com")
@@ -326,12 +326,12 @@ conflict_network_graph <- acled_words %>%
   filter(correlation >= 0.2) %>% 
   igraph::graph_from_data_frame() %>% 
   ggraph(layout = "fr") + 
-  geom_edge_link(aes(alpha = correlation), colour = "blue") + 
+  geom_edge_link(aes(alpha = correlation), colour = "blue", check_overlap = TRUE) + 
   scale_alpha_continuous(range = c(0.1, 0.4)) +
   geom_node_point(colour = "blue", alpha = 0.3) +
   geom_node_text(aes(label = name), size = 2) + 
   theme(legend.position = "none") + 
-  labs(title = "Network graph of words in 2021 conflict event descriptions in Myanmar",
+  labs(title = "Network graph of words in 2021-2022 conflict event descriptions in Myanmar",
        subtitle = "Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com")
 
 ggsave("conflict_network_graph.png", conflict_network_graph, width = 42.0, height = 29.7, units = "cm", dpi = 300)

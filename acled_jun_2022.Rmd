@@ -11,8 +11,19 @@ output:
     toc_float: true
     number_sections: false
     collapsed: false
-always_allow_html: true   
+always_allow_html: true  
+google_analytics: G-7CZPQJVQVL
 ---
+
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-7CZPQJVQVL"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-7CZPQJVQVL');
+</script>
 
 ```{css, echo=FALSE}
 
@@ -194,9 +205,14 @@ conflict_score <- read_csv("./data/conflict_score2.csv") %>%
   left_join(acled %>% 
               distinct(admin1, admin3, admin3_pcode), by = "admin3_pcode") %>% 
   left_join(fsc_2022 %>%  
-              group_by(admin3_pcode) %>% 
+              group_by(admin3_pcode = admin3_pcode_old) %>% 
               summarise(partners = n_distinct(org_code),
-                        beneficiaries = sum(new_beneficiaries)), by = "admin3_pcode")
+                        beneficiaries = sum(new_beneficiaries)), by = "admin3_pcode") %>% 
+  left_join(fsc %>% 
+              filter(unique_beneficiaries == "Yes") %>% 
+              group_by(admin3_pcode) %>% 
+              summarise(beneficiaries_2021 = sum(beneficiaries)), 
+            by = "admin3_pcode")
 
 # shapefiles
 pcode3_shape <- 
@@ -1099,7 +1115,7 @@ As may be expected, conflict indicators are highly correlated with each other. W
 
 ```{r small-corrplot}
 
-conflict_score %>% 
+conflict_score %>%
   select(battles, explosions_remote_violence, protests_and_riots, strategic_developments, violence_against_civilians, 
          fatalities, partners, beneficiaries) %>% 
   filter(!is.na(partners) & !is.na(beneficiaries)) %>% 
@@ -1169,14 +1185,15 @@ The spread of beneficiaries shows no discernible relationship between the incide
 ```{r score-i-ben-plot}
 # there is no relationship between conflict score and the number of beneficiaries or number of partners per township
 conflict_score %>%
-  mutate(beneficiaries = log(beneficiaries)) %>% 
+  mutate(ben_tot = beneficiaries + beneficiaries_2021) %>%
+  mutate(beneficiaries = log(ben_tot)) %>% 
   ggplot(aes(x = beneficiaries, y = conflict_score)) + 
   geom_point() + 
   scale_x_continuous(trans = "log10", labels = comma) +
   geom_smooth(method = "lm") +
   labs(x = "Log of beneficiaries",
        y = "Conflict score",
-title = "Relationship between Q1 2022 beneficiaries reached and conflict score at township level",
+title = "Relationship between 2021-2022 beneficiaries reached and conflict score at township level",
        subtitle = "Higher conflict scores indicate more conflict events and fatalities", 
        caption = "Data sources: Armed Conflict Location & Event Data Project (ACLED); acleddata.com and Food Security Cluster Myanmar") +
   theme(plot.caption = element_text(hjust = 0.5))
@@ -1221,7 +1238,7 @@ conflict_scatter <- acled_new %>%
        title = "Conflict events and fatalities by township", 
        subtitle = "Means of both axes are marked by the dotted red line")
 
-ggplotly(conflict_scatter, tooltip = c("text")) %>% 
+ggplotly(conflict_scatter, tooltip = c("text"), width = 820) %>% 
   # layout(showlegend = FALSE, legend = list(font = list(size = 6))) %>% 
   config(displayModeBar = FALSE) %>% 
   layout(title = list(text = paste0("Conflict events and fatalities by township",

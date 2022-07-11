@@ -4,6 +4,9 @@ output: html_document
 date: '2022-06-19'
 ---
 
+
+### datasets
+
 ```{r}
 
 road_shape <-  st_read("./data/mmr_rdsl_mimu_250k.shp") %>%  st_as_sf()  
@@ -13,7 +16,6 @@ yangon_road <- st_read("./data/mmr_rdsl_mimu_250k.shp") %>%  st_as_sf() %>%
   st_crop(road_shape, ymax = 17.822881, ymin = 16.3482211, xmin = 95.590807, xmax = 96.801033) %>% 
   filter(Road_Type %in% c("Main")) 
 
-glimpse(road_shape)
 ```
 
 
@@ -64,9 +66,9 @@ roads_conflict_title <- acled_new %>%
         plot.title = element_text(colour = "goldenrod"), 
         plot.subtitle = element_text(colour = "goldenrod"), 
         plot.caption = element_text(colour = "goldenrod", hjust = 0.5, vjust = 1)) + 
-  labs(title = "Myanmar major road network and conflict events", 
+  labs(title = "Myanmar -- road network and conflict events (as of 1 June 2022)", 
        subtitle = "Red dots are conflict events, blue squares are major border crossings, yellow square is Nay Pyi Taw", 
-       caption = "Food Security Cluster Myanmar")
+       caption = "Food Security Cluster Myanmar; data from acleddata.com, shapefiles from MIMU")
 
 roads_conflict_title %>% 
   ggsave(filename = "./misc/road_conflict_title.png", 
@@ -79,6 +81,9 @@ acled_new %>% count(event_type)
 ```
 
 ```{r}
+
+# old versiion 
+
 roads_conflict_event <- acled_new %>% 
   filter(year >= 2021 & sub_event_type != "Peaceful protest") %>% 
   filter(event_type %in% c("Battles", "Explosions/Remote violence", "Violence against civilians")) %>% 
@@ -102,9 +107,9 @@ roads_conflict_event <- acled_new %>%
         plot.subtitle = element_text(colour = "goldenrod"), 
         plot.caption = element_text(colour = "goldenrod", hjust = 0.5, vjust = 1), 
         legend.text = element_text(colour = "goldenrod")) + 
-  labs(title = "Myanmar major road network and conflict events", 
+  labs(title = "Myanmar road network and conflict events (as of 1 June 2022)", 
        subtitle = "Red dots are conflict events, blue squares are major border crossings, yellow square is Nay Pyi Taw", 
-       caption = "Food Security Cluster Myanmar")
+       caption = "Food Security Cluster Myanmar; data from acleddata.com, shapefiles from MIMU")
 
 roads_conflict_event %>% 
   ggsave(filename = "./misc/road_conflict_event.png", 
@@ -138,9 +143,9 @@ roads_conflict_title <- acled_new %>%
         plot.title = element_text(colour = "goldenrod"), 
         plot.subtitle = element_text(colour = "goldenrod"), 
         plot.caption = element_text(colour = "goldenrod", hjust = 0.5, vjust = 1)) + 
-  labs(title = "Myanmar major road network and conflict events", 
+  labs(title = "Myanmar road network and conflict events (as of 1 June 2022)", 
        subtitle = "Red dots are conflict events, blue squares are major border crossings, yellow square is Nay Pyi Taw", 
-       caption = "Food Security Cluster Myanmar")
+       caption = "Food Security Cluster Myanmar; data from acleddata.com, shapefiles from MIMU")
 
 roads_conflict_title %>% 
   ggsave(filename = "./misc/road_conflict_title.png", 
