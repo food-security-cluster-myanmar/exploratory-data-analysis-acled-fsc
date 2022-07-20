@@ -1273,6 +1273,8 @@ ag_mali <- vulmmr %>%
                                         "urad_pea", "ground_nut", "pigeon_pea"),
                        crop_type, "other"), 
     crop_type = fct_relevel(crop_type, "other", after = Inf))
+
+# write_csv(ag_mali, "ag_mali.csv")
 ```
 
 <br> 
@@ -1470,7 +1472,8 @@ ag_mali %>%
   scale_colour_manual(values = c("red", "black")) +
   scale_size_continuous(range = c(0.1, 1.5)) +
   geom_sf(data = pcode1_shape, alpha = 0, colour = "black", size = 0.5) +
-  scale_fill_viridis_c(direction = -1, label = scales::comma, breaks = c(0, 50000, 200000, 400000, 600000, 750000)) + 
+  scale_fill_viridis_c(direction = -1, label = scales::comma, 
+                       breaks = c(0, 50000, 200000, 400000, 600000, 750000)) + 
   guides(size = guide_legend(override.aes = list(alpha = 1))) +
   theme_void() + 
   labs(fill = "sown area (acres)", 
