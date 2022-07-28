@@ -455,12 +455,14 @@ acled_new %>%
   geom_line() +
   facet_wrap(~ event_type, scales = "free_y", ncol = 1) + 
    labs(x = "",
-       y = "Number of events", 
-       title = "Number of conflict events per month, by type",
+       y = "Number of events per day", 
+       title = "Number of conflict events per day, by type",
        subtitle = "Data source: Armed Conflict Location & Event Data Project (ACLED); acleddata.com") + 
   theme(legend.position = "none",
         axis.text.x = element_text(size = 7, angle = 30, hjust = 1)) + 
   scale_x_date(date_breaks = "1 month", labels = date_format(format = "%Y-%b"))
+
+#ggsave("./misc/event_days.png", dpi = 300, height = 11, width = 14, units = "in")
 
 ```
 
