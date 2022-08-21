@@ -32,7 +32,7 @@ library(tidytext)
 
 From 2021 version of the 5Ws. Administrative level 3 place codes. Public. [Link](https://raw.githubusercontent.com/food-security-cluster-myanmar/exploratory-data-analysis-acled-fsc/master/data/townships.csv). 
 
-```{r}
+```{r eval = FALSE}
 # Townships, from geoadmins 
 townships <- read_excel("FSC 5W 2021 - GEOADMINS_final 19.xlsx",
            sheet = "GEOADMINS") %>% 
@@ -55,7 +55,7 @@ townships %>%
 
 MIMU shapefiles. Administrative levels 1 and 3 shapefiles. Public. Links for [Admin level 1](https://geonode.themimu.info/layers/geonode%3Ammr_polbnda2_adm1_mimu_250k) [Admin level 3](https://geonode.themimu.info/layers/geonode%3Ammr_polbnda_adm3_mimu_250k).  
 
-```{r}
+```{r eval = FALSE}
 # shapefiles
 pcode3_shape <- st_read("./mmr_polbnda_adm3_mimu_250k/mmr_polbnda_adm3_mimu_250k.shp", quiet = TRUE) %>% 
  rename(state = ST, 
@@ -73,11 +73,9 @@ pcode1_shape <- st_read("./mmr_polbnda2_adm1_mimu_250k/mmr_polbnda2_adm1_mimu_25
 
 ## ACLED
 
-Extracted 2022-01-25. Conflict reference table, at incident level. Provided by MIMU. Read into .csv for public sharing. [Link](https://raw.githubusercontent.com/food-security-cluster-myanmar/exploratory-data-analysis-acled-fsc/master/data/acled_20220125.csv); only used for this report.  
+Extracted 2022-06-06. Conflict reference table, at incident level. Read into .csv for public sharing. [Link](https://raw.githubusercontent.com/food-security-cluster-myanmar/exploratory-data-analysis-acled-fsc/master/data/acled_20220606.csv). 
 
-Find updated dataset at [Link](). 
-
-```{r acled}
+```{r acled, eval = FALSE}
 acled <- read_excel("2010-01-01-2022-01-25-Myanmar.xlsx", 
          sheet = "2010-2021-Cleaned") %>% 
   mutate(admin3 = recode(admin3,
@@ -163,10 +161,9 @@ acled %>%
 
 ## Actors 
 
-Extracted 2022-02-09. Conflict reference table -- long table, by incident and actor. 
-Only observations from 2021 used in the report. Public. [Report link](https://raw.githubusercontent.com/food-security-cluster-myanmar/exploratory-data-analysis-acled-fsc/master/data/actors.csv) (outdated); updated Link. 
+Extracted 2022-06-06. Conflict reference table -- long table, by incident and actor. Public. [Link](https://raw.githubusercontent.com/food-security-cluster-myanmar/exploratory-data-analysis-acled-fsc/master/data/actors.csv). 
 
-```{r actors}
+```{r actors, eval = FALSE}
 # actors <- read_csv("1900-01-01-2022-02-09-Myanmar.csv") %>% 
 actors_new <- read_csv("./data/acled-actors-2022-06-06-Myanmar.csv") %>% 
   mutate(admin3 = recode(admin3,
@@ -308,10 +305,10 @@ actors_new %>%
 
 Textmining dataset. Created using `tidytext`. Contains all words from conflict descriptions of each conflict incident, filtered by stopword. Public. [Link](https://raw.githubusercontent.com/food-security-cluster-myanmar/exploratory-data-analysis-acled-fsc/master/data/acled_words.csv).
 
-```{r}
+```{r eval = FALSE}
 # acled_words df
 acled_words <- acled %>% 
-  filter(year == 2021) %>% 
+  filter(year <= 2021) %>% 
   select(data_id, notes) %>% 
   unnest_tokens(word, notes) %>% 
   anti_join(stop_words, by = "word") %>% 
@@ -328,7 +325,7 @@ acled_words %>%
 
 Census reference dataset. Dataset used for the creation of the MIMU-HARP Vulnerability Index based on 2015 Census data. Public. [Link](https://raw.githubusercontent.com/food-security-cluster-myanmar/exploratory-data-analysis-acled-fsc/master/data/vulmmr.csv). 
 
-```{r vulnerability in Myanmar}
+```{r vulnerability in Myanmar, eval=FALSE}
 # vulnerability in Myanmar 
 
 vulmmr <- read_excel("Datasets_Vulnerability_Analysis_in_Myanmar_09Jul2018 (1).xlsx",

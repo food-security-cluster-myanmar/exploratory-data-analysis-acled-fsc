@@ -112,8 +112,8 @@ acled %>%
 
 ```{r fig.height = 10}
 # map 1
-acled %>% 
-  filter(year == 2021) %>% 
+acled_new %>% 
+  filter(year >= 2021) %>% 
   filter(event_type == "Explosions/Remote violence") %>% 
   mutate(civ_involved = case_when(str_detect(actor1, "Civilian") ~ "yes",
                                   str_detect(actor2, "Civilian") ~ "yes",
@@ -140,6 +140,13 @@ acled %>%
 
 ggsave(filename = "./sharing/explosions_remote_violence_map1.png", dpi = 300, height = 12, width = 7, units = "in")
 ```
+
+```{r}
+acled_new %>% filter(event_type == "Explosions/Remote violence")  %>% 
+  count(sub_event_type, wt = fatalities) %>% 
+  arrange(desc(n))
+```
+
 
 ```{r fig.height = 10}
 # map 2
